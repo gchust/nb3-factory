@@ -34,16 +34,62 @@ jobs:
     permissions:
       actions: read
 
-  # A task that hit the agent job's six-hour limit is reported as cancelled yet
-  # still publishes a failed PR; select deploys only a published build, so a
-  # manual cancel deploys nothing.
-  deploy-preview:
+  # Waits for the source run in a job that holds no concurrency group, so the
+  # global preview lock below is never held while the task's own
+  # dispatch-reports job is still finishing (up to ten minutes); select then
+  # reads a completed run at once. Same condition as the job it feeds, and the
+  # attempt it settled on is passed through so a re-run started meanwhile
+  # cannot make the locked job wait again.
+  wait-for-source:
     needs: dispatch-gate
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
+    outputs:
+      attempt: ${{ steps.wait.outputs.attempt }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # wait-for-task-run.mjs gives up after 11 minutes.
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+      - name: Wait for the source task run to complete
+        id: wait
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+          SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+        run: |
+          node control/.github/scripts/wait-for-task-run.mjs \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT"
+
+  # A task that hit the agent job's six-hour limit is reported as cancelled yet
+  # still publishes a failed PR; select deploys only a published build, so a
+  # cancel before publication deploys nothing.
+  deploy-preview:
+    needs: [dispatch-gate, wait-for-source]
+    if: >-
+      !cancelled() && needs.wait-for-source.result == 'success' &&
+      needs.dispatch-gate.outputs.covered != 'true' &&
+      (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
+    runs-on: ubuntu-24.04
+    # The bounded steps alone take up to 42 minutes: Publish 10, Deploy 30 and
+    # the 2-minute public check. Checkout, the ~84 MB download, the tailnet,
+    # the deploy key and making room come on top, so 45 minutes could cut a
+    # slow deploy off before its own limits and skip the PR notice. The source
+    # wait runs in wait-for-source, outside the lock, so this holds the lock
+    # only for deploying.
+    timeout-minutes: 60
     # Serialized with teardown-preview in preview-teardown.yml. At job level, so
     # a copy the dispatch gate covers or skips never queues behind a deploy.
     concurrency:
@@ -57,7 +103,8 @@ jobs:
       pull-requests: write
     env:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
-      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+      # The attempt wait-for-source settled on; see that job.
+      SOURCE_ATTEMPT: ${{ needs.wait-for-source.outputs.attempt || inputs.attempt || github.event.workflow_run.run_attempt }}
       PREVIEW_HOST: ${{ vars.FACTORY_PREVIEW_HOST || '100.120.77.102' }}
       PREVIEW_USER: ${{ vars.FACTORY_PREVIEW_USER || 'root' }}
       PREVIEW_DOMAIN: ${{ vars.FACTORY_PREVIEW_DOMAIN || 'nfvd.net' }}
@@ -95,7 +142,7 @@ jobs:
             --source "$RUNNER_TEMP/preview-source.json"
 
       # Before the download: without credentials nothing is deployed, so the
-      # build (hundreds of megabytes) is not fetched or unpacked either.
+      # build (~84 MB packed, ~744 MB unpacked) is not fetched or unpacked either.
       - name: Skip without preview credentials
         if: steps.source.outputs.ready == 'true' && env.PREVIEW_ENABLED != 'true'
         run: |
@@ -105,7 +152,10 @@ jobs:
         if: steps.source.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ steps.source.outputs.artifact }}
+          # By ID: the name is shared by every attempt of the run, and select
+          # chose the one this attempt's packaging job uploaded.
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
           run-id: ${{ env.SOURCE_RUN_ID }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/dist-artifact
@@ -169,8 +219,8 @@ jobs:
             'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
 
       # Before anything is packaged or uploaded. The host refuses a new preview
-      # beyond its instance limit, and finding that out only after a ~744 MB
-      # payload was published as a public release asset is how most deploys
+      # beyond its instance limit, and finding that out only after a payload
+      # (~84 MB with dependencies) was published as a public release asset is how most deploys
       # failed once open build PRs outnumbered the slots. A full host first gives
       # up previews of closed PRs, then of failed builds, oldest first; when only
       # successful builds of open PRs remain, this deploy is skipped and the PR
@@ -225,8 +275,9 @@ jobs:
           ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4)
           remote="$PREVIEW_USER@$PREVIEW_HOST"
 
-          # The dependency tree is ~740 MB of a ~744 MB build and changes only
-          # with the dependency set, so ask the host before shipping it.
+          # Unpacked, the dependency tree is ~740 MB of a ~744 MB build (packed,
+          # ~82 of ~84 MB) and changes only with the dependency set, so ask the
+          # host before shipping it: a cache hit sends ~2 MB.
           present="$(ssh "${ssh_opts[@]}" "$remote" "${{ steps.prepare.outputs.probe }}")"
           if [[ "$present" == present ]]; then
             echo "Dependency cache hit; sending the application tree only."
@@ -269,8 +320,11 @@ jobs:
       - name: Deploy the preview
         id: deploy
         if: steps.publish.outcome == 'success'
-        # The host fetches up to ~744 MB at about 815 KB/s (some 15 minutes)
-        # and gives up on a transfer slower than 50 KB/s for two minutes.
+        # The host fetches the packed payload, ~84 MB with dependencies or ~2 MB
+        # on a dependency cache hit (factory-dist and factory-previews assets,
+        # 2026-10-06), in about two minutes at 815 KB/s. A transfer slower than
+        # 50 KB/s for two minutes counts as stalled and resumes; one that stays
+        # just above that floor could still take ~28 minutes, hence the limit.
         timeout-minutes: 30
         env:
           PR: ${{ steps.prepare.outputs.pr }}

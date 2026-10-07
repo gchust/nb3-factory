@@ -410,7 +410,8 @@ test('preset workflow runs manually and daily at 02:23 UTC+8, off the congested 
 
 test('merging initializes only the label on the default branch; pushes and label changes do not start builds', () => {
   const workflow = readFileSync(new URL('../../workflows/scheduled-preset-tests.yml', import.meta.url), 'utf8');
-  assert.match(workflow, /push:\s+paths:/);
+  // Pushes elsewhere would only start skipped runs.
+  assert.match(workflow, /push:\s+branches: \[develop\]\s+paths:/);
   assert.match(workflow, /github.event_name == 'push' && github.ref_name == github.event.repository.default_branch/);
   assert.match(workflow, /scheduled-preset-tests\.mjs --init-label/);
   assert.doesNotMatch(workflow, /^  issues:|^  label:/m);

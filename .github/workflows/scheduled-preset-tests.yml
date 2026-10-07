@@ -2,7 +2,10 @@ name: Preset build tests
 run-name: "Preset tests · ${{ github.event_name == 'schedule' && 'daily' || github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'preview' || 'manual') || 'initialize' }}"
 
 on:
+  # Only develop, the default branch, creates the factory:daily label; pushes
+  # elsewhere would only start skipped runs.
   push:
+    branches: [develop]
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'

@@ -1,7 +1,10 @@
 # PR 预览环境
 
 搭建任务通过 `verify-final` 和 `publish` 之后，**Deploy Task Preview** 工作流会把这一次
-验收过的构建产物部署到预览机（`ct252-nocobase`），并给业务 PR 回一条带地址的评论：
+验收过的构建产物部署到预览机（`ct252-nocobase`），并给业务 PR 回一条带地址的评论。
+失败任务发布了标为失败的 PR（`publish-failed`）时，`preview-build-failed` 打包的构建也会部署一次，
+评论里标明搭建状态为 failed；打包失败时不部署，只在失败通知里说明。是否交付按这些 Job 的结果判断，
+不看整次运行的结论，所以交付之后问答回复失败不影响预览：
 
 ```
 https://nb3-<PR 号>.nfvd.net/main/
@@ -25,7 +28,8 @@ Code Agent NocoBase Task
                              └─ task-metadata.json  属于哪个 PR 和目标分支
 
 Deploy Task Preview（由 workflow_run 触发，搭建流程也会显式请求一次）
-  select  ──► 只挑同时通过 verify-final 和 publish 的运行
+  wait    ──► 不持锁等待来源运行结束，记下等到的 attempt
+  select  ──► 只挑通过 verify-final 和 publish（或 publish-failed）的运行，取该 attempt 打包 Job 上传的那个构建
   prepare ──► 认领 PR、算出依赖集标识、生成地址
   名额    ──► 先问预览机还有没有名额；满了就回收已关闭 PR 和失败构建的预览，仍满则跳过
   发布    ──► 把 payload 上传成临时 release 资产（factory-previews），名字带内容摘要
@@ -204,7 +208,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 **名额满了怎么办。** 打包和上传 payload 之前，工作流先用 `preview-capacity.sh` 问预览机
 还有没有名额（这个 PR 已经有实例时是替换，不占新名额）。以前这一步在上传之后才由
 `preview-deploy.sh` 检查：2026-10-05 有 49 个开放的搭建 PR 争 30 个名额，约 82% 的部署
-上传了最多 ~744MB 的公开 release 资产之后才被拒绝。现在名额满时按这个顺序腾位置：
+上传了公开 release 资产（带依赖时约 84 MB，解包后约 744 MB）之后才被拒绝。现在名额满时按这个顺序腾位置：
 
 1. PR 已关闭、已合并或不存在的预览，全部回收——本该由回收流程删掉，别处也不会再删；
 2. 失败构建的预览，部署时间最早的先让（失败构建的预览本来就是可选的）；
@@ -283,4 +287,4 @@ Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不�
 
 预览是一次性验收环境，每次部署重新初始化示例数据，避免未合并分支的种子变更与上次数据库校验冲突。旧数据库、上传文件和应用目录保存在 `/srv/nb3-preview/backups/`，不会直接删除。新部署本机健康检查失败时恢复旧实例；失败的新目录也保留供诊断，且不占预览名额。备份需要管理员按磁盘使用情况清理。
 
-默认最多 30 个实例，每个仍限制 768 MB 内存、0.5 CPU；名额满时的回收顺序见“资源与并发”。预览部署和回收在 GitHub 统一排队（`factory-preview-deploy`，加在 `deploy-preview` 和 `teardown-preview` 两个 Job 上），避免共享脚本与产物的并发写入；被 dispatch gate 覆盖或跳过的运行、以及非搭建 PR 关闭触发的回收运行不进入这个队列，不会排在 45 分钟的部署后面。传输卡住时由步骤限时报出失败：发布 payload 限 10 分钟、部署限 30 分钟，SSH 每 15 秒保活、连续 4 次无响应即断开，预览机下载 payload 低于 50 KB/s 持续两分钟即视为卡住，最多再试三次，每次用 `curl -C -` 从已下载的 `.part` 续传而不是重下整个 ~744 MB（服务端拒绝断点续传时从头下载），最后仍按摘要校验整个文件；这样 PR 仍能收到失败说明，而不是整个 Job 在上限处被取消。
+默认最多 30 个实例，每个仍限制 768 MB 内存、0.5 CPU；名额满时的回收顺序见“资源与并发”。预览部署和回收在 GitHub 统一排队（`factory-preview-deploy`，加在 `deploy-preview` 和 `teardown-preview` 两个 Job 上），避免共享脚本与产物的并发写入；被 dispatch gate 覆盖或跳过的运行、以及非搭建 PR 关闭触发的回收运行不进入这个队列，不会排在部署后面。等待来源任务运行结束（最长 11 分钟）放在不持锁的 `wait-for-source` Job 里，持锁的部署 Job 只在真正部署时占用队列，上限 60 分钟。传输卡住时由步骤限时报出失败：发布 payload 限 10 分钟、部署限 30 分钟，SSH 每 15 秒保活、连续 4 次无响应即断开，预览机下载 payload 低于 50 KB/s 持续两分钟即视为卡住，最多再试三次，每次用 `curl -C -` 从已下载的 `.part` 续传而不是重下整个 payload（带依赖时约 84 MB，依赖缓存命中时约 2 MB；服务端拒绝断点续传时从头下载），最后仍按摘要校验整个文件；这样 PR 仍能收到失败说明，而不是整个 Job 在上限处被取消。

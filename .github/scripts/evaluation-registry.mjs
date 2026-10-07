@@ -58,7 +58,7 @@ async function ensureBase(client) {
   return { sha, commit };
 }
 async function blob(client, data) {
-  const created = await client.request('POST', '/git/blobs', { body: { content: Buffer.from(data).toString('base64'), encoding: 'base64' } });
+  const created = await client.request('POST', '/git/blobs', { body: { content: Buffer.from(data).toString('base64'), encoding: 'base64' }, contentAddressed: true });
   return created.sha;
 }
 
@@ -76,9 +76,9 @@ export async function commitTree(client, message, build, { attempts = 5, pause =
       tree.push({ path: 'index.html', mode: '100644', type: 'blob', sha: await blob(client,
         '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./reports/"><title>交付报告</title><a href="./reports/">打开交付报告</a></html>') });
     }
-    const newTree = await client.request('POST', '/git/trees', { body: { ...(commit ? { base_tree: commit.tree.sha } : {}), tree } });
+    const newTree = await client.request('POST', '/git/trees', { body: { ...(commit ? { base_tree: commit.tree.sha } : {}), tree }, contentAddressed: true });
     if (commit?.tree.sha === newTree.sha) return { commitSha: sha, ...result, changed: false };
-    const created = await client.request('POST', '/git/commits', { body: { message, tree: newTree.sha, parents: sha ? [sha] : [] } });
+    const created = await client.request('POST', '/git/commits', { body: { message, tree: newTree.sha, parents: sha ? [sha] : [] }, contentAddressed: true });
     try {
       if (sha) await client.request('PATCH', `/git/refs/heads/${BRANCH}`, { body: { sha: created.sha, force: false } });
       else await client.createRef(BRANCH, created.sha);
