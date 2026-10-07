@@ -1582,7 +1582,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --cached --quiet && [[ "$BASE_REF" != "$WORK_BRANCH" ]]; then
+          # A recovery keeps the target as its base even though the failed run's
+          # publication created the work branch (EXPECTED_WORK_SHA): its empty
+          # diff goes on to replace that published commit below.
+          if git diff --cached --quiet && [[ "$BASE_REF" != "$WORK_BRANCH" ]] && \
+            [[ ! "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]]; then
             echo "::error::No application diff was saved; GitHub cannot create a build PR. The failed report and logs remain available."
             exit 1
           fi

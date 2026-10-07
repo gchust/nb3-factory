@@ -906,6 +906,79 @@ test("after the target moved, only this run's publication record lets a re-run k
   assert.match(download, /path: previous-publication\n/);
 });
 
+test("a recovery's empty diff on a target-branch base replaces the failed run's published commit", (t) => {
+  // The failed run published P on the work branch; the recovery's base is the
+  // target branch at B (liveRecoveryBase), and its repair emptied the patch.
+  const dir = temp(t, 'factory-review10-recovery-push-');
+  const git = (cwd, ...args) =>
+    execFileSync('git', ['-C', cwd, ...args], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  const remote = path.join(dir, 'remote.git');
+  git(dir, 'init', '--bare', '-b', 'develop', remote);
+  const seed = path.join(dir, 'seed');
+  git(dir, 'init', '-b', 'develop', seed);
+  git(seed, 'config', 'user.name', 'Test');
+  git(seed, 'config', 'user.email', 'test@example.invalid');
+  writeFileSync(path.join(seed, 'app.txt'), 'base\n');
+  git(seed, 'add', '.');
+  git(seed, 'commit', '-m', 'base');
+  const B = git(seed, 'rev-parse', 'HEAD');
+  git(seed, 'remote', 'add', 'origin', remote);
+  git(seed, 'push', 'origin', 'HEAD:refs/heads/develop');
+  writeFileSync(path.join(seed, 'app.txt'), 'failed change\n');
+  git(seed, 'commit', '-am', 'failed run');
+  const P = git(seed, 'rev-parse', 'HEAD');
+  git(seed, 'push', 'origin', `HEAD:refs/heads/${branch}`);
+  let attempt = 0;
+  const push = (expected) => {
+    attempt += 1;
+    const workspace = path.join(dir, `workspace-${attempt}`);
+    git(dir, 'clone', '--quiet', remote, workspace);
+    git(workspace, 'checkout', '--quiet', B);
+    const runnerTemp = path.join(dir, `runner-${attempt}`);
+    mkdirSync(runnerTemp);
+    const result = spawnSync('bash', ['-eo', 'pipefail', '-c', pushScript], {
+      cwd: workspace,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        BASE_REF: 'develop',
+        BASE_SHA: B,
+        ISSUE_NUMBER: '7',
+        WORK_BRANCH: branch,
+        EXPECTED_WORK_SHA: expected,
+        RUNNER_TEMP: runnerTemp,
+        GITHUB_RUN_ID: '902',
+        GITHUB_RUN_ATTEMPT: '1',
+        FACTORY_DELIVERY_STATUS: 'failed',
+      },
+    });
+    const record = () =>
+      JSON.parse(
+        readFileSync(
+          path.join(runnerTemp, 'publication-record', 'publication.json'),
+          'utf8',
+        ),
+      );
+    return { ...result, record };
+  };
+  const remoteHead = () => git(remote, 'rev-parse', `refs/heads/${branch}`);
+  // Without a valid lease the empty diff is still refused, and nothing moves.
+  for (const expected of ['', 'not-a-sha']) {
+    const refused = push(expected);
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stdout, /No application diff was saved/);
+    assert.equal(remoteHead(), P);
+  }
+  const replaced = push(P);
+  assert.equal(replaced.status, 0, replaced.stderr);
+  assert.match(replaced.stdout, /replacing the failed run's published commit/);
+  assert.equal(remoteHead(), B);
+  assert.equal(replaced.record().commit, B);
+});
+
 function pullClient(responses) {
   const calls = [];
   return {
