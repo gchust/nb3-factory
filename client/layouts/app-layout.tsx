@@ -7,6 +7,7 @@ import { RouteTreeProvider } from '../routing/route-context.js';
 
 import { useClientApplication } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
+import { NotificationInboxBoundary } from '../components/notification-inbox-boundary.js';
 import { LayoutHeader } from './components/layout-header.js';
 import {
   AppSidebar,
@@ -48,44 +49,49 @@ export function AppLayout({
   return (
     // The shell owns the business route tree used by its pages and navigation.
     <RouteTreeProvider routes={routes}>
-      <AppSidebarProvider>
-        <AppSidebar label={navigationLabel} footer={<AppSidebarFooter />}>
-          <NavigationMenu
-            items={menuItems}
-            label={navigationLabel}
-            selectedKey={selectedKey}
-          />
-        </AppSidebar>
-        <div className='flex min-w-0 flex-1 flex-col'>
-          <LayoutHeader className='sticky top-0 z-40 justify-between'>
-            <div className='flex min-w-0 items-center gap-3'>
-              <AppSidebarToggle />
-              <div className='md:hidden'>
-                <AppBrand />
-              </div>
-              <div className='hidden h-5 w-px bg-border md:block' />
-              <p className='hidden truncate text-sm font-medium text-muted-foreground md:block'>
-                {t('shell.workspace', {
-                  defaultValue: 'AI application workspace',
-                })}
-              </p>
-            </div>
-            <HeaderActions
-              showSettings={
-                navigationPages(settingsNavigation.items).length > 0
-              }
-              showDev={import.meta.env.DEV}
+      {/* The in-app inbox runtime is application-wide: the header badge and the
+          notification page both read this one subscription. The boundary skips the
+          provider on a host that registers no HTTP/realtime client. */}
+      <NotificationInboxBoundary>
+        <AppSidebarProvider>
+          <AppSidebar label={navigationLabel} footer={<AppSidebarFooter />}>
+            <NavigationMenu
+              items={menuItems}
+              label={navigationLabel}
+              selectedKey={selectedKey}
             />
-          </LayoutHeader>
-          <main className='relative min-w-0 flex-1 overflow-hidden'>
-            {/* main only positions; the page scrolls in here, so a child page layer laid over main is neither
+          </AppSidebar>
+          <div className='flex min-w-0 flex-1 flex-col'>
+            <LayoutHeader className='sticky top-0 z-40 justify-between'>
+              <div className='flex min-w-0 items-center gap-3'>
+                <AppSidebarToggle />
+                <div className='md:hidden'>
+                  <AppBrand />
+                </div>
+                <div className='hidden h-5 w-px bg-border md:block' />
+                <p className='hidden truncate text-sm font-medium text-muted-foreground md:block'>
+                  {t('shell.workspace', {
+                    defaultValue: 'AI application workspace',
+                  })}
+                </p>
+              </div>
+              <HeaderActions
+                showSettings={
+                  navigationPages(settingsNavigation.items).length > 0
+                }
+                showDev={import.meta.env.DEV}
+              />
+            </LayoutHeader>
+            <main className='relative min-w-0 flex-1 overflow-hidden'>
+              {/* main only positions; the page scrolls in here, so a child page layer laid over main is neither
             moved by the page's scrolling nor stretched by its height. */}
-            <div className='h-full overflow-y-auto'>
-              <Outlet />
-            </div>
-          </main>
-        </div>
-      </AppSidebarProvider>
+              <div className='h-full overflow-y-auto'>
+                <Outlet />
+              </div>
+            </main>
+          </div>
+        </AppSidebarProvider>
+      </NotificationInboxBoundary>
     </RouteTreeProvider>
   );
 }
