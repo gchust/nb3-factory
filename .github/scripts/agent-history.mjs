@@ -1,4 +1,4 @@
-import { repositoryApi } from './factory-lib.mjs';
+import { isTrustedAuthor, repositoryApi } from './factory-lib.mjs';
 import { readResult } from './agent-result.mjs';
 import { collectAgentMetrics, metricsReceipt, readMetricsReceipts, renderAgentMetrics } from './agent-metrics.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
@@ -24,7 +24,11 @@ import path from 'node:path';
 // the runner: the transcripts are redacted by the runner, but the console logs are not, and the
 // repository is public.
 
+// Archives go to one release per UTC month, `factory-history-YYYY-MM` (see
+// upload-history-asset.sh), because a release holds at most 1000 assets.
+// Archives published before the rotation stay on `factory-history`.
 export const HISTORY_RELEASE_TAG = 'factory-history';
+export const HISTORY_ASSET_URL = /\/releases\/download\/factory-history(?:-\d{4}-\d{2})?\//u;
 export const MARKER = (runId, attempt) =>
   `<!-- factory-agent-history:${runId}:${attempt} -->`;
 const MAX_FILE_BYTES = 256 * 1024 * 1024;
@@ -310,6 +314,22 @@ async function list(route, key) {
   throw new Error('GitHub pagination limit reached');
 }
 
+// Comments on the Issue's build PRs (a closed one and its successor too). The
+// index links what it finds and leaves out what it cannot read.
+async function buildPrComments(repository, issue) {
+  try {
+    const head = encodeURIComponent(`${repository.split('/')[0]}:agent/issue-${issue}`);
+    const pulls = (await list(`/pulls?state=all&head=${head}`))
+      .filter(pr => pr.body?.includes(`<!-- agent-issue: ${issue} -->`));
+    const comments = [];
+    for (const pr of pulls) comments.push(...await list(`/issues/${pr.number}/comments`));
+    return comments;
+  } catch (error) {
+    console.warn(`Build PR comments unavailable for the history index: ${error.message}`);
+    return [];
+  }
+}
+
 async function select(args) {
   const repository = process.env.GITHUB_REPOSITORY;
   const repo = await api('GET', '');
@@ -349,7 +369,7 @@ async function publish(args) {
   const marker = MARKER(runId, attempt);
   const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
   // Keep the previously published link and facts on an unsuccessful replay.
-  if (existing?.body?.includes('/releases/download/factory-history/') &&
+  if (HISTORY_ASSET_URL.test(existing?.body ?? '') &&
       (!args['asset-url'] || (manifest.completeness?.status === 'partial' &&
         existing.body.includes('本轮可观察调用文件齐全')))) {
     body = existing.body.split('\n<!-- factory-history-replay -->')[0] +
@@ -377,8 +397,18 @@ async function publish(args) {
       const c = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(`<!-- factory-${kind}:${run}:${attempt} -->`));
       return c ? ` · [${label}](${commentUrl(c)})` : '';
     };
+    // publish-visual-report.mjs comments on the task's build PR, not on the
+    // Issue: the inline report as the FACTORY_MEDIA_TOKEN user (a collaborator),
+    // the artifact fallback as github-actions[bot]. The inline one wins.
+    const media = await buildPrComments(source.repository, issue);
+    const visual = (run, attempt) => {
+      const marked = media.filter(c => c.body?.includes(`<!-- factory-visual-report:${run}:${attempt} -->`));
+      const c = marked.find(c => c.body.includes('<!-- factory-visual-mode:inline -->') && isTrustedAuthor(c)) ??
+        marked.find(c => c.user?.login === 'github-actions[bot]');
+      return c?.html_url ? ` · [截图与录像](${c.html_url})` : '';
+    };
     const indexBody = `${indexMarker}\n## 本任务交互历史索引\n\n` + entries.slice(0, 100).map(({ comment: c, match }) =>
-      `- [Run ${match[1]} · attempt ${match[2]}](${commentUrl(c)})${related('task-usage', match[1], match[2], '报告')}${related('visual-report', match[1], match[2], '截图与录像')}`).join('\n') +
+      `- [Run ${match[1]} · attempt ${match[2]}](${commentUrl(c)})${related('task-usage', match[1], match[2], '报告')}${visual(match[1], match[2])}`).join('\n') +
       '\n\n各轮归档、缺失说明见对应记录；仅索引已发布的报告和媒体评论，稍后发布的内容仍可在本 Issue 查看。' +
       (entries.length > 100 ? `\n仅列最近 100 轮，共 ${entries.length} 轮；更早记录仍在本 Issue。` : '') +
       renderAgentMetrics(readMetricsReceipts(comments, source.repository, issue));

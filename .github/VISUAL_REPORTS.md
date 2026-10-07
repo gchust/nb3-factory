@@ -26,7 +26,8 @@ gh secret set FACTORY_MEDIA_TOKEN --repo gchust/nb3-factory
 在交互提示中粘贴 Token，不要把 Token 写进命令参数、Issue、PR 或聊天。
 Token 只传给受信任的媒体发布步骤，不会传给实现 Agent 或 QA Agent。
 
-原生附件使用固定版本 GitHub CLI 2.100.0 的 `gh pr comment --attach`。
+原生附件使用 GitHub CLI 的 `gh pr comment --attach`：运行器自带的 `gh` 已支持该参数（2.100.0 起）时直接使用；
+否则使用固定版本 2.100.0，按版本和 SHA-256 缓存，只在缓存未命中时下载，并始终按固定摘要校验。
 该上传能力不接受 Actions 的内置 `GITHUB_TOKEN`（installation token）；
 需要 OAuth/PAT 类型的用户凭据，且用户对目标仓库拥有写入权限。
 未配置 Secret 时，仍会使用内置 Token 在 PR 留下媒体清单和 Artifact 下载入口。

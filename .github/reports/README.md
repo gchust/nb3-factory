@@ -41,7 +41,7 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 
 每组保留各次原始标题、报告链接和归类理由；等级取各次最高值，类型取最具体的分类。展开后的证据表增加 **NocoBase App 版本**，直接取各报告安装后记录的 `baseline.templateVersion`，悬停可见模板包名；缺失时显示“未记录”，不从当前依赖或评审包列表推测。
 
-默认调用上限 600 秒，可通过仓库变量 `FACTORY_FINDINGS_TIMEOUT_SECONDS` 设置为 30–1800 秒；空闲上限为 300 秒且不超过总预算。首次上线可在 Actions 手动执行 **Classify framework findings**，它能读取旧归档；勾选 `force` 可对未变输入重新归类。失败也可在这里重试。分类发布与任务报告部署共用短发布锁，模型执行不占该锁。本地 `node .github/reports/findings-index.mjs <含 report.json 的目录> <输出.html>` 不调用模型，未提供分类记录时显示待归类。
+默认调用上限 600 秒，可通过仓库变量 `FACTORY_FINDINGS_TIMEOUT_SECONDS` 设置为 30–1800 秒；空闲上限为 300 秒且不超过总预算。首次上线可在 Actions 手动执行 **Classify framework findings**，它能读取旧归档；勾选 `force` 可对未变输入重新归类。失败也可在这里重试。分类发布与任务报告部署共用短发布锁，模型执行不占该锁。已有分类 Run 在排队时，`report-task-usage.yml` 不再重复触发；被排队 Run 取代的分类在安装 Agent 前就发现并跳过，模型调用前再确认一次。本地 `node .github/reports/findings-index.mjs <含 report.json 的目录> <输出.html>` 不调用模型，未提供分类记录时显示待归类。
 
 需要重新开始统计时（例如框架升级后旧发现已不再适用），在 Actions 手动执行 [Reset framework findings](../workflows/reset-findings.yml)，`confirm` 填 `RESET`。它把当前时间写入 `reports/findings/baseline.json`，此后汇总只纳入运行开始时间不早于该时刻的报告：重置后新开始的搭建与重跑计入，重置时仍在进行的搭建和对旧运行的重新评审不计入。旧的归类记录随之移除；已发布的报告、各报告自己的问题清单和 gh-pages 历史都不改动。页面顶部注明重新记录的起点和未计入的报告数。基线文件损坏时汇总页保留上一版，报告照常发布。再次执行会把起点移到新的时间。
 
@@ -110,7 +110,7 @@ Pages 未启用/配置失败时，HTML 仍保存在 Actions Artifact 和 `gh-pag
 
 ## 媒体、用量与评论
 
-截图内嵌为数据 URL，HTML 可离线打开。每张最多 10 MiB、整份截图最多 15 MiB；未内嵌的原始引用仍保留，并提示从来源 Artifact 查看。录像沿用已有媒体工作流，不向 Pages Git 历史反复加入长视频。Pages 总站点容量仍需要随报告数量管理。
+截图内嵌为数据 URL，Artifact 中的 HTML 可离线打开。每张最多 10 MiB、整份截图最多 15 MiB；未内嵌的原始引用仍保留，并提示从来源 Artifact 查看。归档到 `gh-pages` 时，`report-pages.mjs` 把每张内嵌截图写成报告旁 `media/<SHA-256>.<扩展名>` 的独立文件（同一报告内重复的截图只存一份），页面 CSP 相应允许同源图片；这省去 base64 多出的三分之一，站点体积约减少 20%～25%。此前归档的报告保持原字节。录像沿用已有媒体工作流，不向 Pages Git 历史反复加入长视频。GitHub Pages 站点上限为 1 GB，总容量仍需要随报告数量管理（例如为被同一 Issue 后续报告取代的旧快照制定保留期）。
 
 用量与耗时复用现有 `task-usage` 计算；新报告不重新统计、不将思考 Token 相加。原有隐藏用量回执不删不改，保证跨轮累计兼容。原有媒体/历史/复盘评论和预览发布不受影响；统一报告评论由独立 marker 更新，不覆盖人工评论。
 

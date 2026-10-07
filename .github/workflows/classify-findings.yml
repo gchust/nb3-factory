@@ -105,9 +105,23 @@ jobs:
         run: |
           node control/.github/scripts/classify-findings.mjs prepare \
             --output "$RUNNER_TEMP/findings-input" --force "$FORCE_CLASSIFY"
+      # Before the 1-10 minute install: a run that a queued one supersedes
+      # learns it now instead of after installing a CLI it will not use. The
+      # check below repeats it right before the model call. Fails open too.
+      - name: Check for a queued run before installing the classifier
+        id: precheck
+        if: steps.prepare.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FORCE_CLASSIFY: ${{ inputs.force || 'false' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          node control/.github/scripts/classify-findings.mjs check \
+            --input "$RUNNER_TEMP/findings-input" --force "$FORCE_CLASSIFY"
       - name: Install selected pinned classifier
         timeout-minutes: 10
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.precheck.outputs.current != 'false'
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
@@ -124,7 +138,7 @@ jobs:
       # only an explicit current=false skips the model call.
       - name: Check the prepared findings are still current
         id: check
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.precheck.outputs.current != 'false'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -134,7 +148,7 @@ jobs:
           node control/.github/scripts/classify-findings.mjs check \
             --input "$RUNNER_TEMP/findings-input" --force "$FORCE_CLASSIFY"
       - name: Classify findings with the selected Agent
-        if: steps.prepare.outputs.ready == 'true' && steps.check.outputs.current != 'false'
+        if: steps.prepare.outputs.ready == 'true' && steps.check.outputs.current != 'false' && steps.precheck.outputs.current != 'false'
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
@@ -179,7 +193,7 @@ jobs:
             --input "$RUNNER_TEMP/findings-input" --output "$RUNNER_TEMP/findings-output"
       - name: Archive classification inputs, decisions and invocation history
         id: archive
-        if: always() && steps.prepare.outputs.ready == 'true' && steps.check.outputs.current != 'false'
+        if: always() && steps.prepare.outputs.ready == 'true' && steps.check.outputs.current != 'false' && steps.precheck.outputs.current != 'false'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-findings-${{ github.run_id }}-${{ github.run_attempt }}

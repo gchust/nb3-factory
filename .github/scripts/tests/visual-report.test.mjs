@@ -502,13 +502,14 @@ async function publisherFixture(
     else if (route === '/issues/19/comments' && request.method === 'GET')
       result = comments;
     else if (route === '/issues/19/comments' && request.method === 'POST') {
-      const user = {
-        login:
-          request.headers.authorization === 'Bearer native-fixture'
-            ? 'gchust'
-            : 'github-actions[bot]',
+      const native = request.headers.authorization === 'Bearer native-fixture';
+      const user = { login: native ? 'gchust' : 'github-actions[bot]' };
+      result = {
+        id: 10 + comments.length,
+        body: body.body,
+        user,
+        author_association: native ? 'OWNER' : 'NONE',
       };
-      result = { id: 10 + comments.length, body: body.body, user };
       comments.push(result);
     } else if (route.startsWith('/issues/comments/')) {
       const id = Number(route.split('/').at(-1));
@@ -618,6 +619,44 @@ for (const mode of ['success', 'posted-but-error']) {
     assert.match(f.comments[1].body, /factory-visual-mode:inline/);
   });
 }
+
+test('a forged inline comment from another user does not suppress the upload', async (t) => {
+  const f = await publisherFixture(t, 'success');
+  const marker = `<!-- factory-visual-report:${runId}:1 -->`;
+  f.comments.push(
+    {
+      id: 50,
+      body: `${marker}\n<!-- factory-visual-mode:inline -->`,
+      user: { login: 'mallory' },
+      author_association: 'NONE',
+    },
+    {
+      id: 51,
+      body: `${marker}\nfallback lookalike`,
+      user: { login: 'mallory' },
+      author_association: 'NONE',
+    },
+  );
+  await f.invoke('publish', { FACTORY_MEDIA_TOKEN: 'native-fixture' });
+  const ours = f.comments.filter(
+    (c) => c.user.login === 'gchust' && c.body.includes(marker),
+  );
+  assert.equal(ours.length, 1);
+  assert.match(ours[0].body, /factory-visual-mode:inline/);
+  // The lookalike fallback is neither edited nor deleted.
+  assert.equal(
+    f.comments.find((c) => c.id === 51).body,
+    `${marker}\nfallback lookalike`,
+  );
+  // A second run trusts the media user's own comment and posts nothing more.
+  await f.invoke('publish', { FACTORY_MEDIA_TOKEN: 'native-fixture' });
+  assert.equal(
+    f.comments.filter(
+      (c) => c.user.login === 'gchust' && c.body.includes(marker),
+    ).length,
+    1,
+  );
+});
 
 test('a new attempt of the same task run gets a new visual report', async (t) => {
   const f = await publisherFixture(t, 'success');

@@ -201,6 +201,51 @@ test('failed replay preserves earlier archive and maintains a single history ind
   assert.match(comments[1].body, /issuecomment-1/);
 });
 
+test('a monthly-release archive is kept on replay and the index links the PR visual report', async t => {
+  const root = fixture(t);
+  const old = '<!-- factory-agent-history:123:2 -->\n本轮可观察调用文件齐全\nhttps://github.com/owner/repo/releases/download/factory-history-2026-10/old.tar.gz';
+  const issueComments = [{ id: 1, body: old, user: { login: 'github-actions[bot]' } }];
+  const marker = '<!-- factory-visual-report:123:2 -->';
+  const prComments = {
+    77: [
+      // Anyone can post the marker; only the collaborator's inline report or the bot's fallback is linked.
+      { id: 700, body: `${marker}\n<!-- factory-visual-mode:inline -->`, user: { login: 'mallory' }, author_association: 'NONE', html_url: 'https://github.com/owner/repo/pull/77#issuecomment-700' },
+      { id: 701, body: `${marker}\n<!-- factory-visual-mode:inline -->`, user: { login: 'gchust' }, author_association: 'OWNER', html_url: 'https://github.com/owner/repo/pull/77#issuecomment-701' },
+    ],
+    78: [{ id: 800, body: '<!-- factory-visual-report:123:2 -->', user: { login: 'github-actions[bot]' }, html_url: 'https://github.com/owner/repo/pull/78#issuecomment-800' }],
+  };
+  const pulls = [
+    { number: 77, body: '<!-- agent-issue: 42 -->' },
+    { number: 78, body: 'unrelated PR from the same branch name' },
+  ];
+  const server = http.createServer(async (req, res) => {
+    let raw = ''; for await (const chunk of req) raw += chunk;
+    res.setHeader('content-type', 'application/json');
+    const url = new URL(req.url, 'http://fixture');
+    const route = url.pathname.replace('/repos/owner/repo', '');
+    if (req.method === 'GET' && route === '/pulls') {
+      assert.equal(url.searchParams.get('head'), 'owner:agent/issue-42');
+      return res.end(JSON.stringify(pulls));
+    }
+    const pr = /^\/issues\/(\d+)\/comments$/.exec(route);
+    if (req.method === 'GET' && pr && prComments[pr[1]]) return res.end(JSON.stringify(prComments[pr[1]]));
+    if (req.method === 'GET') return res.end(JSON.stringify(issueComments));
+    const body = JSON.parse(raw).body;
+    if (req.method === 'POST') { const c = { id: issueComments.length + 1, body, user: { login: 'github-actions[bot]' } }; issueComments.push(c); return res.end(JSON.stringify(c)); }
+    const id = Number(route.split('/').at(-1));
+    const c = issueComments.find(c => c.id === id); c.body = body; res.end(JSON.stringify(c));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); t.after(() => server.close());
+  const env = { ...process.env, GITHUB_API_URL: `http://127.0.0.1:${server.address().port}`, GITHUB_REPOSITORY: 'owner/repo', GITHUB_TOKEN: 'test' };
+  delete env.GITHUB_STEP_SUMMARY;
+  await exec(process.execPath, [script, 'publish', '--manifest', path.join(root, 'missing.json'), '--source', put(root, 'source.json', source),
+    '--issue', '42', '--run', '123', '--attempt', '2', '--asset-url', '', '--fallback-url', 'https://github.com/owner/repo/actions/runs/123'], { env });
+  assert.ok(issueComments[0].body.startsWith(old));
+  assert.match(issueComments[0].body, /保留上次/);
+  assert.match(issueComments[1].body, /\[截图与录像\]\(https:\/\/github\.com\/owner\/repo\/pull\/77#issuecomment-701\)/);
+  assert.doesNotMatch(issueComments[1].body, /issuecomment-700|issuecomment-800/);
+});
+
 test('maintenance Issues cannot enter either build or comment queues', async () => {
   assert.equal(isManualIssue({ labels: ['factory:manual'] }), true);
   assert.equal(isManualIssue({ labels: [{ name: 'factory:manual' }] }), true);

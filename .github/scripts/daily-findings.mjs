@@ -113,14 +113,11 @@ export function parseOwners(text) {
     // The parser's message quotes the input, which must stay out of the log.
     throw new Error('FEISHU_PROBLEM_OWNERS is not valid JSON');
   }
-  const list = (ids, where) => {
-    if (
-      !Array.isArray(ids) ||
-      !ids.every((id) => typeof id === 'string' && MENTION.test(id))
-    )
-      throw new Error(`FEISHU_PROBLEM_OWNERS: invalid mentions for ${where}`);
-    return [...new Set(ids)];
-  };
+  // Errors give counts, never keys or names: the log is public and the mapping
+  // is a secret, so not even a feature point name it lists may appear there.
+  const valid = (ids) =>
+    Array.isArray(ids) &&
+    ids.every((id) => typeof id === 'string' && MENTION.test(id));
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('FEISHU_PROBLEM_OWNERS must be a JSON object');
   // A misspelled key would silently mention nobody.
@@ -129,12 +126,19 @@ export function parseOwners(text) {
   );
   if (unknown.length)
     throw new Error(
-      `FEISHU_PROBLEM_OWNERS: unknown keys ${unknown.join(', ')} (expected featurePoints and default)`,
+      `FEISHU_PROBLEM_OWNERS: ${unknown.length} unknown top-level key(s) (expected featurePoints and default)`,
     );
+  const entries = Object.entries(value.featurePoints ?? {});
+  const invalid = entries.filter(([, ids]) => !valid(ids)).length;
+  if (invalid)
+    throw new Error(
+      `FEISHU_PROBLEM_OWNERS: invalid mentions for ${invalid} feature point entr(ies)`,
+    );
+  if (!valid(value.default ?? []))
+    throw new Error('FEISHU_PROBLEM_OWNERS: invalid mentions for default');
   const featurePoints = {};
-  for (const [name, ids] of Object.entries(value.featurePoints ?? {}))
-    featurePoints[name] = list(ids, name);
-  return { featurePoints, default: list(value.default ?? [], 'default') };
+  for (const [name, ids] of entries) featurePoints[name] = [...new Set(ids)];
+  return { featurePoints, default: [...new Set(value.default ?? [])] };
 }
 
 // Mapping keys that no rule can produce: a feature point or dimension typo.
@@ -609,11 +613,13 @@ if (
       console.log(
         `::warning::FEISHU_WEBHOOK_URL is not set; ${result.remaining} digest entr(ies) stay pending.`,
       );
-    for (const name of config
-      ? unknownOwnerKeys(config.owners, loadRules())
-      : [])
+    // A count only: the names are keys of the secret mapping.
+    const unmatched = config
+      ? unknownOwnerKeys(config.owners, loadRules()).length
+      : 0;
+    if (unmatched)
       console.log(
-        `::warning::FEISHU_PROBLEM_OWNERS names ${name}, which no feature point rule produces.`,
+        `::warning::FEISHU_PROBLEM_OWNERS lists ${unmatched} feature point(s) that no feature point rule produces; check the mapping for typos.`,
       );
     for (const item of result.sent) {
       const line = `Feishu digest for ${item.date}: ${item.count} finding(s).`;

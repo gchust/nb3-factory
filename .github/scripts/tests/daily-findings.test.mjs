@@ -512,9 +512,18 @@ test('owners and webhook configuration are validated without echoing their value
       /not valid JSON/.test(error.message) &&
       !error.message.includes('ou_secret'),
   );
+  // The log is public: errors count keys and entries, never name them.
   assert.throws(
     () => parseOwners('{"defaults": ["ou_a"]}'),
-    /unknown keys defaults/,
+    (error) =>
+      /1 unknown top-level key/.test(error.message) &&
+      !error.message.includes('defaults'),
+  );
+  assert.throws(
+    () => parseOwners('{"featurePoints":{"秘密功能点":["not valid"]}}'),
+    (error) =>
+      /invalid mentions for 1 feature point/.test(error.message) &&
+      !error.message.includes('秘密功能点'),
   );
   assert.deepEqual(
     unknownOwnerKeys(

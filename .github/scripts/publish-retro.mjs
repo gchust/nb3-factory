@@ -279,12 +279,35 @@ export function renderLedger({
   return lines.join('\n');
 }
 
-async function upsert(issue, marker, body) {
-  const existing = (await list(`/issues/${issue}/comments`)).find(
-    (comment) =>
-      comment.user?.login === 'github-actions[bot]' &&
-      comment.body?.includes(marker),
-  );
+const ours = (marker) => (comment) =>
+  comment.user?.login === 'github-actions[bot]' &&
+  comment.body?.includes(marker);
+
+// The ledger gains a comment per run and only grows. A run's own entry, if a
+// replay already wrote one, is among the newest, so its comments are read from
+// the last page back and the search stops at the entry: a publish costs a page
+// or two, not the whole ledger, and no page cap ever fails it.
+export async function findNewestFirst(issue, total, matches, read = api) {
+  for (
+    let page = Math.max(1, Math.ceil((total + 1) / 100));
+    page >= 1;
+    page--
+  ) {
+    const batch = await read(
+      'GET',
+      `/issues/${issue}/comments?per_page=100&page=${page}`,
+    );
+    if (!Array.isArray(batch)) throw new Error('Invalid GitHub list response');
+    const found = batch.findLast(matches);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+async function upsert(issue, marker, body, { total } = {}) {
+  const existing = Number.isSafeInteger(total)
+    ? await findNewestFirst(issue, total, ours(marker))
+    : (await list(`/issues/${issue}/comments`)).find(ours(marker));
   if (existing?.body === body) return { comment: existing, unchanged: true };
   const created = await api(
     existing ? 'PATCH' : 'POST',
@@ -383,32 +406,61 @@ async function select(args) {
   output('ready', 'true');
 }
 
-async function ensureLedger() {
+const LEDGER_BODY = [
+  '每次搭建任务结束后，流水线会把 Agent 的复盘摘要追加到这里。',
+  '',
+  '完整内容（问题与解法、基线优化建议）留在各自 Issue 的「搭建复盘」评论里，',
+  '这里只做按时间累积的索引，方便定期把可机械化的修复合并进 NocoBase 3 基线',
+  '（`factory-template.json` 的 tooling、模板 overlay 脚本）和',
+  '`skills/nocobase-app-development/`。',
+].join('\n');
+
+// The oldest open-or-closed ledger Issue, or undefined.
+async function oldestLedger(read) {
+  return (
+    await read(`/issues?labels=${encodeURIComponent(LEDGER_LABEL)}&state=all`)
+  )
+    .filter((issue) => issue.title === LEDGER_TITLE && !issue.pull_request)
+    .sort((a, b) => a.number - b.number)[0];
+}
+
+// Runs publish under per-run concurrency groups, so two of them can find the
+// ledger missing at once. Each creates one and then settles on the oldest; a
+// run whose own Issue lost closes it, so every run writes to the same ledger.
+export async function ensureLedger({ request = api, read = list } = {}) {
   try {
-    await api('GET', `/labels/${encodeURIComponent(LEDGER_LABEL)}`);
+    await request('GET', `/labels/${encodeURIComponent(LEDGER_LABEL)}`);
   } catch {
-    await api('POST', '/labels', {
-      name: LEDGER_LABEL,
-      color: '5319e7',
-      description: 'Aggregated factory build retrospectives',
-    });
+    try {
+      await request('POST', '/labels', {
+        name: LEDGER_LABEL,
+        color: '5319e7',
+        description: 'Aggregated factory build retrospectives',
+      });
+    } catch (error) {
+      // Another run created it first.
+      await request('GET', `/labels/${encodeURIComponent(LEDGER_LABEL)}`).catch(
+        () => {
+          throw error;
+        },
+      );
+    }
   }
-  const found = (
-    await list(`/issues?labels=${encodeURIComponent(LEDGER_LABEL)}&state=all`)
-  ).find((issue) => issue.title === LEDGER_TITLE && !issue.pull_request);
+  const found = await oldestLedger(read);
   if (found) return found;
-  return api('POST', '/issues', {
+  const created = await request('POST', '/issues', {
     title: LEDGER_TITLE,
     labels: [LEDGER_LABEL],
-    body: [
-      '每次搭建任务结束后，流水线会把 Agent 的复盘摘要追加到这里。',
-      '',
-      '完整内容（问题与解法、基线优化建议）留在各自 Issue 的「搭建复盘」评论里，',
-      '这里只做按时间累积的索引，方便定期把可机械化的修复合并进 NocoBase 3 基线',
-      '（`factory-template.json` 的 tooling、模板 overlay 脚本）和',
-      '`skills/nocobase-app-development/`。',
-    ].join('\n'),
+    body: LEDGER_BODY,
   });
+  const oldest = (await oldestLedger(read)) ?? created;
+  if (oldest.number === created.number) return created;
+  await request('PATCH', `/issues/${created.number}`, {
+    state: 'closed',
+    state_reason: 'not_planned',
+    body: `${LEDGER_BODY}\n\n重复创建，台账见 #${oldest.number}。`,
+  });
+  return oldest;
 }
 
 async function publish(args) {
@@ -489,6 +541,7 @@ async function publish(args) {
     ledger.number,
     LEDGER_MARKER(args.runId, attempt),
     ledgerBody,
+    { total: Number.isSafeInteger(ledger.comments) ? ledger.comments : 0 },
   );
   console.log(
     ledgerUnchanged
