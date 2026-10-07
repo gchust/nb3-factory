@@ -264,9 +264,9 @@ export async function openBatches(client) {
 export function fakeRepository() {
   const pages = fakeGitHub();
   const state = { issues: new Map(), comments: new Map(), labels: new Set(), runs: [], jobs: new Map(), dispatches: [], next: 500, commentId: 1, fail: null, compare: 'identical' };
-  state.issues.set(176, { number: 176, title: '[预置][F00] 流程冒烟：单页计数器', body: presetBody, state: 'closed', user: human,
+  state.issues.set(176, { number: 176, title: '[预置][F00] 流程冒烟：单页计数器', body: presetBody, state: 'closed', user: human, author_association: 'OWNER',
     labels: [{ name: 'factory:preset' }], html_url: `https://github.com/${repository}/issues/176`, updated_at: '2026-09-20T00:00:00Z' });
-  state.comments.set(176, [{ id: 90, user: human, body: '补充：计数器从 0 开始', created_at: '2026-09-20T01:00:00Z', html_url: 'x' }]);
+  state.comments.set(176, [{ id: 90, user: human, author_association: 'OWNER', body: '补充：计数器从 0 开始', created_at: '2026-09-20T01:00:00Z', html_url: 'x' }]);
   const page = (list, query) => { const offset = ((query?.page ?? 1) - 1) * 100; return structuredClone(list.slice(offset, offset + 100)); };
   const client = {
     repository, token: 't', apiUrl: 'https://api.github.invalid', state, pages,

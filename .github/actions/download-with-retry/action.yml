@@ -1,0 +1,68 @@
+name: Download an artifact, retrying once
+description: >-
+  Download one artifact, from this run or from another run of this repository,
+  and when that fails wait 30 seconds and try once more. The action fails only
+  when both attempts failed, so a caller's steps.<id>.outcome is 'success'
+  exactly when the files are there. Used where one transient artifact error
+  would otherwise discard handed-off or recoverable work.
+inputs:
+  name:
+    description: The artifact name.
+    required: true
+  path:
+    description: The directory to extract it into.
+    required: true
+  run-id:
+    description: The run that uploaded it; blank for this run.
+    required: false
+    default: ''
+  github-token:
+    description: A token that can read another run's artifacts; only with run-id.
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    # Two variants of each download: download-artifact reads another run
+    # through the API once it receives a token, so this run's artifacts are
+    # read without one, exactly as the workflow steps did.
+    - name: Download the artifact
+      id: this_run
+      if: inputs.run-id == ''
+      continue-on-error: true
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+
+    - name: Download the artifact from its run
+      id: other_run
+      if: inputs.run-id != ''
+      continue-on-error: true
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Wait before retrying the download
+      if: steps.this_run.outcome == 'failure' || steps.other_run.outcome == 'failure'
+      shell: bash
+      run: sleep 30
+
+    - name: Retry the download
+      if: steps.this_run.outcome == 'failure'
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+
+    - name: Retry the download from its run
+      if: steps.other_run.outcome == 'failure'
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}

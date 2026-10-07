@@ -31,6 +31,7 @@ const issue = {
   number: 2,
   state: 'open',
   user: owner,
+  author_association: 'OWNER',
   body: '### 目标分支\napps/demo\n### 任务类型\n创建新系统\n### 业务需求\nOriginal\n### 验收要求\nWorks',
 };
 const command = (
@@ -559,11 +560,12 @@ for (const body of [
   '/build\nExternal feature',
   'How does this feature work?',
 ]) {
-  test(`a collaborator can trigger a round on another user's Issue: ${body}`, async () => {
+  test(`a collaborator can trigger a round on another member's Issue: ${body}`, async () => {
     const collaborator = { login: 'collaborator', type: 'User' };
     const externalIssue = {
       ...issue,
       user: { login: 'another-user', type: 'User' },
+      author_association: 'MEMBER',
     };
     const comment = command(21, body, collaborator, 'COLLABORATOR');
     const f = fixture({ comments: [comment], runs: [run(1)] });

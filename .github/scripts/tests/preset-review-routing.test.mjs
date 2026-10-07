@@ -13,8 +13,8 @@ const human = { login: 'owner', type: 'User' };
 const bot = { login: 'github-actions[bot]', type: 'Bot' };
 const sourceBody = '### 目标分支\n\nold-branch\n\n### 任务类型\n\n创建新系统\n\n### 业务需求\n\n保存客户\n\n### 验收要求\n\n刷新后数据保留\n\n### 示例数据\n\n是';
 function fixture(review = `${marker}\nREVIEW_SENTINEL: inspect private implementation evidence`) {
-  const source = { number: 1, state: 'closed', title: '客户管理', body: sourceBody, user: human, labels: [{ name: 'factory:preset' }], html_url: 'https://github.com/owner/repo/issues/1' };
-  const issue = { number: 2, state: 'open', title: '重搭', body: '### 预置案例\n\n#1 - 客户管理\n\n### 本次补充要求\n\n增加筛选', user: human, labels: [] };
+  const source = { number: 1, state: 'closed', title: '客户管理', body: sourceBody, user: human, author_association: 'OWNER', labels: [{ name: 'factory:preset' }], html_url: 'https://github.com/owner/repo/issues/1' };
+  const issue = { number: 2, state: 'open', title: '重搭', body: '### 预置案例\n\n#1 - 客户管理\n\n### 本次补充要求\n\n增加筛选', user: human, author_association: 'OWNER', labels: [] };
   const comments = new Map([[1, [
     { id: 10, user: human, author_association: 'OWNER', body: '/build\n新增搜索', html_url: `${source.html_url}#issuecomment-10` },
     ...(review == null ? [] : [{ id: 11, user: human, author_association: 'OWNER', body: review }]),

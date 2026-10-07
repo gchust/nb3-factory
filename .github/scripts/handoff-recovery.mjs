@@ -18,7 +18,7 @@ function read(file, max = 1_048_576) {
 }
 const json = (file) => JSON.parse(read(file).toString('utf8'));
 
-export function validateRecovery({ event, run, task, checkpointTask, state, patch, legacyBaseSha }) {
+export function validateRecovery({ event, run, task, checkpointTask, state, patch, legacyBaseSha, undispatchedHandoff = false }) {
   const issue = Number(event.inputs?.issue_number);
   const runId = Number(event.inputs?.recovery_run_id);
   const repository = event.repository?.full_name;
@@ -44,8 +44,14 @@ export function validateRecovery({ event, run, task, checkpointTask, state, patc
     throw new Error('Recovery artifacts do not belong to the source run attempt.');
   }
   const sha = controlSha(task.controlSha);
+  // A handoff whose continuation was never dispatched (or whose dispatch
+  // failed) left a sealed checkpoint and no successor: recoverable like a
+  // failure. undispatchedHandoff is proven from the source run's jobs and
+  // runs (handoffDispatched), never from the checkpoint itself.
+  const recoverableOutcome = ['failed', 'blocked'].includes(state.outcome) ||
+    (state.outcome === 'handoff' && undispatchedHandoff === true);
   if (state.controlSha !== sha || state.inputHash !== inputHash(task) ||
-      !['failed', 'blocked'].includes(state.outcome) || state.stopReason || state.phase === 'done' ||
+      !recoverableOutcome || state.stopReason || state.phase === 'done' ||
       state.patchHash !== hash(patch)) {
     throw new Error('Recovery checkpoint has a different factory SHA, input, patch or non-recoverable phase.');
   }
@@ -106,6 +112,19 @@ export function publishedWorkCommit(published, { sourceRunId, workBranch }) {
   return published.commit;
 }
 
+// Whether a run that recorded a handoff may have a continuation: its agent
+// job's "Dispatch continuation run" step succeeded, or any continuation run
+// names it as its source (the run name ends "from <run id>"). A failed
+// dispatch can still have reached GitHub (a timeout or a 5xx), so a run that
+// claims to continue it refuses the recovery rather than running the work twice.
+export function handoffDispatched({ jobs, runs, issue, runId }) {
+  const agent = jobs.find((job) => job.name === 'agent');
+  if (!agent) return true;
+  if (agent.steps?.some((step) => step.name === 'Dispatch continuation run' && step.conclusion === 'success')) return true;
+  const title = new RegExp(`^Factory issue #${issue} build \\d+ from ${runId}(?:\\s|$)`, 'u');
+  return runs.some((run) => run.event === 'repository_dispatch' && title.test(run.display_title ?? ''));
+}
+
 // The base a recovery compares with the recorded one. publish-failed pushes the
 // failed patch to the work branch before the failure notice offers recovery;
 // a work branch still at exactly that commit is unmoved, and the recovery keeps
@@ -141,8 +160,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!rest[i]?.startsWith('--') || rest[i + 1] === undefined) throw new Error('Invalid recovery arguments.');
     args[rest[i].slice(2)] = rest[i + 1];
   }
-  const root = path.resolve(args.checkpoint);
+  // Only the commands that read a checkpoint name one: continuation-context
+  // works from the run id alone, and resolving a missing --checkpoint threw
+  // before the command was even chosen.
+  const checkpoint = () => {
+    if (!args.checkpoint) throw new Error(`${command} requires --checkpoint.`);
+    return path.resolve(args.checkpoint);
+  };
   if (command === 'normalize') {
+    const root = checkpoint();
     const event = json(args.event);
     const id = event.inputs?.recovery_run_id;
     if (!positive(id) || process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch') throw new Error('Recovery must be requested explicitly with workflow_dispatch.');
@@ -155,9 +181,34 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (!response.ok) throw new Error(`Cannot validate source run: HTTP ${response.status}`);
     read(path.join(root, 'pipeline-state.json'));
     const state = readState(path.join(root, 'pipeline-state.json'));
-    const data = validateRecovery({ event, run: await response.json(), task: json(args.task),
+    const run = await response.json();
+    const api = async (route) => {
+      const reply = await fetch(`${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`, {
+        headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!reply.ok) throw new Error(`Cannot check the source run's continuation: HTTP ${reply.status}`);
+      return reply.json();
+    };
+    // Only a checkpoint that recorded a handoff needs the proof; reading it
+    // for any other outcome would only add API calls that cannot change the verdict.
+    let undispatchedHandoff = false;
+    if (state.outcome === 'handoff' && positive(run.run_attempt)) {
+      const jobs = (await api(`/actions/runs/${id}/attempts/${run.run_attempt}/jobs?per_page=100`)).jobs ?? [];
+      const runs = [];
+      const since = encodeURIComponent(`>=${run.created_at}`);
+      for (let page = 1; ; page += 1) {
+        const batch = (await api(`/actions/workflows/code-agent-task.yml/runs?event=repository_dispatch&created=${since}&per_page=100&page=${page}`)).workflow_runs ?? [];
+        runs.push(...batch);
+        if (batch.length < 100) break;
+      }
+      undispatchedHandoff = !handoffDispatched({ jobs, runs, issue: Number(event.inputs?.issue_number), runId: Number(id) });
+      if (!undispatchedHandoff) throw new Error('The source run handed off to a continuation (or may have); recover from that continuation instead.');
+    }
+    const data = validateRecovery({ event, run, task: json(args.task),
       checkpointTask: json(path.join(root, 'task-metadata.json')), state,
-      patch: read(path.join(root, 'agent.patch'), 100 * 1024 * 1024), legacyBaseSha: event.inputs?.recovery_base_sha });
+      patch: read(path.join(root, 'agent.patch'), 100 * 1024 * 1024), legacyBaseSha: event.inputs?.recovery_base_sha,
+      undispatchedHandoff });
     // Reject an incorrect legacy SHA or a moved branch before prepare can
     // claim a build comment or mark the Issue as running. Check again after
     // prepare to catch a branch/input change during task normalization.
@@ -210,6 +261,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     }
     appendFileSync(args.output, `event_path=${path.join(root, 'task-event.json')}\n`);
   } else if (command === 'check-base') {
+    const root = checkpoint();
     const recovery = json(path.join(root, 'recovery.json'));
     const current = json(args.metadata);
     const source = json(path.join(root, 'task-metadata.json'));
@@ -230,16 +282,30 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       appendFileSync(args.output, `ref=${base.ref}\nsha=${base.sha}\nexpected_work_sha=${base.expectedWorkSha ?? ''}\n`);
     }
   } else if (command === 'context') {
+    const root = checkpoint();
     const recovery = json(path.join(root, 'recovery.json'));
     if (!positive(recovery.sourceRunId)) throw new Error('Invalid recovery context.');
     // Never copy the full transcript, QA criteria, or previous QA evidence into
     // the implementation prompt. The restored worktree is its source of truth.
     appendFileSync(args.prompt, `\n\n## Restored partial implementation\n\nThis workspace contains the unverified code changes from failed run ${recovery.sourceRunId}. Inspect the existing files and git diff, then continue the original task rather than recreating it. The failure is not a successful delivery. Native agent sessions, databases and browser state were not restored. Do not assume any previous tests passed; the factory will execute its verification gates again.\n`);
+  } else if (command === 'match') {
+    // The agent job downloads the failed run's checkpoint itself (prepare
+    // uploads only the normalized files): it must be the checkpoint prepare
+    // validated, with the patch and state recovery.json recorded.
+    const root = checkpoint();
+    const recovery = json(path.join(root, 'recovery.json'));
+    const state = readState(path.join(root, 'pipeline-state.json'));
+    const patch = read(path.join(root, 'agent.patch'), 100 * 1024 * 1024);
+    if (!positive(recovery.sourceRunId) || state.inputHash !== recovery.inputHash ||
+        state.controlSha !== recovery.controlSha || state.patchHash !== recovery.patchHash ||
+        hash(patch) !== recovery.patchHash) {
+      throw new Error('The downloaded checkpoint is not the one this recovery validated.');
+    }
   } else if (command === 'continuation-context') {
     // A Handoff continuation resuming in the implementation phase gets the
     // same orientation as a recovery: the restored worktree, not a blank start.
     const previous = Number(args['previous-run']);
     if (!positive(previous)) throw new Error('Invalid continuation context.');
     appendFileSync(args.prompt, `\n\n## Restored partial implementation\n\nThis workspace contains the unverified code changes from run ${previous}, which reached its runner time budget and handed off to this run. Inspect the existing files and git diff, then continue the original task rather than recreating it. Native agent sessions, databases and browser state were not restored. Do not assume any previous tests passed; the factory will execute its verification gates again.\n`);
-  } else throw new Error('Usage: handoff-recovery.mjs <normalize|check-base|context|continuation-context> [options]');
+  } else throw new Error('Usage: handoff-recovery.mjs <normalize|check-base|context|match|continuation-context> [options]');
 }

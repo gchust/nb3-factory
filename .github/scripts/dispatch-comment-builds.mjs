@@ -14,6 +14,7 @@ import {
   receiptsFor,
   runTitle,
   saveReceipt,
+  UNTRUSTED_ISSUE,
 } from './comment-queue.mjs';
 
 import { isManualIssue, isPresetIssue } from './issue-presets.mjs';
@@ -30,15 +31,28 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     throw error;
   }
   const { comments, receipts } = await receiptsFor(client, issueNumber);
-  // Activate on a new human comment; scheduled reconciliation must not replay
-  // every historical discussion (and consume quota) when this feature ships.
-  const firstId = Math.min(admissionId, ...receipts.map((item) => item.id));
-  await admitComments(
-    client,
-    issue,
-    comments.filter((comment) => comment.id >= firstId),
-    receipts,
-  );
+  // The Issue body becomes every round's requirements, so a maintainer's
+  // comment on an Issue from someone without repository access starts
+  // nothing: no comment is admitted, a queued one is closed, and a dispatched
+  // one is never sent again. Maintainers can still run it with workflow_dispatch.
+  const trusted = isTrustedAuthor(issue);
+  if (trusted) {
+    // Activate on a new human comment; scheduled reconciliation must not replay
+    // every historical discussion (and consume quota) when this feature ships.
+    const firstId = Math.min(admissionId, ...receipts.map((item) => item.id));
+    await admitComments(
+      client,
+      issue,
+      comments.filter((comment) => comment.id >= firstId),
+      receipts,
+    );
+  } else {
+    for (const receipt of receipts.filter((item) => item.status === 'queued')) {
+      receipt.status = 'done';
+      receipt.conclusion = `rejected: ${UNTRUSTED_ISSUE}`;
+      await saveReceipt(client, issueNumber, receipt);
+    }
+  }
   if (issue.state !== 'open') {
     for (const receipt of receipts.filter(
       (item) => item.status === 'queued' && item.kind !== 'reply',
@@ -101,6 +115,12 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
             Math.max(...claims)),
     );
     if (!matches.length) {
+      if (!trusted) {
+        active.status = 'done';
+        active.conclusion = `rejected: ${UNTRUSTED_ISSUE}`;
+        await saveReceipt(client, issueNumber, active);
+        return;
+      }
       if (Date.now() - (active.dispatchedAt || Date.now()) > 300000) {
         active.dispatchedAt = Date.now();
         await saveReceipt(client, issueNumber, active);
@@ -241,7 +261,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   )
     return;
   const next = receipts.find((item) => item.status === 'queued');
-  if (!next) return;
+  if (!next || !trusted) return;
   next.status = 'dispatched';
   next.dispatchedAt = Date.now();
   await saveReceipt(client, issueNumber, next);

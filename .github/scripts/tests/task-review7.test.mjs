@@ -233,7 +233,11 @@ test('progress labels a core job cancelled at its limit as a timeout', () => {
 
 test('a continuation that fails during setup still seals its restored work', () => {
   const mark = step('Mark a continuation that failed during setup');
-  assert.match(mark, /failure\(\) && steps\.resume\.outcome == 'success'/);
+  // A cancellation (the runner limit included) seals it too.
+  assert.match(
+    mark,
+    /\(failure\(\) \|\| cancelled\(\)\) && steps\.resume\.outcome == 'success'/,
+  );
   assert.match(
     mark,
     /steps\.implementation\.outcome == 'skipped' && steps\.verify\.outcome == 'skipped'/,
@@ -241,7 +245,7 @@ test('a continuation that fails during setup still seals its restored work', () 
   assert.match(mark, /pipeline-state\.mjs outcome "\$state" failed/);
   assert.match(
     step('Create deterministic patch'),
-    /failure\(\) && steps\.setup_failure\.outcome == 'success'/,
+    /\(failure\(\) \|\| cancelled\(\)\) && steps\.setup_failure\.outcome == 'success'/,
   );
 });
 

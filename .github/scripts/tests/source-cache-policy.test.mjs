@@ -29,31 +29,39 @@ test('agent: local source packages never enter setup-node shared cache', () => {
 
 // Only the agent job saves the pnpm store. The later jobs install a patched
 // lockfile, and setup-node's own cache saved a second ~240 MB store whenever
-// the task changed dependencies; they restore the agent job's store instead.
+// the task changed dependencies; they restore the agent job's store instead,
+// through the restore-task-toolchain composite action.
+const toolchain = readFileSync(new URL('../../actions/restore-task-toolchain/action.yml', import.meta.url), 'utf8');
+test("restore-task-toolchain restores the agent job's pnpm store and never saves one", () => {
+  const setup = toolchain.indexOf('uses: actions/setup-node@');
+  const block = toolchain.slice(setup, toolchain.indexOf('\n    - name:', setup));
+  assert.match(block, /node-version: 24.x/);
+  assert.match(block, /package-manager-cache: false/);
+  assert.doesNotMatch(block, /\n\s+cache:/);
+  assert.doesNotMatch(toolchain, /actions\/cache@|actions\/cache\/save@/);
+  const locate = toolchain.split('- name: Locate the pnpm store\n')[1].split('\n    - ')[0];
+  // A source descriptor keeps its isolated local store, as in the agent job.
+  assert.match(locate, /if: hashFiles\('workspace\/factory-source\.json'\) == ''/);
+  assert.match(locate, /working-directory: workspace/);
+  assert.match(locate, /pnpm store path --silent/);
+  const restore = toolchain.split("- name: Restore the agent job's pnpm store\n")[1].split('\n    - ')[0];
+  assert.match(restore, /uses: actions\/cache\/restore@[0-9a-f]{40}/);
+  assert.match(restore, /path: \$\{\{ steps\.pnpm_store\.outputs\.path \}\}/);
+  // setup-node's own key format: node-cache-<RUNNER_OS>-<os.arch()>-pnpm-<hash>.
+  assert.match(restore, /key: node-cache-Linux-x64-pnpm-\$\{\{ hashFiles\('workspace\/pnpm-lock\.yaml'\) \}\}/);
+  assert.match(restore, /restore-keys: \|\n\s+node-cache-Linux-x64-pnpm-\n/);
+  assert.ok(setup < toolchain.indexOf("Restore the agent job's pnpm store"));
+  assert.match(toolchain, /source-snapshot\.mjs restore workspace/);
+});
 for (const [name, next] of [['verify-final', 'publish'], ['preview-build-failed', 'report-failure']]) {
   test(`${name}: restores the agent job's pnpm store and never saves one`, () => {
     const job = jobOf(name, next);
-    const setup = job.indexOf('uses: actions/setup-node@');
+    const use = job.indexOf('uses: ./factory-actions/.github/actions/restore-task-toolchain');
     const checkout = checkoutOf(name, job);
-    assert.ok(checkout >= 0 && setup > checkout, 'Source descriptor is checked out first');
-    const block = job.slice(setup, job.indexOf('\n      - name:', setup));
-    assert.match(block, /node-version: 24.x/);
-    assert.match(block, /package-manager-cache: false/);
-    assert.doesNotMatch(block, /\n\s+cache:/);
-    assert.doesNotMatch(job, /actions\/cache@|actions\/cache\/save@/);
-    const locate = job.split('- name: Locate the pnpm store\n')[1].split('\n      - ')[0];
-    // A source descriptor keeps its isolated local store, as in the agent job.
-    assert.match(locate, /if: hashFiles\('workspace\/factory-source\.json'\) == ''/);
-    assert.match(locate, /working-directory: workspace/);
-    assert.match(locate, /pnpm store path --silent/);
-    const restore = job.split("- name: Restore the agent job's pnpm store\n")[1].split('\n      - ')[0];
-    assert.match(restore, /uses: actions\/cache\/restore@[0-9a-f]{40}/);
-    assert.match(restore, /path: \$\{\{ steps\.pnpm_store\.outputs\.path \}\}/);
-    // setup-node's own key format: node-cache-<RUNNER_OS>-<os.arch()>-pnpm-<hash>.
-    assert.match(restore, /key: node-cache-Linux-x64-pnpm-\$\{\{ hashFiles\('workspace\/pnpm-lock\.yaml'\) \}\}/);
-    assert.match(restore, /restore-keys: \|\n\s+node-cache-Linux-x64-pnpm-\n/);
-    assert.ok(job.indexOf("Restore the agent job's pnpm store") < job.indexOf('pnpm install --frozen-lockfile'));
-    assert.match(job, /source-snapshot\.mjs restore workspace/);
+    assert.ok(checkout >= 0 && use > checkout, 'Source descriptor is checked out first');
+    assert.doesNotMatch(job, /actions\/setup-node@|actions\/cache@|actions\/cache\/save@/);
+    assert.match(job.slice(use), /metadata: agent-artifacts\/task-metadata\.json/);
+    assert.ok(use < job.indexOf('pnpm install --frozen-lockfile'));
   });
 }
 

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import { GitHubClient } from './factory-lib.mjs';
 import { describePublication } from './publication-base.mjs';
+import { createPull } from './pull-request.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -116,7 +117,10 @@ if (pull) {
       `工作分支 ${metadata.workBranch} 已有指向其他目标分支的开放 PR。`,
     );
   }
-  pull = await client.request('POST', '/pulls', {
+  pull = await createPull(client, {
+    owner,
+    workBranch: metadata.workBranch,
+    targetBranch: metadata.task.targetBranch,
     body: {
       title,
       head: metadata.workBranch,

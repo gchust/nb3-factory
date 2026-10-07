@@ -21,6 +21,7 @@ function run({
   aptFails = false,
   failingHosts = [],
   badHash = [],
+  cache,
 } = {}) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-fonts-'));
   const bin = path.join(root, 'bin');
@@ -28,6 +29,16 @@ function run({
   const log = path.join(root, 'calls.log');
   const marker = path.join(root, 'installed');
   if (fontsPresent) writeFileSync(marker, '');
+  // FACTORY_FONT_DEB_CACHE: undefined leaves it unset, '' an empty cache,
+  // otherwise the cached package's content.
+  const cacheDir = path.join(root, 'font-cache');
+  if (cache) {
+    mkdirSync(cacheDir);
+    writeFileSync(
+      path.join(cacheDir, 'fonts-noto-cjk_20230817+repack1-3_all.deb'),
+      cache,
+    );
+  }
   const stub = (name, body) => {
     const file = path.join(bin, name);
     writeFileSync(
@@ -73,12 +84,22 @@ function run({
       STUB_APT_FAILS: String(aptFails),
       STUB_FAILING_HOSTS: failingHosts.join(' '),
       STUB_BAD_HASH: badHash.join(' '),
+      ...(cache === undefined ? {} : { FACTORY_FONT_DEB_CACHE: cacheDir }),
     },
   });
   const calls = existsSync(log)
     ? readFileSync(log, 'utf8').trim().split('\n')
     : [];
-  return { ...result, calls, installed: existsSync(marker) };
+  const cached = path.join(
+    cacheDir,
+    'fonts-noto-cjk_20230817+repack1-3_all.deb',
+  );
+  return {
+    ...result,
+    calls,
+    installed: existsSync(marker),
+    cached: existsSync(cached) ? readFileSync(cached, 'utf8') : null,
+  };
 }
 
 const ARCHIVE = 'http://archive.ubuntu.com';
@@ -134,4 +155,37 @@ test('a file that does not match the pinned hash is never installed', () => {
     [],
   );
   assert.equal(result.installed, false);
+});
+
+test('a cached pinned package installs without apt or any download', () => {
+  const result = run({ cache: 'GOOD' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(named(result.calls, 'apt-get'), []);
+  assert.deepEqual(named(result.calls, 'curl'), []);
+  assert.equal(
+    named(result.calls, 'dpkg').filter((call) => call.startsWith('dpkg -i '))
+      .length,
+    1,
+  );
+  assert.ok(result.installed);
+});
+
+test('a cached package that fails its hash is not installed; the direct downloads replace the apt round and refill the cache', () => {
+  const result = run({ cache: 'BAD', failingHosts: [ARCHIVE] });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /cached .* does not match its pinned SHA-256/);
+  // The apt round is skipped, so the step's time budget still holds.
+  assert.deepEqual(named(result.calls, 'apt-get'), []);
+  assert.equal(named(result.calls, 'curl').length, 2);
+  assert.ok(result.installed);
+  assert.equal(result.cached, 'GOOD');
+});
+
+test('an empty cache uses apt as before, and a direct download is kept for the next run', () => {
+  const apt = run({ cache: '' });
+  assert.equal(apt.status, 0, apt.stderr);
+  assert.equal(named(apt.calls, 'apt-get').length, 2);
+  const direct = run({ cache: '', aptFails: true });
+  assert.equal(direct.status, 0, direct.stderr);
+  assert.equal(direct.cached, 'GOOD');
 });

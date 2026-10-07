@@ -18,7 +18,7 @@ const preset = (number, overrides = {}) => ({
   number, title: `案例 ${number}`, body: '### 任务类型\n\n创建新系统\n\n### 业务需求\n\n业务需求\n\n### 验收要求\n\n验证页面', state: 'closed',
   html_url: `https://github.com/owner/repo/issues/${number}`, updated_at: '2026-09-20T00:00:00Z',
   labels: [{ name: 'factory:preset' }, { name: DAILY_PRESET_LABEL }],
-  user: { login: 'owner', type: 'User' }, ...overrides,
+  user: { login: 'owner', type: 'User' }, author_association: 'OWNER', ...overrides,
 });
 
 function fixture(sources = [preset(176)]) {
@@ -129,6 +129,8 @@ test('mislabelled PRs, bots and manual tasks are reported without building or su
   for (const overrides of [
     { pull_request: {} }, { user: bot }, { user: { login: 'custom[bot]', type: 'User' } },
     { labels: ['factory:preset', 'factory:daily', 'factory:manual'] }, { user: null },
+    // A preset written by someone without repository access is not run daily.
+    { author_association: 'NONE' },
   ]) {
     const { execute, state } = fixture([preset(176), preset(155, overrides)]);
     const result = await execute();

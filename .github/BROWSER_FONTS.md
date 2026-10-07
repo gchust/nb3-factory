@@ -10,6 +10,7 @@ PR #22 的截图出现方框，但同一轮浏览器 snapshot 能正确读取“
 `archive.ubuntu.com` 和 `mirrors.edge.kernel.org` 直接下载固定版本 `1:20230817+repack1-3` 的 `.deb`：
 低于 1 MB/s 持续 20 秒视为卡住，单个来源最多 90 秒；文件必须与 noble `Packages` 索引中的 SHA-256 一致才用 `dpkg -i` 安装。
 `fc-cache`（30 秒）、`fc-list` 与 `fc-match`（各 10 秒）和哈希校验也都限时，整段最坏约 555 秒，运行它的步骤限时 10 分钟，`workflow-policy.test.mjs` 按脚本里的限时重新计算并要求留出 30 秒余量。仍然失败时直接指出环境错误，不让缺字截图继续冒充正常证据。
+任务工作流的 agent Job 用 `actions/cache` 以固定 `.deb` 的 SHA-256 为键缓存该包（`FACTORY_FONT_DEB_CACHE`），verify-final 只恢复不保存：命中时校验哈希后直接 `dpkg -i`，不跑 apt 和索引更新；缓存包不能安装时只走直接下载，仍在同一时间预算内。apt 安装成功或直接下载成功后，把与固定哈希一致的包存入缓存目录。ffmpeg 先用现有索引安装，失败才更新索引。
 `tests/browser-fonts-install.test.mjs` 用桩命令覆盖这几条路径，不需要 sudo 或网络。
 修改语言变量或 `<meta charset>` 不会安装字体；字体修复也不会把应用英文 UI 自动翻译成中文。
 

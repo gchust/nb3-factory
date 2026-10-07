@@ -11,7 +11,7 @@ import { loadBuildReview } from '../build-review.mjs';
 
 const business = '### 任务类型\n\n创建新系统\n\n### 业务需求\n\nA tiny page\n\n### 验收要求\n\nB01. Click once\n\n### 示例数据\n\n否\n';
 const source = () => ({ number: 17, title: 'An ordinary named source', body: business + '\n### 框架评测\n\n轻量\n', labels: ['factory:preset'],
-  user: { login: 'owner', type: 'User' }, html_url: 'https://github.com/owner/repo/issues/17' });
+  user: { login: 'owner', type: 'User' }, author_association: 'OWNER', html_url: 'https://github.com/owner/repo/issues/17' });
 function fixture(choice = '默认') {
   const state = { source: source(), issue: { number: 50, title: 'Rebuild', body: `### 预置案例\n\n#17\n\n### 框架评测\n\n${choice}\n`,
     user: { login: 'owner', type: 'User' }, html_url: 'https://github.com/owner/repo/issues/50' }, comments: [] };

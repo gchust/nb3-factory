@@ -452,7 +452,7 @@ test('long prior Agent replies are bounded context, never promoted to business r
   });
   const task = await resolveBuildTask(
     { repository: 'owner/repo', request: async () => comments },
-    { number: 146, body },
+    { number: 146, body, author_association: 'OWNER' },
     99,
   );
   for (let id = 1; id <= 5; id++)

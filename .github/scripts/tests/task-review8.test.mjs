@@ -429,41 +429,28 @@ test('a failure without a stage file is never filed under an earlier round', (t)
 });
 
 test('continuation downloads are retried once, and a setup failure before restore keeps the checkpoint', () => {
-  for (const [first, retry, id] of [
-    [
-      'Download handoff checkpoint',
-      'Retry the handoff checkpoint download',
-      'checkpoint_download',
-    ],
-    [
-      'Download normalized task',
-      'Retry the normalized task download',
-      'task_download',
-    ],
+  // The download-with-retry composite action waits and retries once, and
+  // fails only when both attempts failed.
+  for (const [name, id] of [
+    ['Download handoff checkpoint', 'checkpoint_download'],
+    ['Download normalized task', 'task_download'],
   ]) {
-    assert.match(step(first), new RegExp(`id: ${id}\\n`));
-    assert.match(step(first), /continue-on-error: true/);
+    assert.match(step(name), new RegExp(`id: ${id}\\n`));
     assert.match(
-      step(retry),
-      new RegExp(`if: steps\\.${id}\\.outcome == 'failure'`),
+      step(name),
+      /uses: \.\/factory-actions\/\.github\/actions\/download-with-retry\n/,
     );
-    assert.doesNotMatch(step(retry), /continue-on-error/);
+    assert.doesNotMatch(step(name), /continue-on-error/);
   }
   const keep = step('Keep the handed-off checkpoint');
   assert.match(keep, /id: keep_checkpoint/);
   assert.match(
     keep,
-    /failure\(\) && steps\.rerun_guard\.outcome == 'success' && steps\.resume\.outcome != 'success'/,
+    /\(failure\(\) \|\| cancelled\(\)\) && steps\.rerun_guard\.outcome == 'success' && steps\.resume\.outcome != 'success'/,
   );
   assert.match(keep, /github\.event\.action == 'code-agent-continue'/);
-  assert.match(
-    keep,
-    /steps\.checkpoint_download\.outcome == 'success' \|\| steps\.checkpoint_retry\.outcome == 'success'/,
-  );
-  assert.match(
-    keep,
-    /steps\.task_download\.outcome == 'success' \|\| steps\.task_retry\.outcome == 'success'/,
-  );
+  assert.match(keep, /steps\.checkpoint_download\.outcome == 'success' &&/);
+  assert.match(keep, /steps\.task_download\.outcome == 'success' &&/);
   // The whole checkpoint, regular files only, without the handoff request.
   assert.match(
     keep,
@@ -472,16 +459,20 @@ test('continuation downloads are retried once, and a setup failure before restor
   assert.match(keep, /cp task\/task-metadata\.json/);
   // A refused control-plane verification keeps nothing.
   assert.match(keep, /steps\.verify_control\.outcome == 'success'/);
-  // The task download (with its retry) precedes verification and the patch
-  // restore, so a failing patch restore is kept.
+  // The downloads and the verification precede the application checkout and
+  // the patch restore, so a failing checkout or patch restore is kept.
   const agentJob = job('agent');
-  assert.ok(
-    agentJob.indexOf('- name: Retry the normalized task download') <
-      agentJob.indexOf('- name: Verify the pinned handoff control plane'),
-  );
-  assert.ok(
-    agentJob.indexOf('- name: Verify the pinned handoff control plane') <
-      agentJob.indexOf('- name: Restore handoff checkpoint'),
+  const order = [
+    '- name: Download handoff checkpoint\n',
+    '- name: Download normalized task\n',
+    '- name: Verify the pinned handoff control plane\n',
+    '- name: Check out application base\n',
+    '- name: Restore handoff checkpoint\n',
+  ].map((name) => agentJob.indexOf(name));
+  assert.ok(order.every((index) => index > 0));
+  assert.deepEqual(
+    order,
+    [...order].sort((a, b) => a - b),
   );
   // The source run's elapsed time is kept, never restarted from this job.
   assert.match(

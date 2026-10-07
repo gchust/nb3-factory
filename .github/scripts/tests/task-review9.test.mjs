@@ -318,25 +318,16 @@ test('the workflow records the published commit, feeds it to recovery and leases
 
 test('prepare retries its source task and checkpoint downloads once', () => {
   const prepare = job('prepare');
-  for (const [first, retry, id] of [
-    [
-      'Download source task control pin',
-      'Retry the source task control pin download',
-      'previous_task_download',
-    ],
-    [
-      'Download failed-run checkpoint',
-      'Retry the failed-run checkpoint download',
-      'recovery_download',
-    ],
+  for (const [name, id] of [
+    ['Download source task control pin', 'previous_task_download'],
+    ['Download failed-run checkpoint', 'recovery_download'],
   ]) {
-    assert.match(step(first, prepare), new RegExp(`id: ${id}\\n`));
-    assert.match(step(first, prepare), /continue-on-error: true/);
+    assert.match(step(name, prepare), new RegExp(`id: ${id}\\n`));
     assert.match(
-      step(retry, prepare),
-      new RegExp(`if: steps\\.${id}\\.outcome == 'failure'`),
+      step(name, prepare),
+      /uses: \.\/factory-actions\/\.github\/actions\/download-with-retry\n/,
     );
-    assert.doesNotMatch(step(retry, prepare), /continue-on-error/);
+    assert.doesNotMatch(step(name, prepare), /continue-on-error/);
   }
 });
 
