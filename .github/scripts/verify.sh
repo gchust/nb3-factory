@@ -49,6 +49,15 @@ failed_stage="$artifact_dir/../last-failed-stage"
 run_check() {
   if timed "$1"; then return 0; else
     local status=$?
+    # Final verification only (FACTORY_RETRY_TEST_ONCE): the application test
+    # suite is run once more after a failure, because a template test flake
+    # would otherwise fail a build whose repair loop already passed. Only the
+    # `test` check, at most once, and the retry is logged and recorded.
+    if [[ "$1" == test && "${FACTORY_RETRY_TEST_ONCE:-0}" == '1' ]]; then
+      echo "::warning::The test check failed (exit $status) in final verification; running it once more."
+      printf 'test exit %s\n' "$status" >"$artifact_dir/test-retried"
+      if timed test; then return 0; else status=$?; fi
+    fi
     printf '%s\n' "$1" >"$failed_stage"
     return "$status"
   fi

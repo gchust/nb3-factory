@@ -180,7 +180,16 @@ while true; do
   agent_status=$?
   set -e
   echo '::endgroup::'
-  if [[ "$agent_status" -eq 75 ]]; then handoff; fi
+  if [[ "$agent_status" -eq 75 ]]; then
+    # The interrupted repair already counts and its edits are in the sealed
+    # patch, so the continuation verifies them first. Resuming at `repair`
+    # would skip that verification and start another repair, or stop as
+    # budget-exhausted when this was the last allowed one.
+    echo "Runner budget reached during repair ${repair_attempts}; the continuation verifies its work first."
+    phase=verify
+    state set "$phase" "$verification_attempt" "$repair_attempts"
+    handoff
+  fi
   if [[ "$agent_status" -ne 0 ]]; then exit "$agent_status"; fi
   phase=verify
   state set "$phase" "$verification_attempt" "$repair_attempts"
