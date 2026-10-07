@@ -456,25 +456,56 @@ async function github(token, method, route, body, fetchImpl = fetch) {
   return { status: response.status, ok: response.ok, data };
 }
 
+// A read is safe to repeat: retry a dropped connection or a 5xx with backoff.
+export async function githubRead(token, route, { fetchImpl, attempts = 3, delayMs = 2000 } = {}) {
+  let last;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      last = await github(token, 'GET', route, null, fetchImpl);
+      if (last.status < 500) return last;
+    } catch (error) {
+      if (attempt === attempts) throw error;
+    }
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+  }
+  return last;
+}
+
 // Commits are authored by the token's own account, as a web-UI commit would be.
-export async function tokenIdentity({ token, fetchImpl }) {
-  const { ok, status, data } = await github(token, 'GET', '/user', null, fetchImpl);
+export async function tokenIdentity({ token, fetchImpl, delayMs }) {
+  const { ok, status, data } = await githubRead(token, '/user', { fetchImpl, delayMs });
   if (!ok || !data?.login || !Number.isSafeInteger(data.id)) throw new Error(`Cannot read the PR token's account (${status}).`);
   return { login: data.login, name: data.name || data.login, email: `${data.id}+${data.login}@users.noreply.github.com` };
 }
 
-export async function openPullRequest({ token, branch, base, title, body, fetchImpl }) {
-  const created = await github(token, 'POST', `/repos/${FIX_REPOSITORY}/pulls`,
-    { title, head: branch, base, body, draft: true, maintainer_can_modify: true }, fetchImpl);
-  if (created.ok) return created.data.html_url;
-  // A rerun of this Actions run reuses its branch; its PR already exists.
-  if (created.status === 422) {
-    const owner = FIX_REPOSITORY.split('/')[0];
-    const existing = await github(token, 'GET',
-      `/repos/${FIX_REPOSITORY}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}`, null, fetchImpl);
-    const pull = existing.ok && Array.isArray(existing.data) ? existing.data[0] : null;
-    if (pull?.html_url) return pull.html_url;
+export async function openPullRequest({ token, branch, base, title, body, fetchImpl, delayMs }) {
+  let created;
+  let dropped = null;
+  try {
+    created = await github(token, 'POST', `/repos/${FIX_REPOSITORY}/pulls`,
+      { title, head: branch, base, body, draft: true, maintainer_can_modify: true }, fetchImpl);
+  } catch (error) {
+    dropped = error;
   }
+  if (created?.ok) return created.data.html_url;
+  // The branch belongs to this run, so a PR from it is this run's PR. A rerun
+  // reuses the branch (422), and a timeout, dropped connection or 5xx may
+  // have created the PR before the response was lost: look it up first.
+  if (dropped || created.status === 422 || created.status >= 500) {
+    const owner = FIX_REPOSITORY.split('/')[0];
+    const route = `/repos/${FIX_REPOSITORY}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}`;
+    // A PR created by a POST whose response was lost can take a moment to
+    // appear in the list: look again with backoff while it is empty. A 422
+    // means the PR already existed, so one look is enough there.
+    const looks = dropped || created.status >= 500 ? 3 : 1;
+    for (let look = 1; look <= looks; look++) {
+      const existing = await githubRead(token, route, { fetchImpl, delayMs }).catch(() => null);
+      const pull = existing?.ok && Array.isArray(existing.data) ? existing.data[0] : null;
+      if (pull?.html_url) return pull.html_url;
+      if (look < looks) await new Promise((resolve) => setTimeout(resolve, (delayMs ?? 2000) * look));
+    }
+  }
+  if (dropped) throw new Error(`Creating the draft PR failed: ${dropped.message}`);
   throw new Error(`Creating the draft PR failed (${created.status}): ${JSON.stringify(created.data?.errors ?? created.data?.message ?? '')}`);
 }
 

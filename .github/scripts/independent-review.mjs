@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { selectHistorySource } from './agent-history-source.mjs';
 import { matchesTaskPR } from './visual-report.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
+import { repositoryApi } from './factory-lib.mjs';
 
 const positive = n => Number.isSafeInteger(n) && n > 0;
 const sha = s => /^[a-f0-9]{40}$/u.test(s ?? '');
@@ -136,18 +137,17 @@ export function archiveReview(root, output, binding, runId, attempt, status) {
   const manifest = { version: 1, binding, reviewRun: { id: runId, attempt }, validation: status,
     files, missing, scope: 'Factory-visible independent review inputs, outputs and normalized usage; missing files are not reconstructed.' };
   writeFileSync(path.join(staging, 'manifest.json'), scrubHistoryFile(JSON.stringify(manifest, null, 2), 'manifest.json'));
-  const asset = `independent-review-issue-${binding.issue}-run-${runId}-attempt-${attempt}-${digest(JSON.stringify(files)).slice(0, 16)}.tar.gz`;
+  // Keyed on the run and the archived content, not the attempt: a re-run of
+  // publish with the same files replaces the same asset (--clobber), while a
+  // re-run whose download failed and archives fewer files gets a different
+  // name, so it can never overwrite a complete archive of this run.
+  const asset = `independent-review-issue-${binding.issue}-run-${runId}-${digest(JSON.stringify(files)).slice(0, 16)}.tar.gz`;
   execFileSync('tar', ['-czf', path.join(output, asset), '-C', staging, '.'], { timeout: 60000 });
   rmSync(staging, { recursive: true, force: true });
   return { asset, manifest };
 }
-async function api(method, route, body) {
-  const response = await fetch(`${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}${route}`, {
-    method, headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(30000) });
-  if (!response.ok) throw new Error(`GitHub ${method} ${route} failed (${response.status})`);
-  return response.json();
-}
+// Retries reads and idempotent writes on 5xx and dropped connections; POST is not retried.
+const api = repositoryApi();
 async function all(route, key) {
   const found = [];
   for (let page = 1; page <= 30; page++) {
@@ -160,6 +160,21 @@ async function all(route, key) {
 }
 const out = (name, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 const read = file => JSON.parse(readFileSync(file, 'utf8'));
+// A validated comment carries this line; older ones are recognized by text.
+const VALID_MARKER = '<!-- factory-independent-review-valid -->';
+const VALID_TEXT = '评审产物身份、引用文件哈希和行号已校验';
+// A re-run of publish must not replace this run's validated review with an
+// incomplete one (for example after its review artifact download failed).
+export function shouldReplaceReviewComment(existingBody, valid) {
+  if (existingBody == null) return true;
+  if (valid) return true;
+  return !(existingBody.includes(VALID_MARKER) || existingBody.includes(VALID_TEXT));
+}
+// This run's review comment, with or without the attempt older markers carried.
+export function isReviewMarker(body, runId) {
+  const match = /^<!-- factory-independent-review:(\d+)(?::\d+)? -->/u.exec(body ?? '');
+  return Boolean(match) && match[1] === String(runId);
+}
 async function main() {
   const [mode, ...argv] = process.argv.slice(2);
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/u, ''), argv[i * 2 + 1]]));
@@ -206,8 +221,11 @@ async function main() {
     const binding = read(path.join(args.input, 'binding.json'));
     let report; try { report = read(path.join(args.output, 'validated-review.json')); } catch { /* Always report a failed/missing review honestly. */ }
     const valid = args.status === 'success' && report?.headSha === binding.headSha && report?.criteriaSha256 === binding.criteriaSha256;
-    const marker = `<!-- factory-independent-review:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT} -->`;
-    const lines = [marker, '## 独立代码 / Skill 评审', '', `冻结交付：PR #${binding.pr} · \`${binding.headSha}\`；原搭建 run ${binding.runId} / attempt ${binding.attempt}。`, '',
+    // One comment per review run: a re-run of publish updates it. Comments from
+    // before this change carry the attempt in the marker and are updated too.
+    const runId = process.env.GITHUB_RUN_ID;
+    const marker = `<!-- factory-independent-review:${runId} -->`;
+    const lines = [marker, ...(valid ? [VALID_MARKER] : []), '## 独立代码 / Skill 评审', '', `冻结交付：PR #${binding.pr} · \`${binding.headSha}\`；原搭建 run ${binding.runId} / attempt ${binding.attempt}。`, '',
       valid ? '评审产物身份、引用文件哈希和行号已校验；以下是评审者结论，不改写原业务验收。' : '评审未完成或产物未通过校验，不计为通过。',
       '', '| 检查 | 功能 | 代码 | Skill | 证据 |', '| --- | --- | --- | --- | --- |'];
     if (valid) for (const c of report.checks) lines.push(`| ${c.checkId} | ${c.functionality.status} | ${c.code.status} | ${c.skillStatus} | ${c.evidence.status} |`);
@@ -216,8 +234,13 @@ async function main() {
     else lines.push('', '长期归档尚未上传成功；暂存记录见上述 Actions Artifact，保留 14 天。');
     const body = lines.join('\n');
     const comments = await all(`/issues/${binding.issue}/comments`);
-    const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.startsWith(marker));
-    if (existing?.body !== body) await api(existing ? 'PATCH' : 'POST', existing ? `/issues/comments/${existing.id}` : `/issues/${binding.issue}/comments`, { body });
+    const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && isReviewMarker(c.body, runId));
+    if (existing?.body === body) return;
+    if (!shouldReplaceReviewComment(existing?.body, valid)) {
+      console.log('::warning::This run already published a validated review; an incomplete re-run does not replace it.');
+      return;
+    }
+    await api(existing ? 'PATCH' : 'POST', existing ? `/issues/comments/${existing.id}` : `/issues/${binding.issue}/comments`, { body });
   } else throw new Error('Expected select/bind/prompt/validate/archive/publish');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => { console.error(error.message); process.exitCode = 1; });

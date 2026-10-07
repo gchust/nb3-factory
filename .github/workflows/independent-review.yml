@@ -71,9 +71,10 @@ env:
     }
 
 permissions: {}
-# One review per Issue at a time: publishing updates the Issue's single review
-# comment and replaces its history asset, so parallel runs would overwrite each
-# other. (A run_id group never serialized anything.)
+# One review per Issue at a time. Each review run has one comment and one
+# history asset, keyed on the run id: a re-run of publish updates both in place
+# instead of adding another. Parallel reviews of one Issue would interleave their
+# comments and release uploads. (A run_id group never serialized anything.)
 concurrency:
   group: factory-independent-review-${{ inputs.issue }}
   queue: max

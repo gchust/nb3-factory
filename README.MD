@@ -72,10 +72,10 @@ CodeBuddy 执行器把配置目录指向工厂自己的 agent 目录，并以 `-
 
 ## 工作方式
 
-1. 使用 **Code Agent 搭建任务** Issue Form 创建任务，目标分支可选，留空使用 `issues-<Issue 编号>`，也可指定 `crm`、`feature/crm` 或既有 `apps/...`。
+1. 使用 **Code Agent 搭建任务** Issue Form 创建任务，目标分支可选，留空时新任务使用仓库默认分支（`develop`），也可指定 `crm`、`feature/crm` 或既有 `apps/...`。早期任务已有的 PR 或 `issues-<Issue 编号>` 分支保持原目标，不会被迁移。
 2. 目标分支不存在时，工厂从默认分支创建；存在时继续使用它。
 3. Code Agent 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并按需求准备实际角色的测试账号，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
-4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Code Agent，并持续执行“修复 → 代码验证 → 失败路径复测 → 完整业务验收”，不设修复次数上限。单次 Code Agent 调用默认不限时（`CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=0`）；如需限制，可显式配置超时秒数。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `agent:failed`。
+4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Code Agent，执行“修复 → 代码验证 → 失败路径复测 → 完整业务验收”。上限由 `.github/scripts/task-policy.mjs` 统一规定：最多 5 次修复，同一检查项的相同失败最多出现 3 次，Agent 单个 Job 运行约 5 小时后保存检查点并最多续跑 1 次（Handoff），实现、修复和 QA 的累计时长不超过 10 小时。单次 Code Agent 调用默认不限时（`CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=0`），如需限制可显式配置超时秒数。达到上限、模型/API/浏览器基础设施错误、人工取消或超时时标记 `agent:failed`，有可用代码差异时仍创建标记为失败的 PR。
 5. 验证通过后，只读 Job 在全新工作区应用 Patch 并独立复验；Publisher 只应用已验证 Patch、提交和 Push，再创建或更新指向目标分支的 PR。
 6. 人工合并 PR 后，来源 Issue 自动关闭；同一目标分支上最早的等待任务会自动进入队列。
 
@@ -92,7 +92,7 @@ pnpm dev
 
 ## 效率与交付报告
 
-目标分支未填写时使用 `issues-<Issue 编号>`；不存在则从默认分支创建，存在则复用。工作分支仍为 `agent/issue-N`，PR 指向目标分支，旧 `apps/...` 任务无需迁移。
+目标分支未填写时，新任务使用仓库默认分支（`develop`）；早期任务已有的 PR 或 `issues-<Issue 编号>` 分支保持原目标。填写的目标分支不存在则从默认分支创建，存在则复用。工作分支仍为 `agent/issue-N`，PR 指向目标分支，旧 `apps/...` 任务无需迁移。
 
 开发 Agent 执行针对性自测，工厂负责固定全量检查。修复循环会先自动格式化变更文件；业务失败后的下一轮先复测失败路径，通过后在全新数据库上执行完整业务 QA。局部通过不能直接发布。最终独立复验保留，修复次数不限。
 
@@ -120,19 +120,19 @@ PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列�
 
 ## 刷新到最新 NocoBase 3 基线
 
-在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。每次都会执行官方创建命令，使用创建器和默认模板的 `latest` 发布版本：
+在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。每次刷新先由 `template-creator.mjs pin` 解析创建器 `@nocobase/create-app` 当前 `latest` 的确切版本，本次运行全程固定使用该版本，并记录在 `factory-template.json` 的 `creator` 字段；默认模板仍按 `latest` 标签解析：
 
 ```bash
-pnpm create @nocobase/app@latest nb3-factory --no-install --template=default --template-tag=latest
+pnpm create @nocobase/app@<本次解析出的创建器版本> nb3-factory --no-install --template=default --template-tag=latest
 ```
 
-创建器和模板继续使用 `latest`，不固定发布版本。当前创建器不再接受 `--db-dialect`；生成时使用模板默认配置，验证时由 `create-runtime-config.mjs` 显式配置独立的 SQLite 数据库。
+当前创建器不再接受 `--db-dialect`；生成时使用模板默认配置，验证时由 `create-runtime-config.mjs` 显式配置独立的 SQLite 数据库。
 
-Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试、应用检查与构建、全新 SQLite Migration/Seed 和登录后的浏览器冒烟。全部通过后，创建一个新的根提交，并以 `--force-with-lease` 强制替换 `develop`；失败时不会更新分支。
+Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试、应用检查与构建、全新 SQLite Migration/Seed 和登录后的浏览器冒烟。全部通过后，把生成的目录树作为一个新提交发布在生成时的 `develop` 之上（保留历史，进行中任务的 PR 仍有共同祖先），并用 `--force-with-lease` 拒绝期间被他人改动的 `develop`；失败时不会更新分支。
 
 刷新保留 `.github/`、`.npmrc`、`.agents/`（已有自定义指引保留，插件 Skills 按新依赖重新同步）、工厂使用说明、AGENTS 中的工厂边界，以及 `factory:test` 和浏览器测试依赖。工厂脚本的 Node.js ESLint 配置追加到新模板配置中。应用源码、NocoBase 依赖、开发指引和 Skills 都来自新模板，不从旧基线复制。按仓库所有者要求，生成的根目录 `config.yml`（包括其中的 `auth.secret`）会进入提交；每次 refresh 使用本次创建器生成的新配置，不复制旧配置。验证使用独立的外部配置和数据库，数据库、依赖目录和构建产物不会进入提交。`factory-template.json` 记录实际模板版本、刷新时间和来源控制提交。
 
-验证显式安装 SQLite 适配器 `@nocobase/db-sqlite`，与验证配置的 dialect 一致。对 `beta.38` 发布包中的 monorepo 测试假设做定向兼容：检查生成应用的包名、使用公开包入口、校验真实路径，并按工厂策略保留 `.agents`；不跳过测试。兼容变更记录在 `factory-template.json`。
+验证使用 SQLite：模板已声明 `@nocobase/db-sqlite` 时沿用模板的版本范围，未声明时才安装该适配器，与验证配置的 dialect 一致。对 `beta.38` 发布包中的 monorepo 测试假设做定向兼容：检查生成应用的包名、使用公开包入口、校验真实路径，并按工厂策略保留 `.agents`；不跳过测试。兼容变更记录在 `factory-template.json`。
 
 工厂只支持当前新版 NocoBase 3：构建使用官方 `nocobase build`，Skill、插件和数据库操作统一使用 `pnpm exec nocobase <命令>`。旧模板补丁、旧 script 别名和迁移回退已删除。刷新时解析官方 latest，完整验证通过后才发布；每次任务固定使用该基线提交和 lockfile，过程中不漂移版本。
 

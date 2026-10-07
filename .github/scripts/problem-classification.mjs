@@ -248,8 +248,42 @@ export function ruleClassify(input, rules, index) {
   return { candidates: [...hits.keys()].sort((a, b) => a - b) };
 }
 
+// A read is safe to repeat. One receiver blip would otherwise send every
+// problem unclassified, so retry a dropped connection, a timeout, a 429 or a
+// 5xx twice before giving up.
+export const RECEIVER_RETRY_DELAYS_MS = [2000, 8000];
+async function receiverGet(
+  config,
+  resource,
+  fetcher,
+  query = [],
+  delays = RECEIVER_RETRY_DELAYS_MS,
+) {
+  for (let attempt = 0; ; attempt++) {
+    const retry = attempt < delays.length;
+    let response;
+    try {
+      response = await receiverRequest(config, resource, fetcher, query);
+    } catch (error) {
+      if (!retry) throw error;
+      console.warn(
+        `Receiver ${resource} request failed (${error.name}); retrying.`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+      continue;
+    }
+    if (!retry || (response.status !== 429 && response.status < 500))
+      return response;
+    await response.body?.cancel();
+    console.warn(
+      `Receiver ${resource} request failed (${response.status}); retrying.`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+  }
+}
+
 // A read-only receiver resource beside the import endpoint, with the same source key.
-function receiverGet(config, resource, fetcher, query = []) {
+function receiverRequest(config, resource, fetcher, query = []) {
   const url = new URL(config.endpoint);
   assert(
     /\/evaluations\/import$/.test(url.pathname),
@@ -274,11 +308,16 @@ function receiverGet(config, resource, fetcher, query = []) {
   });
 }
 
-export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
+export async function fetchTaxonomy(
+  env,
+  { fetcher = fetch, delays = RECEIVER_RETRY_DELAYS_MS } = {},
+) {
   const response = await receiverGet(
     deliveryConfig(env),
     'feature-points',
     fetcher,
+    [],
+    delays,
   );
   assert.equal(
     response.status,
@@ -357,7 +396,7 @@ function planDocuments(plan, planDirectory) {
 // The problems each delivered task already has in the receiver.
 export async function fetchTaskProblems(
   env,
-  { plan, planDirectory, fetcher = fetch },
+  { plan, planDirectory, fetcher = fetch, delays = RECEIVER_RETRY_DELAYS_MS },
 ) {
   const tasks = [
     ...new Set(
@@ -374,6 +413,7 @@ export async function fetchTaskProblems(
       'task-problems',
       fetcher,
       tasks.slice(i, i + TASKS_PER_REQUEST).map((task) => ['task', task]),
+      delays,
     );
     assert.equal(
       response.status,

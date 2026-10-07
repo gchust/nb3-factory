@@ -15,11 +15,13 @@ test('PR template verification is read-only, tests the merge commit, and cannot 
     .trim();
   const publishIf = publisher.match(/    if: \$\{\{ (.+) \}\}/)[1];
   const checkoutRef = generator.match(/          ref: \$\{\{ (.+) \}\}/)[1];
-  const evaluate = (expression, event, actor, sameRepository, dryRun = false) =>
+  const evaluate = (expression, event, actor, sameRepository, dryRun = false, headRef = 'feature') =>
     runInNewContext(expression, {
+      // GitHub's case-insensitive startsWith.
+      startsWith: (value, prefix) => String(value).toLowerCase().startsWith(String(prefix).toLowerCase()),
       github: {
         actor, repository_owner: 'owner', repository: 'owner/factory',
-        event_name: event, sha: 'tested-merge-sha',
+        event_name: event, sha: 'tested-merge-sha', head_ref: event === 'pull_request' ? headRef : '',
         event: { number: 123, pull_request: { head: { repo: { full_name: sameRepository ? 'owner/factory' : 'fork/factory' } } } },
       },
       inputs: event === 'workflow_dispatch' ? { dry_run: dryRun } : {},
@@ -38,6 +40,8 @@ test('PR template verification is read-only, tests the merge commit, and cannot 
     assert.equal(actualGenerate, generate);
     assert.equal(actualGenerate && evaluate(publishIf, event, actor, sameRepo, dryRun), publish);
   }
+  // A build task PR changes the application only and never lands on develop.
+  assert.equal(evaluate(generateIf, 'pull_request', 'owner', true, false, 'agent/issue-42'), false);
   assert.equal(evaluate(checkoutRef, 'pull_request', 'owner', true), 'tested-merge-sha');
   assert.equal(evaluate(checkoutRef, 'workflow_dispatch', 'owner', true), 'develop');
   assert.match(generator, /pull_request:\n    branches: \[develop\]/);

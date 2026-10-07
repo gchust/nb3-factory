@@ -20,13 +20,23 @@ export function selectReplayHistory(run, jobs, artifacts, repository, request) {
   assert.equal(run.status, 'completed'); assert.equal(run.head_repository?.full_name, repository);
   // Replays requested by the retired /factory-build-review comment stay archivable.
   assert.ok(['workflow_dispatch', 'issue_comment'].includes(run.event));
-  const job = jobs.find(j => j.name === 'review' && j.started_at && j.conclusion !== 'skipped');
-  if (!job) return null;
-  const matches = artifacts.filter(a => a.name === `factory-build-review-${run.id}-${run.run_attempt}` &&
+  // jobs may span attempts 1..run_attempt: after "Re-run failed jobs" of the
+  // report, the review that produced the artifact ran in an earlier attempt.
+  // The newest attempt that ran a review is the one to archive.
+  const reviewed = jobs.filter(j => j.name === 'review' && j.started_at && j.conclusion !== 'skipped')
+    .map(j => ({ job: j, attempt: Number(j.run_attempt ?? run.run_attempt) }))
+    .filter(({ attempt }) => positive(attempt) && attempt <= run.run_attempt)
+    .sort((a, b) => b.attempt - a.attempt);
+  if (!reviewed.length) return null;
+  const { job, attempt } = reviewed[0];
+  const matches = artifacts.filter(a => a.name === `factory-build-review-${run.id}-${attempt}` &&
     Date.parse(a.created_at) >= Date.parse(job.started_at) && Date.parse(a.created_at) <= Date.parse(job.completed_at));
   assert.equal(matches.length, 1, 'One retained review artifact is required; expired data cannot be recreated');
   assert.ok(!matches[0].expired && positive(matches[0].id) && positive(job.id), 'Review artifact is unavailable');
-  return { version: 1, repository, runId: run.id, attempt: run.run_attempt, status: 'review',
+  // The review's own attempt, not the run's latest: the history marker and
+  // asset name carry it, so a re-run updates that review's archive and comment
+  // instead of publishing a duplicate under the new attempt.
+  return { version: 1, repository, runId: run.id, attempt, status: 'review',
     artifacts: [{ role: 'agent', jobId: job.id, id: matches[0].id, name: matches[0].name,
       invocationExpected: job.steps?.some(s => s.name === 'Assess modules and persist evidence checkpoints' && s.started_at && s.conclusion !== 'skipped') ?? false,
       state: 'available' }] };
@@ -60,8 +70,11 @@ async function main() {
     const request = historyRequest(JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH)), process.env);
     assert.ok(positive(request.runId) && positive(request.attempt));
     const run = await client.request('GET', `/actions/runs/${request.runId}/attempts/${request.attempt}`);
-    const source = selectReplayHistory(run,
-      await all(client, `/actions/runs/${request.runId}/attempts/${request.attempt}/jobs`, 'jobs'),
+    const jobs = [];
+    for (let attempt = 1; attempt <= request.attempt; attempt++)
+      for (const job of await all(client, `/actions/runs/${request.runId}/attempts/${attempt}/jobs`, 'jobs'))
+        jobs.push({ ...job, run_attempt: job.run_attempt ?? attempt });
+    const source = selectReplayHistory(run, jobs,
       await all(client, `/actions/runs/${request.runId}/artifacts`, 'artifacts'), repository, request);
     if (!source) return;
     write(path.join(root, 'selected.json'), source);

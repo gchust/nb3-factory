@@ -52,10 +52,13 @@ jobs:
   generate:
     # Publishing is owner-only. A PR check, from this repository or a fork,
     # holds no secrets and only read permission, and must not be skipped (a
-    # skipped check passes).
+    # skipped check passes). Build task PRs (agent/issue-N) are the exception:
+    # they change the application, are verified by the task itself and never
+    # land on develop, so a README or package.json change there must not start
+    # a two-hour regeneration (factory-tests.yml skips them the same way).
     if: >-
       (github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner) ||
-      github.event_name == 'pull_request'
+      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-'))
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     permissions:
@@ -135,6 +138,9 @@ jobs:
 
       - name: Create a fresh application from the latest published template
         if: steps.supersede.outputs.superseded != 'true'
+        # Takes seconds (--no-install); a hung registry fetch must not hold the
+        # global refresh queue until the 120-minute job limit.
+        timeout-minutes: 10
         env:
           CI: true
         run: |
@@ -211,6 +217,9 @@ jobs:
         env:
           CI: true
         run: |
+          # One deadline for every pnpm call in this step, a minute inside its
+          # 15-minute limit, so template-plugins.mjs stops a hung call itself.
+          export FACTORY_PLUGIN_STEP_DEADLINE=$(( $(date +%s) + 14 * 60 ))
           APP_ROOT="$RUNNER_TEMP/template-generation/nb3-factory"
           node control/.github/scripts/template-plugins.mjs install \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"

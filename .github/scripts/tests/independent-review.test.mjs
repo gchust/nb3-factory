@@ -99,5 +99,7 @@ test('review archive preserves known diagnostics, rejects links and records miss
   assert.equal(archive.manifest.files.length, 1);
   assert.ok(archive.manifest.missing.includes('review-prompt.md'));
   assert.equal(archive.manifest.validation, 'failure');
-  assert.ok(archive.asset.startsWith('independent-review-issue-2-run-456-attempt-1-'));
+  // Keyed on run and content, never the attempt: the same files replace the
+  // same asset, different files can't overwrite it.
+  assert.match(archive.asset, /^independent-review-issue-2-run-456-[a-f0-9]{16}\.tar\.gz$/);
 });
