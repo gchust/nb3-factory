@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "10ccbc10fad34da37d6b95a17ed41d9d0af3c8f332ea8b7e57b41dc679cb9092",
+  "inputHash": "dd64a107cafddcf75eaafafc5d4cf6333046e5c98b8da66fca5ef8062d99ebed",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -706,6 +706,46 @@
       "id": "630:37590168713:1:F7",
       "report": "630:37590168713:1",
       "fingerprint": "0df23cd6b8086e255615466cf001870fd65612651b380bd755c572bc76aa7b08"
+    },
+    {
+      "id": "647:37621553234:1:F2",
+      "report": "647:37621553234:1",
+      "fingerprint": "db9437eda9e41798ec0dffaa0c7ad34913833d8d1e9e1e9c4543a6bfe4b262cf"
+    },
+    {
+      "id": "647:37621553234:1:F3",
+      "report": "647:37621553234:1",
+      "fingerprint": "8591856427a0fbf1cc9efc14ada535a71c22de8194d324f45a591f3d3a762476"
+    },
+    {
+      "id": "647:37621553234:1:F4",
+      "report": "647:37621553234:1",
+      "fingerprint": "533d59b498e8275ff7f44b355b113886f22180bf3b911096b75eb07c65badaa9"
+    },
+    {
+      "id": "649:37621548882:1:F1",
+      "report": "649:37621548882:1",
+      "fingerprint": "718eb1bff5bae7a737f327320174cfead2b0c500f3f2bf161f2ad22f51b3ae48"
+    },
+    {
+      "id": "649:37621548882:1:F2",
+      "report": "649:37621548882:1",
+      "fingerprint": "2c7f7a9e7c93247f4e448d93b73604a8c6565d2b7ea1b8930472bd3f8c551051"
+    },
+    {
+      "id": "649:37621548882:1:F3",
+      "report": "649:37621548882:1",
+      "fingerprint": "5423160ddd7fdef95e0edd643159ab5cc35dc15e97742ec97d8ff9cee582b760"
+    },
+    {
+      "id": "649:37621548882:1:F4",
+      "report": "649:37621548882:1",
+      "fingerprint": "cdff4ef3c4a3eebabd3bb32b11696b8bba64856302794783f441167e43dca13b"
+    },
+    {
+      "id": "649:37621548882:1:F5",
+      "report": "649:37621548882:1",
+      "fingerprint": "bc408540ba11766cce0f0f986963b0adfe65a50684ec3971e6085ccffd9ea472"
     }
   ],
   "groups": [
@@ -737,12 +777,13 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
-      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。",
+      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。",
       "members": [
         "474:36498921009:1:F1",
         "475:36498925234:1:F2",
         "496:36641602107:1:F1",
-        "544:37156757587:1:F1"
+        "544:37156757587:1:F1",
+        "649:37621548882:1:F1"
       ]
     },
     {
@@ -950,10 +991,11 @@
       ]
     },
     {
-      "title": "演示账号用户名需满足认证最小长度，创建阶段无校验提示",
-      "reason": "单条保留：475:F5 的 E23/E24/E25 显示种子绕过校验导致登录期 422，属独立指引缺口。",
+      "title": "认证 Skill 未在账号创建路径复述用户名 3–30 长度约束，创建期无校验提示",
+      "reason": "跨报告合并。475:F5（E23/E24/E25）显示种子直接 INSERT user/account 绕过 Better Auth 校验，2 字符用户名到登录才以 422 USERNAME_TOO_SHORT 暴露，创建阶段无提示；647:F4（E13/E15/E16/E55）显示 authentication SKILL 的 3–30 用户名长度规则只写在 initialAdmin 段，user-lifecycle 的 create/update 方法表只写“归一化为小写”、未复述约束，用 2 字符用户名（如 hr）调用 userAdministrationService.create 时 Better Auth 抛 Username is too short。两者同属“用户名校验规则未在账号创建处说明”的同一指引缺口，修复方向一致（在创建路径复述/前置校验长度），故合并。",
       "members": [
-        "475:36498925234:1:F5"
+        "475:36498925234:1:F5",
+        "647:37621553234:1:F4"
       ]
     },
     {
@@ -1027,10 +1069,11 @@
       ]
     },
     {
-      "title": "数据库 Skill 迁移示例声明非空 createdAt 却在 createOne 示例省略该字段",
-      "reason": "单条保留：496:F4 的 E17/E18/E16/E14 显示普通 repository 不自动填时间戳，属独立示例缺口。",
+      "title": "数据库 Skill 迁移示例声明非空 createdAt，却未说明 Repository 不自动填时间戳且 createOne 示例省略该字段",
+      "reason": "跨报告合并。496:F4（E17/E18/E16/E14）显示 nocobase-db SKILL 迁移示例 collection.datetime('createdAt', { nullable: false }) 无默认值，同一 Skill 的 createOne 示例只写 name/owner，普通 repository 写入不自动补时间戳，照抄得到 NOT NULL constraint failed；647:F3（E1/E2/E3/E4/E24/E27）进一步显示 Repository 策略只把 defaultValue/db.generated/autoIncrement/optimisticLock 视为可自动取值来源、没有 createdAt/updatedAt 自动注入分支，迁移示例与 Repository 章节均未提示写入方须自带时间戳，应用只能用 createStamp/updateStamp 绕行。两者同一示例缺口与同一修复方向（在迁移/Repository 章节说明并给出统一 stamp helper），故合并。",
       "members": [
-        "496:36641602107:1:F4"
+        "496:36641602107:1:F4",
+        "647:37621553234:1:F3"
       ]
     },
     {
@@ -1114,10 +1157,11 @@
     },
     {
       "title": "defineFileRepositoryApiRoutes/ServerFileRepository 缺少一等的主体感知内容读取与鉴权入口，应用被迫重写受保护字节路由",
-      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）显示内容路由固定绑定公开的 unwritablePolicy、注释声明 authentication/authorization application-owned，上传动作默认只在缺 principal 时返回 403，受保护字节只能靠顺序敏感的自定义根守卫；543:F2（E3/E4/E16/E22）显示 FileOperations 仅暴露 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，没有按主体读取内容的方法，应用只能自建 material-content 根路由并逐行复制 UUID 校验、ownerId 过滤、404 语义与 nosniff/CSP/Content-Disposition。两者同为“受保护内容没有可注入主体过滤的一等入口”，修复方向一致：在 defineFileRepositoryApiRoutes 或 ServerFileRepositoryManager/FileOperations 上提供可注入的认证/授权与主体读取钩子。",
+      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）显示内容路由固定绑定公开的 unwritablePolicy、注释声明 authentication/authorization application-owned，上传动作默认只在缺 principal 时返回 403，受保护字节只能靠顺序敏感的自定义根守卫；543:F2（E3/E4/E16/E22）显示 FileOperations 仅暴露 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，没有按主体读取内容的方法，应用只能自建 material-content 根路由并逐行复制 UUID 校验、ownerId 过滤、404 语义与 nosniff/CSP/Content-Disposition。两者同为“受保护内容没有可注入主体过滤的一等入口”，修复方向一致：在 defineFileRepositoryApiRoutes 或 ServerFileRepositoryManager/FileOperations 上提供可注入的认证/授权与主体读取钩子。 649:F5（E54/E55/E56/E57）显示 app-plugin-file 的 accessPath/<uuid> 内容路由刻意绕过 exposure 的 RepositoryPolicy、仅凭不可猜 UUID 服务任何人，框架只提供“应用在贡献路径自挂认证/授权”，没有把内容路由绑定到父记录关系的逐记录授权原语，应用只能关闭 read metadata 并以会话守卫兜底；与 519:F4、543:F2 同为“受保护内容缺少一等的逐记录授权/主体读取入口”，修复方向一致，故并入。",
       "members": [
         "519:36938138067:1:F4",
-        "543:37156754926:1:F2"
+        "543:37156754926:1:F2",
+        "649:37621548882:1:F5"
       ]
     },
     {
@@ -1248,10 +1292,11 @@
       ]
     },
     {
-      "title": "@nocobase/app-testing 的 request 不注入 Origin，cookie 写测试默认被 CSRF 拒绝",
-      "reason": "单条保留：597:F4（E17）显示 createTestApp 的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer，而认证中间件的 checkCookieWriteOrigin 对携带 cookie 的写请求要求可信来源，否则返回 INVALID_CSRF_ORIGIN，测试作者必须手写 Origin 并在认证配置加入可信来源。这是测试脚手架（@nocobase/app-testing）缺少默认 Origin 注入/可操作提示的框架侧易用性缺口（usability-improvement），与既有的“受保护路由/测试指引未提示 cookie 写请求 Origin/CSRF 校验”文档缺口根因与修复位置不同（代码 vs 指引），故单独保留。",
+      "title": "测试请求助手（app-testing request / authentication signIn）未注入可信 Origin，cookie 写测试被 CSRF 拒绝",
+      "reason": "跨报告合并。597:F4（E17）显示 @nocobase/app-testing 的 createTestApp 暴露的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer；649:F3（E47/E46/E48/E65）显示 @nocobase/app-plugin-authentication 的 signIn()/TestSession 返回的 fetch 同样不设置 Origin，而同插件 checkCookieWriteOrigin 要求携带 cookie 的写请求带可信 Origin/Referer，测试中的 create 请求以 403 INVALID_CSRF_ORIGIN 失败。两者同为测试请求助手未注入可信 Origin 的脚手架缺口（usability-improvement），修复方向一致（默认注入可关闭的 Origin 或在遇到 CSRF 失败时给出可操作提示），故合并。",
       "members": [
-        "597:37453035816:1:F4"
+        "597:37453035816:1:F4",
+        "649:37621548882:1:F3"
       ]
     },
     {
@@ -1317,15 +1362,36 @@
       "members": [
         "630:37590168713:1:F5"
       ]
+    },
+    {
+      "title": "授权 composite 决策经 require() 恒被拒绝为 conditional，指引未显著说明应改用 can()/authorize()",
+      "reason": "单条保留：647:F2 的 E6/E7/E10/E12/E25/E50 显示 authorization.js 对复合资源只有所有底层 check 都 permit 才返回 permit，否则返回带 conditions 的 conditional，而 require() 对非 permit 抛 AuthorizationDeniedError（403 PERMISSION_DENIED）；runtime-api.md 仅在第 135–137 行末句提示该语义，SKILL 与 core-api 的 require 行未把 composite+require 组合讲清，应用按 SKILL 步骤 4 实现后 departments/employees/leave-requests 整组 403、dashboard/notifications 未走 require 反而 200，排查成本高。属独立的授权指引可用性缺口，与其他分组的根因与修复位置不同，故单独保留。",
+      "members": [
+        "647:37621553234:1:F2"
+      ]
+    },
+    {
+      "title": "createAppTest 未为测试应用注入 auth.secret，testing.md 整应用示例照抄即启动失败",
+      "reason": "单条保留：649:F2 的 E58/E59/E48 显示 @nocobase/app-testing 的 createTestAppConfig/testAppConfigValues 只把调用方 config 合并进数据库连接，createTestApp 也未设置 auth.secret，而 app-plugin-authentication 启动时要求 config.secret；testing.md 的整应用示例只传 createServer、不展示 secret，照抄即报应用未配置。属测试库缺少默认测试 secret 注入的独立框架易用性缺口，与既有测试分组的 Origin/CSRF、vitest globals 根因不同，故单独保留。",
+      "members": [
+        "649:37621548882:1:F2"
+      ]
+    },
+    {
+      "title": "testing.md 整应用示例使用裸 expect，与模板 vitest 未开 globals 的配置不一致",
+      "reason": "单条保留：649:F4 的 E48/E60/E65 显示 testing.md 示例直接使用裸 expect(...)，而模板 app/vitest.config.ts 未设置 globals:true，运行时报 ReferenceError: expect is not defined。属文档示例与模板测试配置不一致的独立指引缺口，与同报告的 Origin、secret 缺口根因不同，故单独保留。",
+      "members": [
+        "649:37621548882:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37609798942",
+    "runId": "37636531231",
     "attempt": 1,
-    "controlSha": "bd887d34035f8ec4d8b3ca18a5911ef1725d9188",
-    "completedAt": "2026-10-07T10:50:05.049Z"
+    "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
+    "completedAt": "2026-10-07T14:28:27.882Z"
   }
 }
