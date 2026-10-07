@@ -1,4 +1,10 @@
-import { Home } from 'lucide-react';
+import {
+  Briefcase,
+  CalendarClock,
+  Home,
+  LayoutDashboard,
+  Users,
+} from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +21,79 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The CRM pages are granted by permission set, not by role: a rep and a supervisor both open them, and the
+    // data they see inside is scoped by the CRM permission sets each one holds.
+    name: 'crm',
+    navigation: { title: 'navigation.crm', icon: Briefcase },
+    children: [
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'crm.dashboard' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/crm/index.js'),
+        name: 'crm-dashboard',
+        navigation: {
+          title: 'navigation.crm.dashboard',
+          icon: LayoutDashboard,
+        },
+        path: '/crm',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'crm.customers' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/crm/customers/index.js'),
+        name: 'crm-customers',
+        navigation: { title: 'navigation.crm.customers', icon: Users },
+        path: '/crm/customers',
+        children: [
+          {
+            componentLoader: () => import('./pages/crm/customers/detail.js'),
+            name: 'crm-customer-detail',
+            path: ':customerId',
+          },
+          {
+            componentLoader: () => import('./pages/crm/customers/import.js'),
+            name: 'crm-customer-import',
+            path: 'import',
+          },
+        ],
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'crm.opportunities' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/crm/opportunities/index.js'),
+        name: 'crm-opportunities',
+        navigation: {
+          title: 'navigation.crm.opportunities',
+          icon: Briefcase,
+        },
+        path: '/crm/opportunities',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'crm.follow-ups' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/crm/follow-ups/index.js'),
+        name: 'crm-follow-ups',
+        navigation: {
+          title: 'navigation.crm.followUps',
+          icon: CalendarClock,
+        },
+        path: '/crm/follow-ups',
+      },
+    ],
   },
   {
     auth: 'guest',
