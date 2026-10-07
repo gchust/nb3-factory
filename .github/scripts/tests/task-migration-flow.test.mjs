@@ -20,6 +20,7 @@ const issue = (number, label) => ({
   body: issueBody,
   state: 'open',
   user: { login: 'gchust' },
+  author_association: 'OWNER',
   labels: [{ name: label }],
 });
 const pull = (number, ref) => ({

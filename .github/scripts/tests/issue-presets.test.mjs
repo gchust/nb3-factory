@@ -43,9 +43,9 @@ const selection = `### 预置案例\n\n#1 - 工单系统\n\n### 本次补充要�
 
 function fixture(issueNumber = 20) {
   const source = { number: 1, title: '[Code Agent] 工单系统', body: taskBody,
-    user: human, labels: [{ name: 'factory:preset' }], state: 'closed',
+    user: human, author_association: 'OWNER', labels: [{ name: 'factory:preset' }], state: 'closed',
     html_url: 'https://github.com/test/factory/issues/1', updated_at: '2026-09-20T00:00:00Z' };
-  const issue = { number: issueNumber, title: '重搭', body: selection, user: human,
+  const issue = { number: issueNumber, title: '重搭', body: selection, user: human, author_association: 'OWNER',
     labels: [{ name: 'agent:pending' }], state: 'open', html_url: `https://github.com/test/factory/issues/${issueNumber}` };
   const originals = [
     { id: 102, user: { login: 'reviewer', type: 'User' }, author_association: 'COLLABORATOR', body: '/build\n增加转派，必须填写原因。' },
@@ -208,7 +208,7 @@ test('normalization keeps unrelated source sections and does not parse comment h
 test('source comments are paginated; no human comments beyond page one are dropped', async () => {
   const c = fixture();
   c.originals.splice(0, c.originals.length, ...Array.from({ length: 105 }, (_, i) => ({
-    id: i + 1, user: human, body: `comment ${i + 1}`,
+    id: i + 1, user: human, author_association: 'OWNER', body: `comment ${i + 1}`,
   })));
   const { task, preset } = await preparePresetIssue(c, c.issue);
   assert.equal(preset.humanCommentCount, 105);

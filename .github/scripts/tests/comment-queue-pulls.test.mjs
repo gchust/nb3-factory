@@ -12,6 +12,7 @@ const issue = {
   number: 2,
   state: 'open',
   user: owner,
+  author_association: 'OWNER',
   body: '### 目标分支\napps/demo\n### 任务类型\n创建新系统\n### 业务需求\nOriginal\n### 验收要求\nWorks',
 };
 const pulls = [

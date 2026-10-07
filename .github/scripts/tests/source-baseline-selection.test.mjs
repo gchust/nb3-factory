@@ -14,7 +14,7 @@ import { exactCreatorVersion, recordCreator } from '../template-creator.mjs';
 const branch = `factory-baseline/source-${'a'.repeat(12)}-123-1`;
 const human = { login: 'owner', type: 'User' }, bot = { login: 'github-actions[bot]', type: 'Bot' };
 function fixture(selected = branch) {
-  const source = { number: 1, title: 'A small test', user: human, labels: ['factory:preset'], html_url: 'https://github.com/owner/repo/issues/1',
+  const source = { number: 1, title: 'A small test', user: human, author_association: 'OWNER', labels: ['factory:preset'], html_url: 'https://github.com/owner/repo/issues/1',
     body: '### 目标分支\n\nold\n\n### 任务类型\n\n创建新系统\n\n### 业务需求\n\n计数器\n\n### 验收要求\n\n0 → 1' };
   const issue = { number: 2, title: 'rebuild', body: `### 预置案例\n\n#1 - A small test\n\n### 测试基线分支\n\n${selected}`, user: human, labels: [] };
   const comments = [];
@@ -68,12 +68,18 @@ test('baseline records actual creator and source descriptor without guessing sou
 });
 test('all three clean runners restore the selected snapshot before installing and preserve final archive gates', () => {
   const workflow = readFileSync(new URL('../../workflows/code-agent-task.yml', import.meta.url), 'utf8');
-  assert.equal((workflow.match(/source-snapshot.mjs restore workspace/g) ?? []).length, 3);
+  // verify-final and preview-build-failed restore it through the
+  // restore-task-toolchain composite action.
+  const toolchain = readFileSync(new URL('../../actions/restore-task-toolchain/action.yml', import.meta.url), 'utf8');
+  assert.equal((workflow.match(/source-snapshot.mjs restore workspace/g) ?? []).length, 1);
+  assert.equal((toolchain.match(/source-snapshot.mjs restore workspace/g) ?? []).length, 1);
   for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish'], ['preview-build-failed', 'report-failure']]) {
     const job = workflow.split(`  ${name}:
 `)[1].split(`  ${next}:
 `)[0];
-    const restore = job.indexOf('source-snapshot.mjs restore workspace');
+    const restore = name === 'agent'
+      ? job.indexOf('source-snapshot.mjs restore workspace')
+      : job.indexOf('uses: ./factory-actions/.github/actions/restore-task-toolchain');
     assert.ok(restore >= 0, `${name} restores its pinned source baseline`);
     assert.ok(job.indexOf('pnpm install --frozen-lockfile') > restore, `${name} restores before installing`);
   }

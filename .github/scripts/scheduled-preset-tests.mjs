@@ -1,7 +1,7 @@
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-import { BUILD_LABEL } from './factory-lib.mjs';
+import { BUILD_LABEL, isTrustedAuthor } from './factory-lib.mjs';
 import { getPresetSourceNumber, isManualIssue, isPresetIssue } from './issue-presets.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { SAMPLE_LABEL } from './evaluation-sample.mjs';
@@ -27,8 +27,8 @@ function validatePreset(issue) {
   const labels = labelNames(issue);
   if (issue.pull_request || !labels.includes('factory:preset') || !labels.includes(DAILY_PRESET_LABEL) ||
       labels.includes('factory:manual') || !issue.user?.login || issue.user.type === 'Bot' ||
-      /\[bot\]$/i.test(issue.user.login)) {
-    throw new Error(`#${issue.number} 必须是同时带 factory:preset 和 ${DAILY_PRESET_LABEL} 标签的人工案例，不能是 PR 或 factory:manual 任务。`);
+      /\[bot\]$/i.test(issue.user.login) || !isTrustedAuthor(issue)) {
+    throw new Error(`#${issue.number} 必须是同时带 factory:preset 和 ${DAILY_PRESET_LABEL} 标签、由有仓库权限的维护者创建的人工案例，不能是 PR 或 factory:manual 任务。`);
   }
 }
 

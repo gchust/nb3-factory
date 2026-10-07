@@ -720,8 +720,17 @@ test('every building job exposes the factory registry to nested dist installs', 
       .split('\n  verify-final:')[1]
       .split('\n  publish:')[0],
   };
+  // verify-final exposes it through the restore-task-toolchain composite.
+  const toolchain = readFileSync(
+    path.resolve(scripts, '..', 'actions', 'restore-task-toolchain', 'action.yml'),
+    'utf8',
+  );
+  assert.ok(toolchain.includes('cat control/.npmrc >> ~/.npmrc'));
   for (const [name, job] of Object.entries(jobs)) {
-    const expose = job.indexOf('cat control/.npmrc >> ~/.npmrc');
+    const expose =
+      name === 'task verify-final'
+        ? job.indexOf('uses: ./factory-actions/.github/actions/restore-task-toolchain')
+        : job.indexOf('cat control/.npmrc >> ~/.npmrc');
     assert.ok(expose > 0, name);
     assert.ok(expose < job.search(/pnpm (create|install)/), name);
   }

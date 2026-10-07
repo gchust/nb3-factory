@@ -1,6 +1,6 @@
 // Queue receipts live in trusted bot comments, independently of runner/artifact
 // retention. Only the serialized queue workflow may mutate these receipts.
-import { isTrustedAuthor, parseIssueTask, TaskInputError } from './factory-lib.mjs';
+import { isTrustedAuthor, isTrustedIssue, parseIssueTask, TaskInputError } from './factory-lib.mjs';
 
 const marker = '<!-- factory-build-v1\n';
 export const runTitle = /^Factory issue #(\d+) build (\d+)(?:\s|$)/;
@@ -115,7 +115,12 @@ export function sourceComment(client, issueNumber, comments, id) {
     prompt,
   };
 }
+export const UNTRUSTED_ISSUE =
+  'Issue 作者没有仓库权限，评论不会启动搭建或问答；维护者可通过 workflow_dispatch 显式运行该 Issue。';
 export async function resolveBuildTask(client, issue, buildId, initialTask) {
+  // The Issue body is the round's requirements: re-checked for every comment
+  // round prepare starts (dispatch, continuation, recovery), like the comment.
+  if (!isTrustedIssue(issue)) throw new TaskInputError(UNTRUSTED_ISSUE);
   const { comments, receipts } = await receiptsFor(client, issue.number);
   const current = receipts.find((item) => item.id === Number(buildId));
   if (!current || current.status !== 'dispatched')

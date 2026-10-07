@@ -32,18 +32,27 @@ if (root) {
     );
   }
 }
-const recoverable =
-  process.env.FACTORY_CHECKPOINT_AVAILABLE === 'true' &&
-  ['failed', 'blocked'].includes(state?.outcome) &&
-  !state.stopReason &&
-  state.phase !== 'done';
-const exhausted = state?.outcome === 'budget-exhausted';
 // A cancelled run still leaves agent:running, so it is marked here too, but
 // it must not read like a build failure. FACTORY_RUN_CANCELLED is set only
 // when the run itself was cancelled; the agent job reports its own six-hour
 // timeout, which GitHub also shows as cancelled.
 const timedOut = process.env.FACTORY_RUN_TIMED_OUT === 'true';
 const cancelled = process.env.FACTORY_RUN_CANCELLED === 'true' && !timedOut;
+// A handoff whose continuation was not dispatched (its checkpoint or dispatch
+// step failed) has no successor: its checkpoint is recovered like a failure's
+// (validateRecovery checks the source run's jobs and runs again).
+const undispatched =
+  process.env.FACTORY_HANDOFF_UNDISPATCHED === 'true' &&
+  state?.outcome === 'handoff';
+// A recovery starts only from a run that concluded as failed, never from one
+// that was cancelled.
+const recoverable =
+  process.env.FACTORY_CHECKPOINT_AVAILABLE === 'true' &&
+  (['failed', 'blocked'].includes(state?.outcome) || undispatched) &&
+  !state.stopReason &&
+  state.phase !== 'done' &&
+  !cancelled;
+const exhausted = state?.outcome === 'budget-exhausted';
 const body = [
   timedOut
     ? '**本次运行超过 GitHub runner 的 6 小时上限被终止**，未完成搭建；这不是搭建失败结论。已尽量保存补丁与检查点，需要继续时请重新发起任务。'
@@ -79,6 +88,27 @@ const body = [
     : []),
   // A rejected GitHub Re-run saved no checkpoint of its own, yet the earlier
   // attempt's checkpoint is intact and recovery accepts it.
+  // A failed build whose patch is empty on a new work branch has nothing to
+  // publish: say so instead of leaving the missing PR unexplained.
+  ...(process.env.FACTORY_EMPTY_PATCH === 'true'
+    ? [
+        '',
+        '本次运行没有保存任何代码差异，工作分支尚不存在，因此没有创建标记 failed 的搭建 PR。',
+      ]
+    : []),
+  // Only a checkpoint that was saved, in a run that was not cancelled, can be
+  // recovered; otherwise say plainly that this handoff is lost.
+  ...(undispatched && recoverable
+    ? [
+        '',
+        '本次运行已在 5 小时预算处保存 Handoff 检查点，但续跑没有成功派发（若派发请求超时，GitHub 也可能已经收到）。请先在 Actions 中确认没有从本 Run 续跑的运行；恢复时会再次核对，已有续跑时拒绝恢复。',
+      ]
+    : undispatched
+      ? [
+          '',
+          '本次运行在 5 小时预算处请求了 Handoff，但续跑没有成功派发，且检查点未保存或运行已取消，无法从本 Run 恢复；需要继续时请重新发起任务。',
+        ]
+      : []),
   ...(process.env.FACTORY_RERUN_REJECTED === 'true'
     ? [
         '',

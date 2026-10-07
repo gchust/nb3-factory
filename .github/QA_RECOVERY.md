@@ -71,11 +71,13 @@ replaces that commit, with a push lease on it. Any other commit on the work
 branch is newer work, and the recovery refuses. A shared target branch is
 compared with the task's pinned base receipt, not its live head.
 
-A continuation retries its checkpoint and task downloads once. If it still
-fails after both downloads but before restoring its progress (applying the
-patch, sample admission, the restore itself), it keeps the whole handed-off
-checkpoint as its own, marked failed, but only when the checkpoint is one it
-could have restored: the same task input, patch and control plane, not
+A continuation retries its checkpoint and task downloads once, and runs them
+and the control-plane verification before it checks out the application. If
+it still fails, or is cancelled (its runner limit included), after both
+downloads but before restoring its progress (the application checkout,
+applying the patch, sample admission, the restore itself), it keeps the whole
+handed-off checkpoint as its own, marked failed, but only when the checkpoint
+is one it could have restored: the same task input, patch and control plane, not
 stopped, an unchanged budget, a repair checkpoint with its diagnostic context,
 and an evaluation sample that was not refused. A refused control-plane
 verification, or any checkpoint rejected on purpose, is not kept, published or
@@ -83,6 +85,17 @@ offered for recovery. Recover a kept one with `recovery_run_id` set to that cont
 since its source run concluded successfully when it handed off. A
 continuation whose own task branch moved during the handoff stops at once
 instead of failing at the final push.
+
+A run that reached its runner budget and saved a handoff checkpoint, but whose
+checkpoint upload or continuation dispatch failed, has no successor. Its
+failure notice offers recovery from it, and a recovery accepts a checkpoint
+that records a handoff only when the source run's "Dispatch continuation run"
+step did not succeed and no continuation names that run as its source (a
+dispatch that timed out may still have reached GitHub). A handoff refused by a
+spent budget records its stop instead and stays unrecoverable. A recovery
+uploads only the files its prepare normalized; the agent job downloads the
+failed run's checkpoint itself and checks it is the one prepare validated
+(`handoff-recovery.mjs match`).
 
 Regression checks: `pnpm factory:test`. A task keeps the control plane it
 recorded as `control_sha` for its continuations and recoveries, so an

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { BUILD_LABEL, BUILD_REVIEW_LABELS, extractIssueSections, parseIssueTask, parseBuildReviewMode, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
+import { BUILD_LABEL, BUILD_REVIEW_LABELS, extractIssueSections, isTrustedAuthor, parseIssueTask, parseBuildReviewMode, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
 import { listAll, parseBuild } from './comment-queue.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { splitPresetComments } from './preset-comment-inputs.mjs';
@@ -20,6 +20,13 @@ export function isManualIssue(issue) {
 
 export function isHuman(user) {
   return Boolean(user?.login && user.type !== 'Bot' && !/\[bot\]$/i.test(user.login));
+}
+
+// A preset's body and comments become requirements and review criteria of
+// every rebuild, scheduled ones included: only people with repository access
+// write them. Other people's comments on a preset are discussion, never input.
+export function isTrustedHuman(entity) {
+  return isHuman(entity?.user) && isTrustedAuthor(entity);
 }
 
 function isFactoryComment(comment) {
@@ -118,11 +125,12 @@ export function readSnapshot(comments, issueNumber, expectedHash, selectedNumber
   return null;
 }
 
-// One-time capture of a source preset: body plus all human comments in order.
+// One-time capture of a source preset: body plus all comments of people with
+// repository access, in order.
 export async function readPresetSource(client, number) {
   const source = await client.getIssue(number);
-  if (source.pull_request || !isPresetIssue(source) || !isHuman(source.user)) {
-    throw new TaskInputError('来源必须是带 factory:preset 标签、由人工创建的 Issue。');
+  if (source.pull_request || !isPresetIssue(source) || !isTrustedHuman(source)) {
+    throw new TaskInputError('来源必须是带 factory:preset 标签、由有仓库权限的维护者创建的 Issue。');
   }
   const originals = await listAll(client, `/issues/${number}/comments`);
   return {
@@ -131,7 +139,7 @@ export async function readPresetSource(client, number) {
       author: source.user.login, url: source.html_url,
       updatedAt: source.updated_at,
     },
-    comments: originals.filter((comment) => isHuman(comment.user))
+    comments: originals.filter(isTrustedHuman)
       .sort((a, b) => a.id - b.id)
       .map((comment) => ({
         id: comment.id, author: comment.user.login,
@@ -266,7 +274,7 @@ export async function preparePresetIssue(client, issue) {
 }
 
 export function renderPresetForm(issues) {
-  const options = issues.filter((issue) => !issue.pull_request && isPresetIssue(issue) && isHuman(issue.user))
+  const options = issues.filter((issue) => !issue.pull_request && isPresetIssue(issue) && isTrustedHuman(issue))
     .sort((a, b) => a.number - b.number)
     .map((issue) => `#${issue.number} - ${stripTaskTitle(issue.title).replace(/[\r\n]+/g, ' ')}`);
   if (!options.length) options.push('暂无预置案例（请先添加 factory:preset 标签）');

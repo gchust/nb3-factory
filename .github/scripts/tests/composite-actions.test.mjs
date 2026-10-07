@@ -31,6 +31,8 @@ test('composite actions come from the workflow commit, and every one used exists
     assert.ok(existsSync(path.join(root, action, 'action.yml')), action);
   }
   for (const name of [
+    'prepare',
+    'agent',
     'verify-final',
     'publish',
     'publish-failed',

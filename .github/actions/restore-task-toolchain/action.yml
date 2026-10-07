@@ -1,0 +1,68 @@
+name: Restore the task toolchain and package sources
+description: >-
+  Set up pnpm and Node.js, restore the agent job's pnpm store, expose the
+  factory registry to nested pnpm roots and restore the selected source
+  baseline packages, as the jobs that rebuild the applied patch do before they
+  install its dependencies. The install itself stays a workflow step, which
+  carries its timeout. The pinned control plane must already be checked out at
+  control/ and the application at workspace/: the scripts come from control/.
+inputs:
+  metadata:
+    description: The task metadata file that selects the source baseline.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm
+      uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      with:
+        version: 11.7.0
+        run_install: false
+
+    # Restore only. setup-node's own cache would save a second store whenever
+    # the task changed the lockfile, and only the agent job saves one. Same key
+    # format and store path as setup-node (node-cache-Linux-x64-pnpm-<hash of
+    # the lockfile>, `pnpm store path --silent` run in workspace/), so the
+    # agent job's store is restored here, exactly or by prefix after a
+    # dependency change. Source tarballs use an isolated local store, not the
+    # shared registry cache.
+    - name: Set up Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24.x
+        package-manager-cache: false
+
+    - name: Locate the pnpm store
+      id: pnpm_store
+      if: hashFiles('workspace/factory-source.json') == ''
+      shell: bash
+      working-directory: workspace
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore the agent job's pnpm store
+      if: steps.pnpm_store.outputs.path != ''
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.pnpm_store.outputs.path }}
+        key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
+        restore-keys: |
+          node-cache-Linux-x64-pnpm-
+
+    # The official CLI installs dist/ as its own pnpm root, which never reads the
+    # application's .npmrc, and pnpm 11 ignores scoped registries passed in
+    # the environment. Only the user-level file reaches that nested install.
+    - name: Expose the factory registry to nested pnpm roots
+      shell: bash
+      run: cat control/.npmrc >> ~/.npmrc
+
+    - name: Restore the selected source baseline packages
+      shell: bash
+      env:
+        TASK_METADATA: ${{ inputs.metadata }}
+      run: |
+        if [[ -f control/.github/scripts/source-snapshot.mjs ]]; then
+          node control/.github/scripts/source-snapshot.mjs restore workspace "$TASK_METADATA"
+        elif [[ -f workspace/factory-source.json ]]; then
+          echo "Pinned control plane cannot restore the selected source baseline." >&2
+          exit 1
+        fi

@@ -180,27 +180,26 @@ jobs:
             /.github/scripts/evaluation-sample.mjs
           persist-credentials: false
 
+      # The composite steps below come from this workflow's own commit, like the
+      # bootstrap checkout: an in-flight task's pinned control_sha may predate
+      # them. The scripts they run still come from control/ or bootstrap/.
+      - name: Check out the workflow's composite actions
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: factory-actions
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/actions/
+          persist-credentials: false
+
       # A continuation that fails here has no checkpoint of its own, and its
       # source run concluded success, so one transient artifact error would
       # discard the handed-off work: each download below is retried once.
       - name: Download source task control pin
         id: previous_task_download
         if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
-          path: previous-task
-          run-id: ${{ inputs.recovery_run_id || github.event.client_payload.previous_run_id }}
-          github-token: ${{ github.token }}
-
-      - name: Wait before retrying the source task download
-        if: steps.previous_task_download.outcome == 'failure'
-        run: sleep 30
-
-      - name: Retry the source task control pin download
-        if: steps.previous_task_download.outcome == 'failure'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: ./factory-actions/.github/actions/download-with-retry
         with:
           name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
           path: previous-task
@@ -223,23 +222,9 @@ jobs:
       - name: Download failed-run checkpoint
         id: recovery_download
         if: inputs.recovery_run_id != ''
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: ./factory-actions/.github/actions/download-with-retry
         with:
           # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
-          name: factory-agent-${{ inputs.issue_number }}
-          path: recovery
-          run-id: ${{ inputs.recovery_run_id }}
-          github-token: ${{ github.token }}
-
-      - name: Wait before retrying the failed-run checkpoint download
-        if: steps.recovery_download.outcome == 'failure'
-        run: sleep 30
-
-      - name: Retry the failed-run checkpoint download
-        if: steps.recovery_download.outcome == 'failure'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
           name: factory-agent-${{ inputs.issue_number }}
           path: recovery
           run-id: ${{ inputs.recovery_run_id }}
@@ -283,11 +268,13 @@ jobs:
         id: baseline
         env:
           SAMPLE_CONTROL_SHA: ${{ steps.sample.outputs.control_sha }}
+          TASK_EVENT: ${{ steps.recovery.outputs.event_path || github.event_path }}
+          CHECKPOINT: ${{ inputs.recovery_run_id != '' && 'recovery' || 'legacy-handoff' }}
         run: |
           node bootstrap/.github/scripts/handoff-control.mjs resolve \
-            --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
+            --event "$TASK_EVENT" \
             --current-sha "${SAMPLE_CONTROL_SHA:-$(git -C bootstrap rev-parse HEAD)}" \
-            --checkpoint "${{ inputs.recovery_run_id != '' && 'recovery' || 'legacy-handoff' }}" \
+            --checkpoint "$CHECKPOINT" \
             --previous-task previous-task/task-metadata.json \
             --output "$GITHUB_OUTPUT"
 
@@ -311,9 +298,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           # The status comment of a continuation shows the base it keeps.
           FACTORY_PREVIOUS_TASK: ${{ github.event.action == 'code-agent-continue' && 'previous-task/task-metadata.json' || '' }}
+          TASK_EVENT: ${{ steps.recovery.outputs.event_path || github.event_path }}
         run: |
           node control/.github/scripts/prepare-task.mjs \
-            --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
+            --event "$TASK_EVENT" \
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
 
@@ -357,12 +345,19 @@ jobs:
             printf 'ref=%s\nsha=%s\n' "$BASE_REF" "$BASE_SHA" >> "$GITHUB_OUTPUT"
           fi
 
+      # Only the files normalize wrote: the agent job downloads the failed
+      # run's checkpoint itself (it is already stored there) and checks it is
+      # the one validated here (handoff-recovery.mjs match), instead of this
+      # job uploading a second copy of the whole checkpoint.
       - name: Save normalized recovery checkpoint
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-recovery-${{ steps.prepare.outputs.issue_number }}
-          path: recovery
+          path: |
+            recovery/task-event.json
+            recovery/handoff.json
+            recovery/recovery.json
           if-no-files-found: error
           retention-days: 14
 
@@ -394,7 +389,8 @@ jobs:
         if: failure() && steps.prepare.outputs.status == 'ready' && steps.prepare.outputs.comment_kind != 'reply'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node control/.github/scripts/mark-failure.mjs "${{ steps.prepare.outputs.issue_number }}"
+          ISSUE_NUMBER: ${{ steps.prepare.outputs.issue_number }}
+        run: node control/.github/scripts/mark-failure.mjs "$ISSUE_NUMBER"
 
   agent:
     needs: prepare
@@ -426,6 +422,10 @@ jobs:
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
       # A kept handed-off checkpoint (Keep the handed-off checkpoint) is a sealed patch too.
       patch_available: ${{ steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success' }}
+      # A failed build with nothing to publish: see Check for a publishable diff.
+      empty_patch: ${{ steps.diff.outputs.empty == 'true' }}
+      # A handoff whose continuation was not dispatched: its checkpoint is recoverable.
+      handoff_undispatched: ${{ steps.outcome.outputs.handoff_undispatched }}
       # A later attempt counts as rejected unless the guard accepted it: a
       # control checkout that failed first skips the guard, and that attempt
       # still must not publish reports or answer a comment.
@@ -504,6 +504,90 @@ jobs:
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
+      # The composite steps below come from this workflow's own commit, like the
+      # bootstrap checkout: an in-flight task's pinned control_sha may predate
+      # them. The scripts they run still come from control/ or bootstrap/.
+      - name: Check out the workflow's composite actions
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: factory-actions
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/actions/
+          persist-credentials: false
+
+      # A continuation that fails here has nothing of its own to save, and its
+      # source run concluded success, so no recovery can start from either run:
+      # one transient artifact error would discard the handed-off work. Each
+      # download is retried once after a pause, and they all run before the
+      # application checkout, so a failure from that checkout on is kept (see
+      # "Keep the handed-off checkpoint" below).
+      - name: Download handoff checkpoint
+        id: checkpoint_download
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        uses: ./factory-actions/.github/actions/download-with-retry
+        with:
+          # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: handoff
+          run-id: ${{ github.event.client_payload.previous_run_id }}
+          github-token: ${{ github.token }}
+
+      # A recovery restores the failed run's own checkpoint, which prepare
+      # validated, plus the small files prepare's normalize wrote beside it.
+      - name: Download the failed run's checkpoint
+        id: recovery_checkpoint_download
+        if: inputs.recovery_run_id != ''
+        uses: ./factory-actions/.github/actions/download-with-retry
+        with:
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: handoff
+          run-id: ${{ inputs.recovery_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Download normalized recovery checkpoint
+        if: inputs.recovery_run_id != ''
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
+          path: recovery-normalized
+
+      # The normalized files replace any of the same name the checkpoint holds,
+      # and the checkpoint must be the one prepare validated: same patch,
+      # state, input and control plane as its recovery.json records.
+      - name: Apply the normalized recovery files
+        if: inputs.recovery_run_id != ''
+        run: |
+          set -euo pipefail
+          for file in task-event.json handoff.json recovery.json; do
+            if [[ ! -f "recovery-normalized/$file" || -L "recovery-normalized/$file" ]]; then
+              echo "::error::The normalized recovery lacks $file." >&2
+              exit 1
+            fi
+            rm -f "handoff/$file"
+            cp "recovery-normalized/$file" "handoff/$file"
+          done
+          node bootstrap/.github/scripts/handoff-recovery.mjs match --checkpoint handoff
+
+      # Downloaded before the checkpoint is verified and applied, so a failing
+      # patch restore still finds the task metadata and keeps its checkpoint.
+      - name: Download normalized task
+        id: task_download
+        uses: ./factory-actions/.github/actions/download-with-retry
+        with:
+          name: factory-task-${{ needs.prepare.outputs.issue_number }}
+          path: task
+
+      - name: Verify the pinned handoff control plane
+        id: verify_control
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
+        env:
+          TASK_EVENT: ${{ inputs.recovery_run_id != '' && 'handoff/task-event.json' || github.event_path }}
+        run: |
+          node bootstrap/.github/scripts/handoff-control.mjs verify \
+            --event "$TASK_EVENT" --checkpoint handoff
+
       # Only the Agent sees full history: it may read `git log` to locate how the
       # template and earlier task rounds changed a file. Later jobs apply the
       # sealed patch to the base tree and check out a single commit.
@@ -515,80 +599,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # A continuation that fails here has nothing of its own to save, and its
-      # source run concluded success, so no recovery can start from either run:
-      # one transient artifact error would discard the handed-off work. Retry
-      # each download once after a pause; see also "Keep the handed-off
-      # checkpoint" below for failures between download and restore.
-      - name: Download handoff checkpoint
-        id: checkpoint_download
-        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
-          path: handoff
-          run-id: ${{ github.event.client_payload.previous_run_id }}
-          github-token: ${{ github.token }}
-
-      - name: Wait before retrying the checkpoint download
-        if: steps.checkpoint_download.outcome == 'failure'
-        run: sleep 30
-
-      - name: Retry the handoff checkpoint download
-        id: checkpoint_retry
-        if: steps.checkpoint_download.outcome == 'failure'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
-          path: handoff
-          run-id: ${{ github.event.client_payload.previous_run_id }}
-          github-token: ${{ github.token }}
-
-      - name: Download normalized recovery checkpoint
-        if: inputs.recovery_run_id != ''
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
-          path: handoff
-
-      # Downloaded before the checkpoint is verified and applied, so a failing
-      # patch restore still finds the task metadata and keeps its checkpoint.
-      - name: Download normalized task
-        id: task_download
-        continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: factory-task-${{ needs.prepare.outputs.issue_number }}
-          path: task
-
-      - name: Wait before retrying the task download
-        if: steps.task_download.outcome == 'failure'
-        run: sleep 30
-
-      - name: Retry the normalized task download
-        id: task_retry
-        if: steps.task_download.outcome == 'failure'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: factory-task-${{ needs.prepare.outputs.issue_number }}
-          path: task
-
-      - name: Verify the pinned handoff control plane
-        id: verify_control
-        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        run: |
-          node bootstrap/.github/scripts/handoff-control.mjs verify \
-            --event "${{ inputs.recovery_run_id != '' && 'handoff/task-event.json' || github.event_path }}" --checkpoint handoff
-
       - name: Restore handoff checkpoint
         if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
+        env:
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
         run: |
           node control/.github/scripts/apply-patch.mjs \
             --workspace workspace \
             --patch handoff/agent.patch \
-            --branch "${{ needs.prepare.outputs.work_branch }}"
+            --branch "$WORK_BRANCH"
           # Restore retrospective only here; stage state is validated after task download.
           mkdir -p "$RUNNER_TEMP/agent-artifacts"
           if [[ -f handoff/retro.json && ! -L handoff/retro.json ]]; then
@@ -684,9 +703,39 @@ jobs:
       - name: Expose the factory registry to nested pnpm roots
         run: cat control/.npmrc >> ~/.npmrc
 
+      # The pinned font package is cached under its own SHA-256 and verified
+      # again before dpkg installs it, so most runs skip apt and its index
+      # update entirely (FACTORY_FONT_DEB_CACHE in install-browser-fonts.sh).
+      # Restored and saved here, before any model call; verify-final only
+      # restores it.
+      - name: Read the pinned Chinese font package
+        id: font_pin
+        env:
+          FONT_SCRIPT: control/.github/scripts/install-browser-fonts.sh
+        run: echo "sha=$(sed -n 's/^FONT_DEB_SHA256=\([0-9a-f]\{64\}\)$/\1/p' "$FONT_SCRIPT")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the pinned Chinese font package
+        id: font_cache
+        if: steps.font_pin.outputs.sha != ''
+        continue-on-error: true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: browser-font-cache
+          key: browser-font-deb-${{ runner.os }}-${{ steps.font_pin.outputs.sha }}
+
       - name: Install Chinese browser fonts
         timeout-minutes: 10
+        env:
+          FACTORY_FONT_DEB_CACHE: ${{ github.workspace }}/browser-font-cache
         run: bash control/.github/scripts/install-browser-fonts.sh
+
+      - name: Save the pinned Chinese font package
+        if: steps.font_pin.outputs.sha != '' && steps.font_cache.outputs.cache-hit != 'true' && hashFiles('browser-font-cache/*.deb') != ''
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: browser-font-cache
+          key: browser-font-deb-${{ runner.os }}-${{ steps.font_pin.outputs.sha }}
 
       - name: Restore the selected source baseline packages
         run: |
@@ -776,14 +825,20 @@ jobs:
           path: ${{ runner.temp }}/agent-browser-npm
           key: ${{ steps.browser_cache.outputs.cache-primary-key }}
 
+      # The package index is refreshed only when installing from the current
+      # one fails: the font install usually refreshed it already, and a cached
+      # font package leaves the image's index, which is often still current.
       - name: Install optional video encoder
         if: inputs.failure_smoke != true
         continue-on-error: true
         timeout-minutes: 5
         run: |
           if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30
-            sudo apt-get install -o Acquire::Retries=2 -o Acquire::http::Timeout=30 --yes --no-install-recommends ffmpeg
+            apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=30)
+            if ! sudo apt-get install "${apt_options[@]}" --yes --no-install-recommends ffmpeg; then
+              sudo apt-get update "${apt_options[@]}"
+              sudo apt-get install "${apt_options[@]}" --yes --no-install-recommends ffmpeg
+            fi
           fi
 
       - name: Prepare and validate browser environment
@@ -913,7 +968,9 @@ jobs:
       - name: Inject disclosed failure before business QA
         id: failure_smoke
         if: inputs.failure_smoke == true
-        run: node control/.github/scripts/failure-smoke.mjs inject workspace "$RUNNER_TEMP/agent-artifacts" "${{ needs.prepare.outputs.work_branch }}"
+        env:
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+        run: node control/.github/scripts/failure-smoke.mjs inject workspace "$RUNNER_TEMP/agent-artifacts" "$WORK_BRANCH"
 
       # A job timeout is a cancellation: success() and failure() are both false
       # then, so without the cancelled() clause hours of work left no patch and
@@ -924,21 +981,22 @@ jobs:
       # the run as failed so the patch below seals it and the work stays
       # publishable and recoverable instead of vanishing with the runner.
       # A continuation that failed after both the checkpoint and the task
-      # downloads but before "Restore pipeline progress" (patch restore,
-      # admission, the restore itself) has a workspace of uncertain state, yet
-      # the handed-off work is intact in handoff/. Save that checkpoint as this
-      # run's own, marked failed, so publish-failed and an explicit recovery from
-      # this run (recovery_run_id) keep it: the source run concluded success
-      # after its handoff, so a recovery could never start from there. A refused
-      # control-plane verification is deliberate and keeps nothing. The elapsed
-      # time stays the source run's (no job start), so no counter is reset.
+      # downloads but before "Restore pipeline progress" (application checkout,
+      # patch restore, admission, the restore itself) has a workspace of
+      # uncertain state, yet the handed-off work is intact in handoff/. Save
+      # that checkpoint as this run's own, marked failed, so publish-failed and
+      # an explicit recovery from this run (recovery_run_id) keep it: the source
+      # run concluded success after its handoff, so a recovery could never start
+      # from there. A cancellation (the runner limit included) keeps it too. A
+      # refused control-plane verification is deliberate and keeps nothing. The
+      # elapsed time stays the source run's (no job start), so no counter is reset.
       - name: Keep the handed-off checkpoint
         id: keep_checkpoint
         if: >-
-          failure() && steps.rerun_guard.outcome == 'success' && steps.resume.outcome != 'success' &&
+          (failure() || cancelled()) && steps.rerun_guard.outcome == 'success' && steps.resume.outcome != 'success' &&
           github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' &&
-          (steps.checkpoint_download.outcome == 'success' || steps.checkpoint_retry.outcome == 'success') &&
-          (steps.task_download.outcome == 'success' || steps.task_retry.outcome == 'success') &&
+          steps.checkpoint_download.outcome == 'success' &&
+          steps.task_download.outcome == 'success' &&
           steps.verify_control.outcome == 'success' &&
           steps.admit.outputs.refused != 'true'
         run: |
@@ -979,7 +1037,7 @@ jobs:
       - name: Mark a continuation that failed during setup
         id: setup_failure
         if: >-
-          failure() && steps.resume.outcome == 'success' &&
+          (failure() || cancelled()) && steps.resume.outcome == 'success' &&
           steps.implementation.outcome == 'skipped' && steps.verify.outcome == 'skipped' &&
           ((github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != '')
         run: |
@@ -995,7 +1053,7 @@ jobs:
         if: >-
           success() ||
           failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.failure_smoke.outcome == 'failure') ||
-          failure() && steps.setup_failure.outcome == 'success' ||
+          (failure() || cancelled()) && steps.setup_failure.outcome == 'success' ||
           cancelled() && (steps.implementation.outcome != 'skipped' || steps.verify.outcome != 'skipped' || steps.failure_smoke.outcome != 'skipped') ||
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
@@ -1049,6 +1107,7 @@ jobs:
         if: steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true'
         env:
           CURRENT_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
         run: |
           # Bash arithmetic evaluates command substitutions, and this value comes
           # from the dispatch payload: accept digits only.
@@ -1057,15 +1116,18 @@ jobs:
             exit 1
           fi
           next_continuation=$((10#$CURRENT_CONTINUATION + 1))
-          # A spent evaluation budget ends the chain here: the checkpoint is kept, no continuation is sent.
+          # A spent evaluation budget ends the chain here: the checkpoint is kept,
+          # no continuation is sent. evaluation-budget.mjs records the stop
+          # (budget-exhausted, with its diagnostic), so the failure notice reads
+          # "stopped for diagnosis", not a recoverable handoff.
           if [[ -f control/.github/scripts/evaluation-budget.mjs ]] && \
             ! node control/.github/scripts/evaluation-budget.mjs handoff "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$next_continuation"; then
             echo "::warning::Evaluation sample budget exhausted; facts are saved without an automatic continuation."
             exit 1
           fi
           node bootstrap/.github/scripts/handoff.mjs prepare \
-            --issue "${{ needs.prepare.outputs.issue_number }}" \
-            --run-id "${{ github.run_id }}" \
+            --issue "$ISSUE_NUMBER" \
+            --run-id "$GITHUB_RUN_ID" \
             --continuation "$next_continuation" \
             --phase "$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" \
             --output "$RUNNER_TEMP/agent-artifacts/handoff.json"
@@ -1095,6 +1157,29 @@ jobs:
           path: ${{ runner.temp }}/agent-artifacts
           if-no-files-found: warn
           retention-days: 14
+
+      # A failed build whose patch is empty on a new work branch has nothing a
+      # failed PR could show, and its push would only fail: publish-failed is
+      # skipped and the failure notice says so (FACTORY_EMPTY_PATCH). An empty
+      # patch on an existing work branch still marks that branch's PR failed,
+      # and so does a recovery's (expected_work_sha): its base is the target
+      # branch, yet the failed run's publication already created the branch.
+      - name: Check for a publishable diff
+        id: diff
+        if: always() && (steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success')
+        # Must not fail the job or block the handoff dispatch below.
+        continue-on-error: true
+        env:
+          BASE_REF: ${{ needs.prepare.outputs.base_ref }}
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+          EXPECTED_WORK_SHA: ${{ needs.prepare.outputs.expected_work_sha }}
+        run: |
+          patch="$RUNNER_TEMP/agent-artifacts/agent.patch"
+          if [[ "$BASE_REF" != "$WORK_BRANCH" && -z "$EXPECTED_WORK_SHA" && -f "$patch" && ! -L "$patch" && ! -s "$patch" ]]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::The saved patch is empty and ${WORK_BRANCH} does not exist yet, so no failed build PR is published."
+            echo "No application diff was saved; ${WORK_BRANCH} does not exist yet, so no failed build PR is published." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # Final verification, publication, failed preview packaging and the
       # failure notice read only these files. They download this small copy;
@@ -1141,9 +1226,10 @@ jobs:
         if: always() && (steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success') && (steps.handoff.outcome == 'success' || failure() || cancelled())
         env:
           AGENT_UPLOAD_OUTCOME: ${{ steps.agent-upload.outcome }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
         run: |
           if [[ "$AGENT_UPLOAD_OUTCOME" != 'success' ]]; then
-            echo "::error::factory-agent-${{ needs.prepare.outputs.issue_number }} was not uploaded ($AGENT_UPLOAD_OUTCOME); no checkpoint was saved."
+            echo "::error::factory-agent-${ISSUE_NUMBER} was not uploaded ($AGENT_UPLOAD_OUTCOME); no checkpoint was saved."
             exit 1
           fi
           for file in agent.patch pipeline-state.json task-metadata.json; do
@@ -1161,11 +1247,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           BUILD_COMMENT_ID: ${{ needs.prepare.outputs.build_comment_id }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+          CONTINUATION: ${{ steps.handoff.outputs.continuation }}
         run: |
           node bootstrap/.github/scripts/handoff.mjs dispatch \
-            --issue "${{ needs.prepare.outputs.issue_number }}" \
-            --previous-run-id "${{ github.run_id }}" \
-            --continuation "${{ steps.handoff.outputs.continuation }}"
+            --issue "$ISSUE_NUMBER" \
+            --previous-run-id "$GITHUB_RUN_ID" \
+            --continuation "$CONTINUATION"
 
       - name: Record agent outcome
         id: outcome
@@ -1174,6 +1262,7 @@ jobs:
         # was dispatched. Otherwise no continuation exists, so this run must
         # still report its failure and publish what it has.
         env:
+          HANDOFF_REQUESTED: ${{ steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
           HANDOFF_OUTCOME: ${{ steps.handoff.outcome }}
           CHECKPOINT_OUTCOME: ${{ steps.checkpoint.outcome }}
           DISPATCH_OUTCOME: ${{ steps.dispatch.outcome }}
@@ -1187,6 +1276,14 @@ jobs:
               echo "::error::Handoff was prepared but its checkpoint upload ($CHECKPOINT_OUTCOME) or continuation dispatch ($DISPATCH_OUTCOME) did not succeed; reporting this run as failed."
             fi
             echo "handoff=false" >> "$GITHUB_OUTPUT"
+            # The checkpoint still records the handoff and no successor runs:
+            # the failure notice offers recovery from it, and an explicit
+            # recovery accepts it once no continuation of this run exists
+            # (handoffDispatched in handoff-recovery.mjs). A refused handoff
+            # (spent budget) recorded its stop instead and stays unrecoverable.
+            if [[ "$HANDOFF_REQUESTED" == true ]]; then
+              echo "handoff_undispatched=true" >> "$GITHUB_OUTPUT"
+            fi
           fi
           # GitHub reports a job that hit timeout-minutes as cancelled, the same
           # as a manual cancel. Elapsed time tells them apart for the notice;
@@ -1259,58 +1356,34 @@ jobs:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: final-task
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.7.0
-          run_install: false
+      # Restore only: the agent job of this run saved the pinned package (see
+      # its font steps); a miss installs through apt as before.
+      - name: Read the pinned Chinese font package
+        id: font_pin
+        env:
+          FONT_SCRIPT: control/.github/scripts/install-browser-fonts.sh
+        run: echo "sha=$(sed -n 's/^FONT_DEB_SHA256=\([0-9a-f]\{64\}\)$/\1/p' "$FONT_SCRIPT")" >> "$GITHUB_OUTPUT"
 
-      # Restore only. setup-node's own cache would save a second store whenever
-      # the task changed the lockfile, and only the agent job saves one. Same key
-      # format and store path as setup-node (node-cache-Linux-x64-pnpm-<hash of
-      # the lockfile>, `pnpm store path --silent` run in workspace/), so the
-      # agent job's store is restored here, exactly or by prefix after a
-      # dependency change. Source tarballs use an isolated local store, not the
-      # shared registry cache.
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.x
-          package-manager-cache: false
-
-      - name: Locate the pnpm store
-        id: pnpm_store
-        if: hashFiles('workspace/factory-source.json') == ''
-        working-directory: workspace
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore the agent job's pnpm store
-        if: steps.pnpm_store.outputs.path != ''
+      - name: Restore the pinned Chinese font package
+        if: steps.font_pin.outputs.sha != ''
+        continue-on-error: true
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{ steps.pnpm_store.outputs.path }}
-          key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
-          restore-keys: |
-            node-cache-Linux-x64-pnpm-
-
-      # The official CLI installs dist/ as its own pnpm root, which never reads the
-      # application's .npmrc, and pnpm 11 ignores scoped registries passed in
-      # the environment. Only the user-level file reaches that nested install.
-      - name: Expose the factory registry to nested pnpm roots
-        run: cat control/.npmrc >> ~/.npmrc
+          path: browser-font-cache
+          key: browser-font-deb-${{ runner.os }}-${{ steps.font_pin.outputs.sha }}
 
       - name: Install Chinese browser fonts
         timeout-minutes: 10
+        env:
+          FACTORY_FONT_DEB_CACHE: ${{ github.workspace }}/browser-font-cache
         run: bash control/.github/scripts/install-browser-fonts.sh
 
-      - name: Restore the selected source baseline packages
-        run: |
-          if [[ -f control/.github/scripts/source-snapshot.mjs ]]; then
-            node control/.github/scripts/source-snapshot.mjs restore workspace agent-artifacts/task-metadata.json
-          elif [[ -f workspace/factory-source.json ]]; then
-            echo "Pinned control plane cannot restore the selected source baseline." >&2
-            exit 1
-          fi
+      # pnpm, Node.js, the agent job's pnpm store (restored, never saved), the
+      # registry for nested pnpm roots and the selected source baseline.
+      - name: Restore the task toolchain and package sources
+        uses: ./factory-actions/.github/actions/restore-task-toolchain
+        with:
+          metadata: agent-artifacts/task-metadata.json
 
       - name: Install application dependencies
         timeout-minutes: 15
@@ -1484,6 +1557,18 @@ jobs:
             --base-sha "$BASE_SHA" \
             --record agent-artifacts/publication-base.json
 
+      # A re-run attempt reads the commit an earlier attempt of this run
+      # pushed (the record is uploaded right after the push): the push below
+      # keeps that commit when it holds the same tree, even after the target
+      # branch moved and the publication base was restacked onto a new parent.
+      - name: Download this run's publication record
+        if: github.run_attempt > 1
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-published-${{ needs.prepare.outputs.issue_number }}
+          path: previous-publication
+
       - name: Commit and push task branch
         id: push
         working-directory: workspace
@@ -1497,7 +1582,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --cached --quiet && [[ "$BASE_REF" != "$WORK_BRANCH" ]]; then
+          # A recovery keeps the target as its base even though the failed run's
+          # publication created the work branch (EXPECTED_WORK_SHA): its empty
+          # diff goes on to replace that published commit below.
+          if git diff --cached --quiet && [[ "$BASE_REF" != "$WORK_BRANCH" ]] && \
+            [[ ! "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]]; then
             echo "::error::No application diff was saved; GitHub cannot create a build PR. The failed report and logs remain available."
             exit 1
           fi
@@ -1516,6 +1605,41 @@ jobs:
             fi
           else
             git commit -m "feat: apply Code Agent task #${ISSUE_NUMBER}"
+          fi
+          # A GitHub Re-run of this job after its push landed (and, say, the PR
+          # creation failed) commits the same tree again under a new commit id,
+          # which the lease below refuses. A remote work branch that already
+          # holds exactly this commit's tree is that publication when it sits on
+          # the same parent, or when this run's publication record names it
+          # (the target moved between attempts and the base was restacked):
+          # keep its commit rather than pushing an identical tree. Any other
+          # commit with that tree is not provably this run's and is still pushed
+          # under the lease, which refuses it.
+          if [[ "$push_needed" == true ]]; then
+            remote="$(git ls-remote origin "refs/heads/${WORK_BRANCH}" | cut -f1)"
+            parents() { git cat-file -p "$1" | sed -n 's/^parent //p'; }
+            recorded=''
+            record=../previous-publication/publication.json
+            if [[ -f "$record" && ! -L "$record" ]]; then
+              recorded="$(node -e '
+                const [file, runId, branch] = process.argv.slice(1);
+                const value = JSON.parse(require("fs").readFileSync(file, "utf8"));
+                if (value?.version === 1 && String(value.sourceRunId) === runId && value.workBranch === branch &&
+                  /^[a-f0-9]{40}$/.test(value.commit ?? "")) console.log(value.commit);
+              ' "$record" "$GITHUB_RUN_ID" "$WORK_BRANCH" 2>/dev/null || true)"
+            fi
+            if [[ "$remote" == "$(git rev-parse HEAD)" ]]; then
+              echo "${WORK_BRANCH} is already at this commit."
+              push_needed=false
+            elif [[ -n "$remote" ]] && \
+              git fetch --quiet --no-tags --depth=1 origin "refs/heads/${WORK_BRANCH}" && \
+              [[ "$(git rev-parse FETCH_HEAD)" == "$remote" ]] && \
+              [[ "$(git rev-parse 'FETCH_HEAD^{tree}')" == "$(git rev-parse 'HEAD^{tree}')" ]] && \
+              { [[ "$(parents FETCH_HEAD)" == "$(parents HEAD)" ]] || [[ "$remote" == "$recorded" ]]; }; then
+              echo "${WORK_BRANCH} already holds this verified tree at ${remote}, published by this task; keeping that commit instead of pushing again."
+              git reset --quiet --soft "$remote"
+              push_needed=false
+            fi
           fi
           if [[ "$push_needed" == true ]]; then
             if [[ "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]]; then
@@ -1599,6 +1723,7 @@ jobs:
       needs.prepare.outputs.comment_kind != 'reply' &&
       needs.agent.outputs.handoff != 'true' &&
       needs.agent.outputs.patch_available == 'true' &&
+      needs.agent.outputs.empty_patch != 'true' &&
       (needs.agent.result != 'success' || needs.verify-final.result != 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1654,54 +1779,12 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.issue_number }}
           work-branch: ${{ needs.prepare.outputs.work_branch }}
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # pnpm, Node.js, the agent job's pnpm store (restored, never saved), the
+      # registry for nested pnpm roots and the selected source baseline.
+      - name: Restore the task toolchain and package sources
+        uses: ./factory-actions/.github/actions/restore-task-toolchain
         with:
-          version: 11.7.0
-          run_install: false
-
-      # Restore only. setup-node's own cache would save a second store whenever
-      # the task changed the lockfile, and only the agent job saves one. Same key
-      # format and store path as setup-node (node-cache-Linux-x64-pnpm-<hash of
-      # the lockfile>, `pnpm store path --silent` run in workspace/), so the
-      # agent job's store is restored here, exactly or by prefix after a
-      # dependency change. Source tarballs use an isolated local store, not the
-      # shared registry cache.
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.x
-          package-manager-cache: false
-
-      - name: Locate the pnpm store
-        id: pnpm_store
-        if: hashFiles('workspace/factory-source.json') == ''
-        working-directory: workspace
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore the agent job's pnpm store
-        if: steps.pnpm_store.outputs.path != ''
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ steps.pnpm_store.outputs.path }}
-          key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
-          restore-keys: |
-            node-cache-Linux-x64-pnpm-
-
-      # The official CLI installs dist/ as its own pnpm root, which never reads the
-      # application's .npmrc, and pnpm 11 ignores scoped registries passed in
-      # the environment. Only the user-level file reaches that nested install.
-      - name: Expose the factory registry to nested pnpm roots
-        run: cat control/.npmrc >> ~/.npmrc
-
-      - name: Restore the selected source baseline packages
-        run: |
-          if [[ -f control/.github/scripts/source-snapshot.mjs ]]; then
-            node control/.github/scripts/source-snapshot.mjs restore workspace agent-artifacts/task-metadata.json
-          elif [[ -f workspace/factory-source.json ]]; then
-            echo "Pinned control plane cannot restore the selected source baseline." >&2
-            exit 1
-          fi
+          metadata: agent-artifacts/task-metadata.json
 
       - name: Install application dependencies
         timeout-minutes: 15
@@ -1858,7 +1941,10 @@ jobs:
           FACTORY_RUN_CANCELLED: ${{ needs.run-cancelled.result == 'success' }}
           FACTORY_RUN_TIMED_OUT: ${{ needs.agent.outputs.timed_out }}
           FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected }}
-        run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
+          FACTORY_HANDOFF_UNDISPATCHED: ${{ needs.agent.outputs.handoff_undispatched }}
+          FACTORY_EMPTY_PATCH: ${{ needs.agent.outputs.empty_patch }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+        run: node control/.github/scripts/mark-failure.mjs "$ISSUE_NUMBER" failure-artifacts
 
   dispatch-reports:
     # The dispatched report runs wait only a few minutes for this run to
