@@ -54,6 +54,8 @@ After a timeout, a dropped connection or another 5xx response such as a 502 or 5
 - `forget_uncertain`: the digest is in the chat, so the day is removed from the queue.
 - `resend_uncertain`: the digest is missing, so the day is sent once more.
 
+Keep `notify` on for such a dispatch: the send step, which reads both lists, does not run without it. A listed date that is not a real day fails the step before anything is sent; a real date that matches no queued day (or, for `resend_uncertain`, no uncertain day) is reported as a warning and ignored. If marking a day uncertain itself fails, the run ends with an error naming the day: check the chat and forget it before the next run, or it may be sent again.
+
 When Feishu answers with an explicit rejection, for example because the signature does not match, the day was not posted: it stays queued and the next run sends it again together with its own day. A day still unsent after seven days is dropped, uncertain or not. Only the send step receives the webhook, its secret and the mapping. The archive step learns only whether a webhook exists.
 
 ## Running it by hand

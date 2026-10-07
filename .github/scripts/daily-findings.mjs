@@ -366,9 +366,16 @@ export function parseDays(value) {
     .split(',')
     .map((day) => day.trim())
     .filter(Boolean);
-  for (const day of days)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day))
-      throw new Error(`Invalid day ${day}; expected YYYY-MM-DD`);
+  for (const day of days) {
+    const parsed = new Date(`${day}T00:00:00Z`);
+    // The round trip rejects shapes like 2026-13-45 that the pattern accepts.
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== day
+    )
+      throw new Error(`Invalid day ${day}; expected a real YYYY-MM-DD date`);
+  }
   return new Set(days);
 }
 
@@ -399,6 +406,26 @@ export async function notifyPending(
     ? validateLedger(await getJson(client, LEDGER, sha))
     : null;
   let pending = ledger?.pending ?? [];
+  // A listed day that matches nothing is most likely a typo: say so, since
+  // the maintainer is waiting for that day to be settled.
+  const ignored = [
+    ...[...forgetDays]
+      .filter((date) => !pending.some((item) => item.date === date))
+      .map((date) => ({
+        date,
+        input: 'forget_uncertain',
+        reason: 'is not pending',
+      })),
+    ...[...resendDays]
+      .filter(
+        (date) => !pending.some((item) => item.date === date && item.uncertain),
+      )
+      .map((date) => ({
+        date,
+        input: 'resend_uncertain',
+        reason: 'is not an uncertain pending day',
+      })),
+  ];
   const forgotten = [];
   const forgetKeys = new Set(
     pending.filter((item) => forgetDays.has(item.date)).map((item) => item.key),
@@ -426,6 +453,7 @@ export async function notifyPending(
       failed: [],
       held,
       forgotten,
+      ignored,
       remaining: pending.length,
     };
   let settled = 0;
@@ -462,7 +490,16 @@ export async function notifyPending(
         uncertain: Boolean(error.uncertain),
       });
       if (error.uncertain) {
-        await recordDay(client, keys, markUncertain, { pause });
+        try {
+          await recordDay(client, keys, markUncertain, { pause });
+        } catch (record) {
+          throw Object.assign(
+            new Error(
+              `The Feishu digest for ${date} may have been delivered but could not be marked uncertain (${record.message}); check the chat and dispatch with forget_uncertain=${date} before the next run, or it may be sent again.`,
+            ),
+            { undelivered: failed, delivered: sent },
+          );
+        }
         break;
       }
       continue;
@@ -480,7 +517,14 @@ export async function notifyPending(
     settled += keys.size;
     sent.push({ date, count: entries.length });
   }
-  return { sent, failed, held, forgotten, remaining: pending.length - settled };
+  return {
+    sent,
+    failed,
+    held,
+    forgotten,
+    ignored,
+    remaining: pending.length - settled,
+  };
 }
 
 // The conventional project Pages base, as the TestManage3 delivery uses.
@@ -549,6 +593,10 @@ if (
       console.log(`::error::${error.message}`);
       throw error;
     }
+    for (const item of result.ignored)
+      console.log(
+        `::warning::${item.input} lists ${item.date}, which ${item.reason}; nothing was done for it.`,
+      );
     for (const date of result.forgotten)
       console.log(
         `Removed ${date} from the Feishu digest queue as already delivered.`,

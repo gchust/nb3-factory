@@ -659,6 +659,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
     failed: [],
     held: [],
     forgotten: [],
+    ignored: [],
     remaining: 0,
   });
   assert.equal(sent.length, 1);
@@ -680,6 +681,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
       failed: [],
       held: [],
       forgotten: [],
+      ignored: [],
       remaining: 0,
     },
   );
@@ -869,6 +871,57 @@ test('resending one uncertain day leaves the other held', async () => {
   assert.deepEqual(pendingDays(client), ['2026-09-26']);
 });
 
+test('listed days that match nothing are reported, not silently ignored', async () => {
+  const client = await twoDays();
+  // 09-26 becomes uncertain; 09-27 stays plainly pending.
+  await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw timeout();
+    },
+  });
+  const result = await notifyPending(client, null, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    forgetDays: new Set(['2026-09-20']),
+    resendDays: new Set(['2026-09-27', '2026-09-26']),
+  });
+  assert.deepEqual(result.ignored, [
+    { date: '2026-09-20', input: 'forget_uncertain', reason: 'is not pending' },
+    {
+      date: '2026-09-27',
+      input: 'resend_uncertain',
+      reason: 'is not an uncertain pending day',
+    },
+  ]);
+});
+
+// The duplicate this feature prevents must not come back through a failed
+// mark: the run names the day and the remedy.
+test('a day that cannot be marked uncertain is named with its remedy', async () => {
+  const client = await twoDays();
+  await assert.rejects(
+    notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        client.failRef = true;
+        throw timeout();
+      },
+    }),
+    (error) =>
+      /The Feishu digest for 2026-09-26 may have been delivered but could not be marked uncertain/.test(
+        error.message,
+      ) &&
+      /forget_uncertain=2026-09-26/.test(error.message) &&
+      error.undelivered.length === 1 &&
+      error.undelivered[0].date === '2026-09-26' &&
+      Array.isArray(error.delivered),
+  );
+  client.failRef = false;
+});
+
 test('a day list is validated', () => {
   assert.deepEqual(
     [...parseDays(' 2026-09-26, 2026-09-27 ,')],
@@ -876,6 +929,10 @@ test('a day list is validated', () => {
   );
   assert.deepEqual([...parseDays('')], []);
   assert.throws(() => parseDays('yesterday'), /Invalid day yesterday/);
+  // The shape alone is not enough: the date must exist.
+  assert.throws(() => parseDays('2026-13-45'), /Invalid day 2026-13-45/);
+  assert.throws(() => parseDays('2026-02-30'), /Invalid day 2026-02-30/);
+  assert.deepEqual([...parseDays('2024-02-29')], ['2024-02-29']);
 });
 
 test('a definite rejection keeps the day pending and unmarked', async () => {
