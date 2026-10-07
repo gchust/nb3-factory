@@ -1227,7 +1227,8 @@ test('the retrying download fails only when both attempts failed', () => {
         /uses: \.\/factory-actions\/\.github\/actions\/download-with-retry\n/g,
       ),
     ].length,
-    5,
+    // Round 12 added verify-final, reply and publish-reply (two).
+    9,
   );
 });
 
