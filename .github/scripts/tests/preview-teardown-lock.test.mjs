@@ -40,6 +40,30 @@ test('a teardown mark stops only deploys that started before it', (t) => {
   assert.equal(run('closed_since 7 0').status, 0);
 });
 
+test('gc drops teardown marks older than its age limit and keeps recent ones', (t) => {
+  const run = lib(t);
+  const day = 86400n * 1000000000n;
+  const now = BigInt(Date.now()) * 1000000n;
+  const result = run(
+    [
+      'mkdir -p "$PREVIEW_ROOT/closed"',
+      `echo ${now - 2n * day} >"$PREVIEW_ROOT/closed/pr-1"`,
+      `echo ${now - day / 2n} >"$PREVIEW_ROOT/closed/pr-2"`,
+      'echo garbage >"$PREVIEW_ROOT/closed/pr-3"',
+      'prune_closed_marks 86400',
+      'ls "$PREVIEW_ROOT/closed"',
+    ].join('; '),
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.stdout.trim().split('\n'), ['pr-2']);
+  // preview-gc.sh runs it under the deploy lock, in every mode.
+  const gc = script('preview-gc.sh');
+  const held = gc.indexOf('flock 9');
+  const prune = gc.indexOf('prune_closed_marks 86400');
+  assert.ok(held > 0 && prune > held);
+  assert.ok(prune < gc.indexOf('if [[ "$reap_orphans" == true ]]'));
+});
+
 test('teardown marks the pull request closed and removes it, all under the deploy lock', () => {
   // A deploy cut off on the CI side keeps running on the host; the lock keeps
   // it from running concurrently, and the mark stops it once it gets the lock.

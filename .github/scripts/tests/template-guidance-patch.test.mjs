@@ -131,6 +131,30 @@ test('on a work branch that already diverged, the patch carries the target branc
   assert.match(text, /^\+template agents$/m);
 });
 
+test('the fork point heals a diverged branch without pulling in a later template refresh', (t) => {
+  const repo = repository(t, { workBranchGuidance: 'earlier build notes\n' });
+  // The target branch moved on: a template refresh rewrote its guidance.
+  git(repo.source, ['checkout', '--quiet', 'main']);
+  writeFileSync(path.join(repo.source, 'AGENTS.md'), 'refreshed template\n');
+  git(repo.source, ['commit', '--quiet', '-am', 'template refresh']);
+  git(repo.source, ['checkout', '--quiet', 'agent/issue-1']);
+  // What the task workflow passes on an existing work branch.
+  const fork = git(repo.source, ['merge-base', 'HEAD', 'main']).trim();
+  writeFileSync(path.join(repo.source, 'app.ts'), 'export const c = 3;\n');
+  const { files, text } = createPatch(repo, [
+    '--protect-template-guidance',
+    'true',
+    '--guidance-source',
+    fork,
+  ]);
+  assert.deepEqual(files, ['AGENTS.md', 'app.ts']);
+  assert.equal(
+    readFileSync(path.join(repo.source, 'AGENTS.md'), 'utf8'),
+    'template agents\n',
+  );
+  assert.doesNotMatch(text, /refreshed template/);
+});
+
 test('an unchanged work branch keeps an empty patch when the guidance already matches', (t) => {
   const repo = repository(t, { workBranchGuidance: 'template agents\n' });
   const { files } = createPatch(repo, [
@@ -169,7 +193,14 @@ test('only the build task opts in; framework-fix keeps its repository rules', ()
     .split('\n      - name: ')[0];
   assert.match(step, /--protect-template-guidance true/);
   assert.match(step, /--guidance-source "\$guidance_source"/);
-  assert.match(step, /refs\/remotes\/origin\/\$\{target\}/);
+  // On a work branch: the fork point from the target, with a visible warning
+  // when it cannot be found instead of a silent fallback.
+  assert.match(
+    step,
+    /fork="\$\(git -C workspace merge-base HEAD "refs\/remotes\/origin\/\$\{target\}"/,
+  );
+  assert.match(step, /guidance_source="\$fork"/);
+  assert.equal(step.match(/::warning::/g)?.length, 2);
   const fix = readFileSync(path.join(workflows, 'framework-fix.yml'), 'utf8');
   assert.doesNotMatch(fix, /protect-template-guidance/);
 });

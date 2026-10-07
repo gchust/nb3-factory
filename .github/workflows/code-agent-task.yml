@@ -763,13 +763,19 @@ jobs:
           WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
         run: |
           # The root AGENTS.md/CLAUDE.md are reset to the template text: from
-          # this base, or on an existing work branch from the target branch, so
-          # a branch an earlier build diverged carries the template text again.
+          # this base, or on an existing work branch from where it forked from
+          # the target branch, so a branch an earlier build diverged carries
+          # the template text again. The fork point, not the target head: a
+          # later template refresh must not pull newer guidance into an old branch.
           guidance_source=HEAD
           if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
             target="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).task?.targetBranch ?? "")' task/task-metadata.json)"
-            if [[ -n "$target" ]] && git -C workspace rev-parse --verify --quiet "refs/remotes/origin/${target}^{commit}" >/dev/null; then
-              guidance_source="refs/remotes/origin/${target}"
+            if [[ -z "$target" ]]; then
+              echo "::warning::The task records no target branch; the root AGENTS.md/CLAUDE.md are kept as this work branch has them."
+            elif ! fork="$(git -C workspace merge-base HEAD "refs/remotes/origin/${target}" 2>/dev/null)"; then
+              echo "::warning::Cannot find where this work branch forked from ${target}; the root AGENTS.md/CLAUDE.md are kept as this work branch has them."
+            else
+              guidance_source="$fork"
             fi
           fi
           node control/.github/scripts/create-patch.mjs \

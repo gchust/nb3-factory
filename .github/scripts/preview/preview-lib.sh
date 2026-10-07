@@ -155,6 +155,21 @@ mark_closed() {
   date +%s%N >"$(closed_mark "$1")"
 }
 
+# prune_closed_marks <max-age-seconds>: drops marks older than that. A mark
+# only has to outlive a deploy that started before its teardown, and the deploy
+# step is limited to 30 minutes, so a day leaves a wide margin.
+prune_closed_marks() {
+  local cutoff mark at
+  cutoff=$(( $(date +%s%N) - $1 * 1000000000 ))
+  for mark in "$PREVIEW_ROOT"/closed/pr-*; do
+    [[ -f "$mark" ]] || continue
+    at="$(tr -dc '0-9' <"$mark")"
+    if [[ -z "$at" ]] || (( at < cutoff )); then
+      rm -f "$mark"
+    fi
+  done
+}
+
 # closed_since <pr> <start-ns>: succeeds when teardown ran at or after start.
 closed_since() {
   local mark at
