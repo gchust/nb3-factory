@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "dd5f2c7e31158e796fdebc65c557e0ab737da2bdce9a8a9424f8420bd9c307d5",
+  "inputHash": "64c7b29dcabaf02db3fd3690c589076ddf4873449d0e313ca88a6df708e34806",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -786,6 +786,16 @@
       "id": "651:37621552259:1:F2",
       "report": "651:37621552259:1",
       "fingerprint": "74d522b22624262e5a3a165981862b6db51a4af4fe3c96792a879e99de3ee01a"
+    },
+    {
+      "id": "652:37621554092:1:F10",
+      "report": "652:37621554092:1",
+      "fingerprint": "e1192dfaf459ae8db8961a96865bfe779b4380746d07d202542679f3b7c0f679"
+    },
+    {
+      "id": "652:37621554092:1:F6",
+      "report": "652:37621554092:1",
+      "fingerprint": "55d780d050ce06ad70ba0b409f8031691f6ae83da0880fc5099b1a79c92c9be4"
     }
   ],
   "groups": [
@@ -1461,15 +1471,29 @@
       "members": [
         "646:37621545718:1:F6"
       ]
+    },
+    {
+      "title": "知识库检索仅做向量相似度过滤，缺少词法回退与结构化空结果/低置信契约",
+      "reason": "单条保留：652:F6 的 E24/E25/E26 显示 KnowledgeBaseFeatureImpl.search 最终调用 LocalVectorStoreService.search，只执行 similaritySearchWithScore 并按 score 过滤（ai-employee 默认 topK:3、score:0.6），既无词法/混合检索回退，也没有结构化的空结果或低置信信号，调用方只能自行兜底。触发条件（问题与语料无关或分数低于阈值）、期望（返回空结果或明确低置信标记）与修复方向（补结构化结果契约或提供词法混合检索选项）均为检索能力缺口，与既有分组中 556:F4（检索不是授权边界、缺授权代理示例）的根因和修复方向不同，且与同报告 652:F10 按规则不得合并，故单独保留。",
+      "members": [
+        "652:37621554092:1:F6"
+      ]
+    },
+    {
+      "title": "知识库插件 Skill 未被开发流程触发，缺少引用与触发提示",
+      "reason": "单条保留：652:F10 的 E27/E28 显示 nocobase-app-plugin-ai-knowledge-base Skill 已列出 embedding→向量数据库→存储→知识库→文档→员工绑定的依赖链，并给出命中测试等端到端检查，但 9 次 agent-history 调用中未见读取该 Skill，AGENTS.md/安装输出也未提供触发提示，导致 Agent 未沿既定能力链接入向量检索。该条为 suspected 且定向复核未完成，证据仅支持“Skill 未被引用/触发”这一独立指引缺口，与 533:F5（聊天界面安装步骤未内联）、616:F7（Skill 内部引用路径歧义）等根因不同，且与同报告 652:F6 按规则不得合并，故单独保留。",
+      "members": [
+        "652:37621554092:1:F10"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37645174028",
+    "runId": "37648211869",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-07T15:37:42.632Z"
+    "completedAt": "2026-10-07T15:59:33.962Z"
   }
 }
