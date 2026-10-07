@@ -99,6 +99,7 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   let result = run(1, 'lint');
   assert.notEqual(result.status, 0);
   assert.deepEqual(readFileSync(commands, 'utf8').trim().split('\n'), [
+    'install --frozen-lockfile --lockfile-only --prefer-offline --ignore-scripts',
     'format:check !.github/**',
     'lint --ignore-pattern .github/**',
   ]);
@@ -107,6 +108,7 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(readFileSync(commands, 'utf8').trim().split('\n'), [
     'lint --ignore-pattern .github/**',
+    'install --frozen-lockfile --lockfile-only --prefer-offline --ignore-scripts',
     'format:check !.github/**',
     'typecheck',
     'test',

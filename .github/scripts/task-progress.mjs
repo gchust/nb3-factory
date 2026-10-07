@@ -168,6 +168,19 @@ export function renderProgress(record, repository) {
     '> 阶段或验收计数变化时最多每两分钟更新一次；无变化时约每二十分钟刷新快照时间。日志有输出不等于验收有进展；QA 行是已记录结果，不是最终验收结论。时间停止更新表示快照已过时，不能仅凭此认定搭建卡死。\n';
 }
 
+// GitHub reports a job that reached its timeout-minutes as cancelled. The final
+// progress update is written while the run is still finishing, and it is never
+// replaced, so a runner timeout must not be labelled a manual cancel. A job
+// that ran to within five minutes of its own limit timed out. Keep these in
+// step with code-agent-task.yml (task-review7.test.mjs checks them).
+export const CORE_JOB_TIMEOUT_MINUTES = { agent: 360, 'verify-final': 90, publish: 15 };
+export function jobOutcome(job) {
+  if (job.conclusion !== 'cancelled') return job.conclusion;
+  const limit = CORE_JOB_TIMEOUT_MINUTES[job.name];
+  const elapsed = Date.parse(job.completed_at) - Date.parse(job.started_at);
+  return limit && Number.isFinite(elapsed) && elapsed >= (limit - 5) * 60_000 ? 'timed_out' : 'cancelled';
+}
+
 export async function publishProgress(api, repository, { runId, attempt, live }, now = Date.now()) {
   if (![runId, attempt].every(positive)) throw new Error('Invalid source run');
   if (live) live = validateSnapshot(live, now);
@@ -190,7 +203,7 @@ export async function publishProgress(api, repository, { runId, attempt, live },
   const dispatched = core.some((j) => j.name === 'agent' && j.status === 'completed' &&
     j.steps?.some((s) => s.name === 'Dispatch continuation run' && s.conclusion === 'success'));
   const outcome = taskOutcome(run, jobs) ||
-    core.find((j) => ['failure', 'cancelled', 'timed_out'].includes(j.conclusion))?.conclusion ||
+    core.map(jobOutcome).find((conclusion) => ['failure', 'cancelled', 'timed_out'].includes(conclusion)) ||
     (dispatched ? 'handoff' : null);
   // A comment-reply job may still be running after delivery; do not occupy a
   // reporter runner waiting for it or confuse it with business build progress.

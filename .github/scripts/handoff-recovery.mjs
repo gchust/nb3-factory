@@ -32,9 +32,14 @@ export function validateRecovery({ event, run, task, checkpointTask, state, patc
       task.task?.commentKind === 'reply' || !isDeepStrictEqual(task, checkpointTask)) {
     throw new Error('Recovery checkpoint and source task do not identify the same Issue and input.');
   }
-  if (!positive(run.run_attempt) || (task.run
-      ? task.run.id !== runId || task.run.attempt !== run.run_attempt
-      : run.run_attempt !== 1)) {
+  // The checkpoint belongs to the attempt that recorded it. A later attempt is
+  // only a GitHub Re-run, which the agent job rejects before any work
+  // (requireFreshRunAttempt), so it leaves that checkpoint intact; accept it
+  // when the state's execution identity proves it is the earlier attempt's.
+  const sourceAttempt = task.run ? task.run.attempt : 1;
+  if (!positive(run.run_attempt) || !positive(sourceAttempt) || (task.run && task.run.id !== runId) ||
+      (run.run_attempt !== sourceAttempt &&
+        (run.run_attempt < sourceAttempt || state?.executionId !== `${runId}:${sourceAttempt}`))) {
     throw new Error('Recovery artifacts do not belong to the source run attempt.');
   }
   const sha = controlSha(task.controlSha);
@@ -52,7 +57,7 @@ export function validateRecovery({ event, run, task, checkpointTask, state, patc
   if (task.applicationBase && ![task.workBranch, task.task.targetBranch].includes(task.applicationBase.ref)) {
     throw new Error('Invalid recorded application base ref.');
   }
-  const recovery = { sourceRunId: runId, sourceAttempt: run.run_attempt, baseSha,
+  const recovery = { sourceRunId: runId, sourceAttempt, baseSha,
     baseRef: task.applicationBase?.ref, controlSha: sha, inputHash: state.inputHash, patchHash: state.patchHash };
   return {
     recovery,
@@ -136,5 +141,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     // Never copy the full transcript, QA criteria, or previous QA evidence into
     // the implementation prompt. The restored worktree is its source of truth.
     appendFileSync(args.prompt, `\n\n## Restored partial implementation\n\nThis workspace contains the unverified code changes from failed run ${recovery.sourceRunId}. Inspect the existing files and git diff, then continue the original task rather than recreating it. The failure is not a successful delivery. Native agent sessions, databases and browser state were not restored. Do not assume any previous tests passed; the factory will execute its verification gates again.\n`);
-  } else throw new Error('Usage: handoff-recovery.mjs <normalize|check-base|context> [options]');
+  } else if (command === 'continuation-context') {
+    // A Handoff continuation resuming in the implementation phase gets the
+    // same orientation as a recovery: the restored worktree, not a blank start.
+    const previous = Number(args['previous-run']);
+    if (!positive(previous)) throw new Error('Invalid continuation context.');
+    appendFileSync(args.prompt, `\n\n## Restored partial implementation\n\nThis workspace contains the unverified code changes from run ${previous}, which reached its runner time budget and handed off to this run. Inspect the existing files and git diff, then continue the original task rather than recreating it. Native agent sessions, databases and browser state were not restored. Do not assume any previous tests passed; the factory will execute its verification gates again.\n`);
+  } else throw new Error('Usage: handoff-recovery.mjs <normalize|check-base|context|continuation-context> [options]');
 }
