@@ -843,7 +843,12 @@ test('the replayed usage report serializes with the other page writers and inher
   );
   assert.doesNotMatch(usage, /^concurrency:/m);
   for (const [job, group] of [
-    ['report', 'factory-task-usage'],
+    // Writes only its Issue's usage comment: queued per Issue (from the source
+    // run's title), the global lock without one.
+    [
+      'report',
+      String.raw`\$\{\{ needs\.wait-for-source\.outputs\.issue && format\('factory-task-usage-issue-\{0\}', needs\.wait-for-source\.outputs\.issue\) \|\| 'factory-task-usage' \}\}`,
+    ],
     ['pages', 'factory-task-usage'],
     // Compare-and-swap gh-pages writes; off the global lock.
     ['evaluation', 'factory-evaluation-registry'],

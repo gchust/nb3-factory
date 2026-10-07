@@ -332,9 +332,10 @@ jobs:
       pull-requests: write
       pages: write
       id-token: write
-    # The called reporter's writing jobs hold factory-task-usage themselves, so
-    # the publish never runs beside daily-findings and classify-findings. Holding
-    # the group here too would deadlock: GitHub cancels the call.
+    # The called reporter's pages job holds factory-task-usage itself, so the
+    # archive and deploy never run beside daily-findings and classify-findings;
+    # its usage comment queues per Issue. Holding the global group here too
+    # would deadlock: GitHub cancels the call.
     uses: ./.github/workflows/report-task-usage.yml
     with:
       run_id: ${{ needs.prepare.outputs.run_id }}

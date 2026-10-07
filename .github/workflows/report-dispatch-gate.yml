@@ -35,6 +35,9 @@ on:
       covered:
         description: "'true' when the source run already requested this report, or ran no model and has nothing to report"
         value: ${{ jobs.check.outputs.covered }}
+      issue:
+        description: The source run's Issue from its title, or '' when the title has none; only for picking a concurrency group
+        value: ${{ jobs.check.outputs.issue }}
 
 permissions: {}
 
@@ -46,6 +49,7 @@ jobs:
       actions: read
     outputs:
       covered: ${{ steps.check.outputs.covered }}
+      issue: ${{ steps.issue.outputs.issue }}
     steps:
       - name: Check whether the task already dispatched this report
         id: check
@@ -90,3 +94,17 @@ jobs:
           fi
           echo "covered=$covered" >> "$GITHUB_OUTPUT"
           echo "$WORKFLOW already dispatched by run $RUN_ID attempt $ATTEMPT: $covered"
+
+      # The caller may queue per Issue; the task's run-name starts with it.
+      # Same rule as taskRunIssue in wait-for-task-run.mjs.
+      - name: Read the source run's Issue
+        id: issue
+        env:
+          TITLE: ${{ github.event.workflow_run.display_title }}
+        run: |
+          set -euo pipefail
+          issue=''
+          if [[ "${TITLE:-}" =~ ^Factory\ issue\ \#([1-9][0-9]*)\ build\  ]]; then
+            issue="${BASH_REMATCH[1]}"
+          fi
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"

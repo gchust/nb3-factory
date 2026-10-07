@@ -549,7 +549,7 @@ test('workflow_run copies of dispatched reports skip once the task requested the
 // The gate's own script against a recorded jobs listing.
 function gate(t, steps, { workflow, fail = false, failTimes = 0, runId = '123', calls } = {}) {
   const source = readWorkflow('report-dispatch-gate.yml');
-  const script = source.split('        run: |\n')[1].replace(/^ {10}/gm, '');
+  const script = source.split('        run: |\n')[1].split('\n      - name:')[0].replace(/^ {10}/gm, '');
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-gate-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const bin = path.join(root, 'bin');
@@ -601,15 +601,60 @@ test('the gate reads only its own workflow\'s request step and fails open', (t) 
   assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml"); evil' }), 'covered=false');
 });
 
-test('live progress updates queue per source run, not globally', () => {
+test('the gate reads the source run\'s Issue from its title for the caller\'s queue', (t) => {
+  const source = readWorkflow('report-dispatch-gate.yml');
+  assert.match(source, /\n {6}issue:\n {8}description: .*\n {8}value: \$\{\{ jobs\.check\.outputs\.issue \}\}\n/);
+  assert.match(source, /\n {6}issue: \$\{\{ steps\.issue\.outputs\.issue \}\}\n/);
+  const script = source.split('        run: |\n')[2].replace(/^ {10}/gm, '');
+  const read = (title) => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'factory-gate-issue-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const output = path.join(root, 'output');
+    writeFileSync(output, '');
+    const env = { ...process.env, GITHUB_OUTPUT: output };
+    delete env.TITLE;
+    if (title !== undefined) env.TITLE = title;
+    const result = spawnSync('bash', ['-c', script], { encoding: 'utf8', env });
+    assert.equal(result.status, 0, result.stderr);
+    return readFileSync(output, 'utf8').trim();
+  };
+  assert.equal(read('Factory issue #42 build 0 from 0'), 'issue=42');
+  assert.equal(read('Factory issue #42 build 7 from 99 request r1'), 'issue=42');
+  assert.equal(read('Factory issue #0 build 0 from 0'), 'issue=');
+  assert.equal(read('Factory issue # build 0 from 0'), 'issue=');
+  assert.equal(read('Something else #42 build'), 'issue=');
+  assert.equal(read('$(touch pwned) Factory issue #1 build '), 'issue=');
+  assert.equal(read(undefined), 'issue=');
+});
+
+test('live progress updates queue per Issue, falling back to the source run, never globally', () => {
   const workflow = readFileSync(
     path.resolve(import.meta.dirname, '../../workflows/report-task-progress.yml'),
     'utf8',
   );
+  // A continuation's snapshots and its predecessor's final report rewrite one
+  // Issue comment, so they share a group; without an Issue it is the run's.
+  // A workflow_run copy reads its Issue from the gate, so it queues with the
+  // dispatched copy; the group is therefore on the job, after the gate.
+  const issue =
+    'github.event.client_payload.snapshot.issue || inputs.issue || needs.dispatch-gate.outputs.issue';
+  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   assert.match(
     workflow,
-    /group: factory-live-progress-\$\{\{ github\.event\.client_payload\.snapshot\.runId \|\| inputs\.run_id \|\| github\.event\.workflow_run\.id \}\}\n\s+queue: max/,
+    new RegExp(
+      `\\n {2}report:\\n {4}needs: dispatch-gate\\n[\\s\\S]*?\\n {4}concurrency:\\n {6}group: >-\\n {8}` +
+        escape(`\${{ (${issue}) &&`) +
+        `\\n {8}` +
+        escape(`format('factory-live-progress-issue-{0}', ${issue}) ||`) +
+        `\\n {8}` +
+        escape(
+          "format('factory-live-progress-{0}', github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id) }}",
+        ) +
+        `\\n {6}queue: max\\n`,
+    ),
   );
+  assert.doesNotMatch(workflow, /^concurrency:/m);
+  assert.match(workflow, /\n {6}issue:\n {8}description: .*\n {8}required: false\n/);
 });
 
 test('jobs downstream of the dispatch gate never inherit its skip', () => {

@@ -77,6 +77,16 @@ export async function waitForTaskRun(
   }
 }
 
+// The task's run-name starts with its Issue, which the reporters use only to
+// pick a per-Issue concurrency group; each still reads the Issue it writes to
+// from the run's own artifacts. Anything else yields '' (a shared group).
+export function taskRunIssue(run) {
+  const issue = Number(
+    /^Factory issue #([1-9]\d*) build /u.exec(run?.display_title ?? '')?.[1],
+  );
+  return Number.isSafeInteger(issue) ? String(issue) : '';
+}
+
 // `node wait-for-task-run.mjs --run-id N [--attempt N]` waits in a job of its
 // own that holds no concurrency group, so a report job that serializes on a
 // shared group never holds it while the source run is still finishing. That
@@ -107,5 +117,8 @@ if (
   // and a re-run started after this job must not change which one the locked
   // report job reads (and then waits for while holding its group).
   if (process.env.GITHUB_OUTPUT)
-    appendFileSync(process.env.GITHUB_OUTPUT, `attempt=${run.run_attempt}\n`);
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `attempt=${run.run_attempt}\nissue=${taskRunIssue(run)}\n`,
+    );
 }
