@@ -52,9 +52,17 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The ticket page
+    // is the opposite: it checks the `tickets` page grant, so it is hidden from an identity that has not been given
+    // one, and the permission sets in database/seed-data/tickets-permission-sets.ts store that same id. Its three
+    // overlay routes (create dialog, detail drawer, complete dialog) skip page authorization of their own: they are
+    // reached only through the ticket page, whose grant still guards them.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'tickets' },
+      { name: 'ticket-new', authorizedAs: null },
+      { name: 'ticket-detail', authorizedAs: null },
+      { name: 'ticket-detail-complete', authorizedAs: null },
     ]);
   });
 });
