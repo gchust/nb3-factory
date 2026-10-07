@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "4ba138ac5a047bf148a82c9f292f9ebbc88cdf8857f7d48ca78f0b248c767fb5",
+  "inputHash": "10ccbc10fad34da37d6b95a17ed41d9d0af3c8f332ea8b7e57b41dc679cb9092",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -696,6 +696,16 @@
       "id": "616:37567947893:1:F8",
       "report": "616:37567947893:1",
       "fingerprint": "8db21731eb8153ba2d3bca064325d2f234afd243e6b946e5b7d88c4fb2baea80"
+    },
+    {
+      "id": "630:37590168713:1:F5",
+      "report": "630:37590168713:1",
+      "fingerprint": "041ca7565ef1b684aa516a4a3ba04cf101baf263a03a4779ab3f112ec6c275b0"
+    },
+    {
+      "id": "630:37590168713:1:F7",
+      "report": "630:37590168713:1",
+      "fingerprint": "0df23cd6b8086e255615466cf001870fd65612651b380bd755c572bc76aa7b08"
     }
   ],
   "groups": [
@@ -1060,10 +1070,11 @@
       ]
     },
     {
-      "title": "指引可显式说明运行时 schema 探查应走框架 API 而非原始 SQL 驱动",
-      "reason": "单条保留：528:F5 的 E6/E44 显示 Agent 用原始驱动探查导致 no such column，属独立操作指引缺口。",
+      "title": "指引未说明运行时 schema/表结构探查应走框架内省，Agent 改用原始 SQL 驱动并以逻辑名查询失败",
+      "reason": "跨报告合并（含本次新增 630:F7）。528:F5（E6/E44）与 630:F7（E26/E77）都记录 nocobase-db Skill 只给出逻辑 Collection/字段名与物理名的映射，却未给出受支持的只读 schema/表结构探查路径；实现 Agent 因此用 better-sqlite3/sqlite3 直接对已迁移库执行 SQL，并沿用逻辑集合/列名（contacts.customerId、meetingRooms/startAt），得到 no such column / no such table。触发条件（db apply 后核对实际结构）、期望（用框架内省、Query 层或 collections doctor 只读检查结构）、实际（原始方言驱动 + 逻辑名失败）与修复方向（在 nocobase-db 的 Builder/Collections 章节或 §3/§4 顶部补充推荐探查途径并提示逻辑名到物理列的转换）一致。",
       "members": [
-        "528:37073999569:1:F5"
+        "528:37073999569:1:F5",
+        "630:37590168713:1:F7"
       ]
     },
     {
@@ -1299,15 +1310,22 @@
       "members": [
         "616:37567947893:1:F8"
       ]
+    },
+    {
+      "title": "shadcn 依赖步骤缺少 lockfile 同步命令",
+      "reason": "单条保留。630:F5（E37/E38/E54/E57）显示 shadcn.md 要求把 CLI 引入的包移到 devDependencies 并恢复 @nocobase/i18n 的 ^ 范围，却未要求重新生成 pnpm-lock，随后 frozen-lockfile 校验以 ERR_PNPM_OUTDATED_LOCKFILE 失败，repair 轮需自行执行 pnpm install --lockfile-only 同步。现有分组中没有同一根因（依赖变更后缺少 lockfile 同步步骤）或同一指引位置（shadcn.md / AGENTS.md 添加依赖章节）的成员，故独立保留。",
+      "members": [
+        "630:37590168713:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37569459952",
+    "runId": "37609798942",
     "attempt": 1,
-    "controlSha": "c44263e0d58bfdfb2785f3dd7550ab6bff13023d",
-    "completedAt": "2026-10-07T04:03:30.635Z"
+    "controlSha": "bd887d34035f8ec4d8b3ca18a5911ef1725d9188",
+    "completedAt": "2026-10-07T10:50:05.049Z"
   }
 }
