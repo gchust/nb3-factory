@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b69e04b840956791cfc86db72fc86d8c6e663fea78d3eb18e2c11b97b093e7ab",
+  "inputHash": "3515196ab51efa574107652183fd8bb9681ce39d5bafbe6583181a1b0ae24de7",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -723,6 +723,16 @@
       "fingerprint": "533d59b498e8275ff7f44b355b113886f22180bf3b911096b75eb07c65badaa9"
     },
     {
+      "id": "648:37621548015:1:F4",
+      "report": "648:37621548015:1",
+      "fingerprint": "a6044a7300afee3a7d2de7b4c8e17d73104f51ea5072c53250defa93ba4b18ae"
+    },
+    {
+      "id": "648:37621548015:1:F6",
+      "report": "648:37621548015:1",
+      "fingerprint": "b26a34ae02ff26ef2c4335fe22f5ee4aebc9a1c92bea77823b1483607472bb13"
+    },
+    {
       "id": "649:37621548882:1:F1",
       "report": "649:37621548882:1",
       "fingerprint": "718eb1bff5bae7a737f327320174cfead2b0c500f3f2bf161f2ad22f51b3ae48"
@@ -1407,15 +1417,29 @@
       "members": [
         "650:37621552128:1:F7"
       ]
+    },
+    {
+      "title": "授权 Skill 仅记录 composite 路径，公共 catalog 资源类型/grantBacked 缺指引",
+      "reason": "单条保留：648:F4 的 E17 显示 authorization.md 只要求业务操作走 composite 并绑定 conditions.database 策略、禁止 collection 级或内存过滤，而 E12/E13 证明 core 公共导出 ResourceTypeRegistry/ResourceItems/grantBacked 的 catalog 资源类型路径，E28 显示冻结应用据此声明 office catalog 资源类型并用 grantBacked 兜底、记录范围改由 service 侧 readOwn 过滤；共同指向授权 Skill 未文档化 catalog 路径及其适用边界。该缺口与 composite 下 require() 行为、withPolicy 类型丢失等既有根因不同，且与同报告 648:F6 无关，故单独保留。",
+      "members": [
+        "648:37621548015:1:F4"
+      ]
+    },
+    {
+      "title": "页面在异步保存后关闭 overlay 缺少受支持范式，应用自建 RouteOverlayBridge",
+      "reason": "单条保留：648:F6 的 E24 显示 overlay.md 规定 useRouteOverlay 只能在 overlay 内部调用、只给出把 close 拆成子组件的写法，E30/E31 显示应用在页面层调用 hook 导致自定义表单路由加载失败，只能新增 RouteOverlayBridge/useRouteOverlayRef 才能通过验证；这是模板/指引缺少页面级异步关闭 overlay 的受支持路径，与同报告 648:F4 的授权指引缺口根因不同，故单独保留。",
+      "members": [
+        "648:37621548015:1:F6"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37640971919",
+    "runId": "37643525908",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-07T14:59:03.622Z"
+    "completedAt": "2026-10-07T15:25:26.949Z"
   }
 }
