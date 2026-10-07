@@ -97,6 +97,112 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  // The IT repair ticketing feature. The `authz` and `permissionSet` entries
+  // are not shown on its pages: the authorization plugin renders them in the
+  // permission workspace, through these same locale files.
+  itTickets: {
+    title: 'IT repair tickets',
+    description:
+      'Report a computer, account or other problem and follow how it is handled.',
+    capNotice:
+      'Showing the {{shown}} most recent of {{total}} matching tickets. Use the status filter to narrow the list.',
+    create: {
+      action: 'Submit a ticket',
+      title: 'Submit a repair ticket',
+      success: 'Ticket "{{title}}" was submitted.',
+    },
+    form: {
+      description:
+        'Describe the problem. The ticket is recorded against you automatically.',
+      descriptionHint:
+        'What is wrong, and what you have already tried. Optional.',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      descriptionTooLong: 'Use at most {{max}} characters.',
+    },
+    filters: {
+      status: 'Filter by status',
+      allStatuses: 'All statuses',
+      clear: 'Clear filter',
+    },
+    fields: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      description: 'Description',
+      submitter: 'Submitted by',
+      handler: 'Handled by',
+      resolutionNote: 'Resolution',
+      createdAt: 'Submitted at',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+    },
+    status: {
+      pending: 'Pending',
+      processing: 'Processing',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    empty: {
+      title: 'No tickets yet',
+      description: 'Submit a ticket when something needs repairing.',
+      noResults: 'No ticket matches this filter.',
+    },
+    error: {
+      title: 'Tickets could not be loaded',
+      requestFailed: 'Something went wrong. Please try again in a moment.',
+      forbidden: 'Your account is not allowed to do this.',
+      notFound: 'This ticket does not exist, or is not yours to see.',
+      sessionExpired: 'Your session has ended. Sign in to continue.',
+      signInAgain: 'Sign in again',
+    },
+    // What the server reports when a transition is refused.
+    state: {
+      IT_TICKET_NOT_PENDING: 'This ticket is no longer waiting to be handled.',
+      IT_TICKET_NOT_PROCESSING:
+        'This ticket is not being handled, so it cannot be completed.',
+      IT_TICKET_ALREADY_COMPLETED: 'This ticket is already completed.',
+      IT_TICKET_RESOLUTION_REQUIRED:
+        'Describe the resolution before completing the ticket.',
+    },
+    start: {
+      action: 'Start handling',
+    },
+    complete: {
+      action: 'Complete',
+      title: 'Complete the ticket',
+      description:
+        'Record what was done. The resolution is what the reporter reads.',
+      hint: 'Required: the resolution note.',
+      noteRequired: 'Describe the resolution.',
+      noteTooLong: 'Use at most {{max}} characters.',
+      success: 'Ticket "{{title}}" was completed.',
+    },
+    detail: { title: 'Ticket' },
+    authz: {
+      section: { title: 'IT repair tickets' },
+      resource: { title: 'IT repair tickets' },
+      recordAccess: {
+        title: 'Tickets I submitted',
+        description: 'Only the tickets this account submitted itself.',
+      },
+      action: {
+        view: 'View tickets',
+        create: 'Submit a ticket',
+        start: 'Start handling',
+        complete: 'Complete a ticket',
+      },
+    },
+    permissionSet: {
+      employee: 'IT repair - employee',
+      handler: 'IT repair - handler',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -114,6 +220,8 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    saving: 'Saving…',
     language: 'Language',
   },
   notices: {
@@ -131,6 +239,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    itTickets: 'IT repair tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
