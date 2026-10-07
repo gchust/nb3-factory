@@ -144,9 +144,10 @@ function trustedUsage(budget, metadata, state, restoring = false) {
     : null;
   const advancing =
     restoring && (!executionId || executionId !== state.executionId);
-  const floor =
-    count(process.env.FACTORY_TASK_CONTINUATION) +
-    Math.max(0, count(process.env.GITHUB_RUN_ATTEMPT) - 1);
+  // Only continuations raise the floor: initialize and restoreState reject any
+  // GitHub Re-run (requireFreshRunAttempt) before this runs, so the run attempt
+  // is always 1 here.
+  const floor = count(process.env.FACTORY_TASK_CONTINUATION);
   return {
     ...(budget ? { budget } : {}),
     activeSeconds,

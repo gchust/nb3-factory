@@ -34,6 +34,14 @@ timed() {
       # A negative CLI glob keeps the app's own ignore/config files unchanged.
       node "$script_dir/timed-command.mjs" format:check pnpm format:check '!.github/**'
       ;;
+    lockfile)
+      # The lockfile must still match every manifest: final verification and
+      # deployment install with --frozen-lockfile, and a drift found only there
+      # fails a task the repair loop could have fixed in one round. Checked
+      # lockfile-only, without scripts: about a second, node_modules untouched.
+      node "$script_dir/timed-command.mjs" lockfile \
+        pnpm install --frozen-lockfile --lockfile-only --prefer-offline --ignore-scripts
+      ;;
     *) node "$script_dir/timed-command.mjs" "$1" pnpm "$1" ;;
   esac
 }
@@ -55,11 +63,11 @@ previous=''
 if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' && -f "$failed_stage" ]]; then
   previous="$(cat "$failed_stage")"
   case "$previous" in
-    format:check|lint|typecheck|test) run_check "$previous" ;;
+    lockfile|format:check|lint|typecheck|test) run_check "$previous" ;;
     *) previous='' ;;
   esac
 fi
-for check in format:check lint typecheck test; do
+for check in lockfile format:check lint typecheck test; do
   [[ "$check" == "$previous" ]] || run_check "$check"
 done
 rm -f "$failed_stage"

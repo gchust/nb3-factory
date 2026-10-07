@@ -187,8 +187,12 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   }
   // A merged/closed PR terminates this Issue's single-PR iteration, even if
   // the Issue-close callback has not yet arrived.
+  // Only this Issue's own PRs, filtered by the API rather than by listing every
+  // PR of the repository on each reconcile.
+  const owner = client.repository.split('/')[0];
   const pulls = await listAll(client, '/pulls', {
     state: 'all',
+    head: `${owner}:agent/issue-${issueNumber}`,
   });
   const { default_branch: defaultBranch } = await client.getRepository();
   task.targetBranch = await resolveTargetBranch(
@@ -212,7 +216,12 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   }
   if (
     !isSharedTaskBase(task.targetBranch, defaultBranch) &&
-    pulls.some(
+    (
+      await listAll(client, '/pulls', {
+        state: 'open',
+        base: task.targetBranch,
+      })
+    ).some(
       (pull) =>
         pull.base?.ref === task.targetBranch &&
         pull.state === 'open' &&

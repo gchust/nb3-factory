@@ -116,12 +116,9 @@ jobs:
       build_comment_id: ${{ steps.prepare.outputs.build_comment_id }}
       comment_kind: ${{ steps.prepare.outputs.comment_kind }}
       issue_number: ${{ steps.prepare.outputs.issue_number }}
-      target_branch: ${{ steps.prepare.outputs.target_branch }}
       work_branch: ${{ steps.prepare.outputs.work_branch }}
-      default_branch: ${{ steps.prepare.outputs.default_branch }}
-      base_ref: ${{ steps.prepare.outputs.base_ref }}
-      base_sha: ${{ steps.prepare.outputs.base_sha }}
-      evaluation_sample: ${{ steps.prepare.outputs.evaluation_sample }}
+      base_ref: ${{ steps.base.outputs.ref }}
+      base_sha: ${{ steps.base.outputs.sha }}
     steps:
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
@@ -232,6 +229,24 @@ jobs:
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
 
+      # A continuation keeps the application base its source run recorded; see
+      # continuationBase in handoff-control.mjs. Everything else uses prepare's.
+      - name: Resolve the application base
+        id: base
+        if: steps.prepare.outputs.status == 'ready'
+        env:
+          BASE_REF: ${{ steps.prepare.outputs.base_ref }}
+          BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+          CONTINUATION: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' }}
+        run: |
+          if [[ "$CONTINUATION" == true ]]; then
+            node bootstrap/.github/scripts/handoff-control.mjs base \
+              --previous-task previous-task/task-metadata.json \
+              --base-ref "$BASE_REF" --base-sha "$BASE_SHA" --output "$GITHUB_OUTPUT"
+          else
+            printf 'ref=%s\nsha=%s\n' "$BASE_REF" "$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Reject changed recovery input or application base
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
         env:
@@ -258,8 +273,8 @@ jobs:
         env:
           FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
           FACTORY_ENTRY_SHA: ${{ github.sha }}
-          FACTORY_APPLICATION_BASE_REF: ${{ steps.prepare.outputs.base_ref }}
-          FACTORY_APPLICATION_BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+          FACTORY_APPLICATION_BASE_REF: ${{ steps.base.outputs.ref }}
+          FACTORY_APPLICATION_BASE_SHA: ${{ steps.base.outputs.sha }}
         run: node bootstrap/.github/scripts/handoff-control.mjs record --metadata "$RUNNER_TEMP/task-metadata.json"
 
       - name: Save normalized task metadata
@@ -506,6 +521,12 @@ jobs:
         if: inputs.recovery_run_id != '' && steps.resume.outputs.phase == 'implementation'
         run: node bootstrap/.github/scripts/handoff-recovery.mjs context --checkpoint handoff --prompt "$RUNNER_TEMP/implement.md"
 
+      - name: Explain handed-off work without exposing QA context
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' && steps.resume.outputs.phase == 'implementation'
+        env:
+          PREVIOUS_RUN_ID: ${{ github.event.client_payload.previous_run_id }}
+        run: node bootstrap/.github/scripts/handoff-recovery.mjs continuation-context --previous-run "$PREVIOUS_RUN_ID" --prompt "$RUNNER_TEMP/implement.md"
+
       - name: Install pinned Code Agent
         timeout-minutes: 10
         if: inputs.failure_smoke != true
@@ -693,11 +714,31 @@ jobs:
       # A job timeout is a cancellation: success() and failure() are both false
       # then, so without the cancelled() clause hours of work left no patch and
       # no checkpoint. Only work that actually started is sealed.
+      # A continuation or recovery that fails while setting up (dependency or
+      # Agent install, preflight, fonts) never reaches implementation or
+      # verification, yet its workspace already holds the restored work. Record
+      # the run as failed so the patch below seals it and the work stays
+      # publishable and recoverable instead of vanishing with the runner.
+      - name: Mark a continuation that failed during setup
+        id: setup_failure
+        if: >-
+          failure() && steps.resume.outcome == 'success' &&
+          steps.implementation.outcome == 'skipped' && steps.verify.outcome == 'skipped' &&
+          ((github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != '')
+        run: |
+          state="$RUNNER_TEMP/agent-artifacts/pipeline-state.json"
+          outcome="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).outcome ?? "")' "$state")"
+          # A preflight block or an exhausted budget keeps its own verdict.
+          if [[ "$outcome" != blocked && "$outcome" != budget-exhausted && "$outcome" != failed ]]; then
+            node control/.github/scripts/pipeline-state.mjs outcome "$state" failed
+          fi
+
       - name: Create deterministic patch
         id: patch
         if: >-
           success() ||
           failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.failure_smoke.outcome == 'failure') ||
+          failure() && steps.setup_failure.outcome == 'success' ||
           cancelled() && (steps.implementation.outcome != 'skipped' || steps.verify.outcome != 'skipped' || steps.failure_smoke.outcome != 'skipped') ||
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
@@ -891,6 +932,9 @@ jobs:
     if: needs.agent.result == 'success' && needs.agent.outputs.handoff != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    outputs:
+      # A failed verification left its deployable build; see the upload below.
+      failed_dist: ${{ steps.failed_dist_upload.outcome == 'success' }}
     env:
       FACTORY_BUILD_TARGET: linux-x64
       FACTORY_BUILD_NODE_VERSION: '24'
@@ -1028,6 +1072,30 @@ jobs:
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: factory-dist-${{ needs.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/deployable
+          if-no-files-found: error
+          retention-days: 14
+
+      # verify.sh builds and archives before its database, browser and required
+      # checks. When one of those fails, the archive is the same linux-x64 build
+      # preview-build-failed would install and build a second time for the failed
+      # PR's preview; keep it instead, and that job is skipped.
+      - name: Stage the failed verification's build for the preview
+        id: failed_dist
+        if: failure() && hashFiles('workspace/storage/exports/dist.tar.gz') != ''
+        continue-on-error: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/deployable"
+          cp workspace/storage/exports/dist.tar.gz "$RUNNER_TEMP/deployable/dist.tar.gz"
+          cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
+
+      - name: Upload the failed verification's build
+        id: failed_dist_upload
+        if: failure() && steps.failed_dist.outcome == 'success'
+        continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
@@ -1212,8 +1280,10 @@ jobs:
   # configured: deploy-preview would discard the package anyway. A job
   # condition cannot read secrets, hence the variable; unset keeps it on.
   preview-build-failed:
-    needs: [prepare, agent, publish-failed]
-    if: always() && !cancelled() && needs.publish-failed.result == 'success' && vars.FACTORY_PREVIEW_ENABLED != 'false'
+    needs: [prepare, agent, verify-final, publish-failed]
+    # Skipped when verify-final already uploaded the build it made before a
+    # later check failed: deploy-preview takes that factory-dist-N instead.
+    if: always() && !cancelled() && needs.publish-failed.result == 'success' && vars.FACTORY_PREVIEW_ENABLED != 'false' && needs.verify-final.outputs.failed_dist != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1350,10 +1420,16 @@ jobs:
 
       - name: Summarize failed preview packaging timings
         if: always()
+        # Diagnostics only: a failure here must not report a package that was
+        # uploaded above as missing.
+        continue-on-error: true
         run: node control/.github/scripts/timing-summary.mjs
 
       - name: Upload failed preview packaging diagnostics
         if: always()
+        # Diagnostics only: a failure here must not report a package that was
+        # uploaded above as missing.
+        continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-preview-build-${{ needs.prepare.outputs.issue_number }}
@@ -1415,6 +1491,8 @@ jobs:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
+          # mark-failure.mjs and everything it imports live here.
+          sparse-checkout: .github/scripts
 
       - name: Download failure diagnostics
         id: patch_copy
@@ -1619,6 +1697,8 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           persist-credentials: false
+          # comment-reply.mjs and everything it imports live here.
+          sparse-checkout: .github/scripts
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x

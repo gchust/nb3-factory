@@ -83,6 +83,22 @@ export function verifyControlSha(event, selectedSha, checkpoint) {
   return selected;
 }
 
+// A continuation applies the checkpoint patch to the base its source run
+// recorded. prepare-task.mjs reads a non-shared target branch's live head, which
+// can move during the five hours before a handoff; the patch was built and
+// verified on the recorded commit, and publication restacks it onto the branch
+// head afterwards (publication-base.mjs). A changed base ref means the chain
+// itself changed, which no continuation can reconcile.
+export function continuationBase(previous, ref, sha) {
+  controlSha(sha);
+  const recorded = previous?.applicationBase;
+  if (!recorded) return { ref, sha, pinned: false };
+  if (recorded.ref !== ref) {
+    throw new Error(`Application base ref changed since the source run (${recorded.ref} -> ${ref}); start a new build instead of continuing.`);
+  }
+  return { ref, sha: controlSha(recorded.sha), pinned: recorded.sha !== sha };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [command, ...rest] = process.argv.slice(2);
   const args = {};
@@ -106,6 +122,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
     process.exit(0);
   }
+  if (command === 'base') {
+    const base = continuationBase(args['previous-task'] ? readJson(args['previous-task'], true) : null,
+      args['base-ref'], args['base-sha']);
+    if (base.pinned) console.error(`::notice::${base.ref} moved to ${args['base-sha']} since the source run; continuing on its recorded base ${base.sha}.`);
+    appendFileSync(args.output, `ref=${base.ref}\nsha=${base.sha}\n`);
+    process.exit(0);
+  }
   const event = readJson(args.event);
   if (command === 'resolve') {
     const sha = resolveControlSha(event, args['current-sha'], args.checkpoint,
@@ -115,5 +138,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } else if (command === 'verify') {
     const sha = verifyControlSha(event, process.env.FACTORY_CONTROL_SHA, args.checkpoint);
     console.error(`Verified checkpoint factory: ${sha}`);
-  } else throw new Error('Usage: handoff-control.mjs <resolve|verify> --event <file> --checkpoint <directory> [--current-sha <sha> --output <file>]');
+  } else throw new Error('Usage: handoff-control.mjs <record|base|resolve|verify> --event <file> --checkpoint <directory> [--current-sha <sha> --output <file>]');
 }
