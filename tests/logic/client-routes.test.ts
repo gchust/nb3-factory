@@ -52,9 +52,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The three
+    // expense children inherit the list page's grant: they are part of the same page, not pages of their own with
+    // their own grant to hand out.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'expenses', authorizedAs: 'expenses.claims' },
+      { name: 'expenses-new', authorizedAs: 'expenses.claims' },
+      { name: 'expenses-detail', authorizedAs: 'expenses.claims' },
+      { name: 'expenses-edit', authorizedAs: 'expenses.claims' },
     ]);
   });
 });
