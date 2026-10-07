@@ -106,6 +106,8 @@ function pages(items) {
   const client = {
     repository,
     conflictOnce: false,
+    conflicts: 0,
+    failRef: false,
     commits: 0,
     async getRef() {
       return { object: { sha: head } };
@@ -149,6 +151,11 @@ function pages(items) {
           client.conflictOnce = false;
           throw new Error('422 concurrent ref update');
         }
+        if (client.conflicts > 0) {
+          client.conflicts -= 1;
+          throw new Error('422 concurrent ref update');
+        }
+        if (client.failRef) throw new Error('500 ref update failed');
         client.commits += 1;
         head = body.sha;
         return {};
@@ -649,6 +656,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
   assert.deepEqual(result, {
     sent: [{ date: '2026-09-27', count: 2 }],
     failed: [],
+    held: [],
     remaining: 0,
   });
   assert.equal(sent.length, 1);
@@ -668,6 +676,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
     {
       sent: [],
       failed: [],
+      held: [],
       remaining: 0,
     },
   );
@@ -695,6 +704,142 @@ test('a failed send keeps the day pending for the next run', async () => {
   assert.equal(failed.remaining, 1);
   assert.equal(client.json(LEDGER).pending.length, 1);
   assert.equal((await notifyPending(client, null, {})).remaining, 1);
+});
+
+const digestConfig = {
+  url: 'https://open.feishu.cn/open-apis/bot/v2/hook/x',
+  secret: null,
+  owners,
+};
+const noPause = async () => {};
+
+// A send that may have reached the chat is never repeated automatically,
+// not even by the next day's run: the day is marked uncertain instead.
+test('a day whose send may have been delivered is held until a maintainer resends it', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  const ambiguous = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw Object.assign(
+        new Error(
+          'Feishu request failed (TimeoutError); it may have been delivered',
+        ),
+        { uncertain: true },
+      );
+    },
+  });
+  assert.equal(ambiguous.failed.length, 1);
+  assert.equal(ambiguous.failed[0].uncertain, true);
+  assert.equal(ambiguous.remaining, 1);
+  assert.deepEqual(
+    client.json(LEDGER).pending.map((item) => item.uncertain),
+    [true],
+  );
+
+  // The next scheduled run holds the day and sends nothing.
+  let sends = 0;
+  const count = async () => {
+    sends += 1;
+  };
+  const scheduled = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: count,
+  });
+  assert.deepEqual(scheduled.held, ['2026-09-27']);
+  assert.deepEqual(scheduled.sent, []);
+  assert.equal(sends, 0);
+  assert.equal(client.json(LEDGER).pending.length, 1);
+
+  // Only an explicit resend sends it, and then it is forgotten.
+  const resent = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: count,
+    resendUncertain: true,
+  });
+  assert.deepEqual(resent.sent, [{ date: '2026-09-27', count: 1 }]);
+  assert.equal(sends, 1);
+  assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+test('a definite rejection keeps the day pending and unmarked', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw Object.assign(
+        new Error('Feishu rejected the digest (HTTP 200, code 19021)'),
+        {
+          uncertain: false,
+        },
+      );
+    },
+  });
+  assert.deepEqual(
+    client.json(LEDGER).pending.map((item) => item.uncertain),
+    [undefined],
+  );
+});
+
+// Each day is recorded right after its send, so a later failure in the same
+// run cannot make the next run resend a day that already went out.
+test('each sent day is recorded before the next day is sent', async () => {
+  const client = pages([
+    report(101, '2026-09-26T02:00:00.000Z'),
+    report(102, '2026-09-27T02:00:00.000Z'),
+  ]);
+  await archiveDay(client, { now: new Date('2026-09-27T01:07:00Z'), rules });
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  assert.deepEqual(
+    [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+    ['2026-09-26', '2026-09-27'],
+  );
+  const order = [];
+  await assert.rejects(
+    notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async (_config, message) => {
+        order.push(message.content.post.zh_cn.title);
+        // The first day is already recorded when the second is sent; then
+        // recording the second fails outright.
+        if (order.length === 2) {
+          assert.deepEqual(
+            [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+            ['2026-09-27'],
+          );
+          client.failRef = true;
+        }
+      },
+    }),
+    /ref update failed/,
+  );
+  assert.equal(order.length, 2);
+  client.failRef = false;
+  // Only the day whose record failed is still pending.
+  assert.deepEqual(
+    [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+    ['2026-09-27'],
+  );
+});
+
+test('recording a day survives several concurrent gh-pages writers', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  client.conflicts = 4;
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {},
+  });
+  assert.equal(result.sent.length, 1);
+  assert.equal(client.conflicts, 0);
+  assert.deepEqual(client.json(LEDGER).pending, []);
 });
 
 test('day and index pages escape finding text and link each report', async () => {

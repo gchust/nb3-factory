@@ -133,7 +133,10 @@ export function validateLedger(ledger) {
         (day) => DAY.test(day?.date ?? '') && Number.isSafeInteger(day.count),
       ) &&
       ledger.pending.every(
-        (item) => DAY.test(item?.date ?? '') && KEY.test(item.key ?? ''),
+        (item) =>
+          DAY.test(item?.date ?? '') &&
+          KEY.test(item.key ?? '') &&
+          (item.uncertain === undefined || typeof item.uncertain === 'boolean'),
       ),
     'Invalid daily findings ledger entry',
   );

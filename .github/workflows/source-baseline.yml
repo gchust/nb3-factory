@@ -47,8 +47,10 @@ on:
 
 permissions: {}
 
-# Publishing creates a release for the source SHA; two runs for the same SHA
-# would race between checking for it and creating it.
+# Publishing creates the release factory-source-<package digest>, which is the
+# same for every run of one source SHA (only the baseline branch name carries
+# the run id), so two runs for the same SHA would race between checking for
+# that release and creating it.
 concurrency:
   group: factory-source-baseline-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || inputs.source_sha }}
   queue: max
@@ -189,7 +191,8 @@ jobs:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       # Usually 5-9 and 2-4 minutes. The limits stop a hung build or registry
-      # fetch well before the 90-minute job limit holds the global queue.
+      # fetch well before the 90-minute job limit, which would otherwise hold
+      # this PR's (or this source SHA's) concurrency group that long.
       - name: Build and publish only to an isolated loopback registry
         working-directory: source
         timeout-minutes: 25

@@ -83,8 +83,8 @@ jobs:
       needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    # The bounded steps alone take up to 42 minutes: Publish 10, Deploy 30 and
-    # the 2-minute public check. Checkout, the ~84 MB download, the tailnet,
+    # The bounded steps alone take up to 45 minutes: Publish 10, Deploy 30 and
+    # the public check's 5. Checkout, the ~84 MB download, the tailnet,
     # the deploy key and making room come on top, so 45 minutes could cut a
     # slow deploy off before its own limits and skip the PR notice. The source
     # wait runs in wait-for-source, outside the lock, so this holds the lock
@@ -357,6 +357,10 @@ jobs:
       - name: Verify the public preview URL
         id: public
         if: steps.deploy.outcome == 'success'
+        # preview-public-check.mjs gives up after 120 s, but a DNS question or
+        # probe in flight at that moment still has to return; 5 minutes bounds
+        # the step without cutting its own diagnosis short.
+        timeout-minutes: 5
         env:
           PREVIEW_URL: ${{ steps.prepare.outputs.url }}
         run: |

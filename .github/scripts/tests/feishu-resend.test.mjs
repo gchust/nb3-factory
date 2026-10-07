@@ -48,6 +48,7 @@ test('a timeout or a dropped connection is not resent', async () => {
     assert.equal(calls, 1, failure.cause?.code ?? failure.name);
     assert.ok(outcome instanceof Error);
     assert.match(outcome.message, /may have been delivered/);
+    assert.equal(outcome.uncertain, true);
     assert.ok(!outcome.message.includes('token-in-url'));
   }
   // DOMException.code is the legacy number 23; the message names the error.
@@ -92,7 +93,22 @@ test('only 429 and 503 responses are resent', async () => {
     const { calls, outcome } = await respond(status);
     assert.equal(calls, 1, String(status));
     assert.ok(outcome instanceof Error);
+    assert.equal(outcome.uncertain, true, String(status));
   }
+  // A Feishu error code is a definite answer: not in the chat.
+  const rejected = await sendFeishu(
+    config,
+    { msg_type: 'post' },
+    {
+      fetcher: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ code: 19021, msg: 'sign match fail' }),
+      }),
+      pause: async () => {},
+    },
+  ).catch((error) => error);
+  assert.equal(rejected.uncertain, false);
 });
 
 test('a connection that was never made is retried', async () => {

@@ -55,7 +55,7 @@ jobs:
     # skipped check shows as passed). Build task PRs (agent/issue-N) are the
     # exception: they change the application and are verified by the task
     # itself before a maintainer merges them into develop, so a README or
-    # package.json change there must not start a two-hour regeneration
+    # package.json change there must not start a template regeneration
     # (factory-tests.yml skips them the same way). Nothing enforces that
     # review: develop has no branch protection or rulesets today.
     if: >-
