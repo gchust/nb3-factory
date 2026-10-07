@@ -8,22 +8,29 @@ import { writeZip } from '../evaluation-bundle.mjs';
 import { deliverBundle, deliveryConfig, DeliveryConfigError, ITEM_WORST_CASE_MS, planDeliveries, SCAN_LIMIT, SEND_BUDGET_MS, sendDeliveries, targetIdOf } from '../evaluation-delivery.mjs';
 import { readOutbox, recordDeliveries } from '../evaluation-registry.mjs';
 import { problemSubmission } from '../problem-submission.mjs';
-import { buildArtifacts, fakeGitHub, reportFor, startReceiver, temporary, usageRecord } from './evaluation-fixtures.mjs';
+import { buildArtifacts, fakeGitHub, reportFor, startReceiver, markFeedbackReviewed, supportedFeedbackReview, temporary, usageRecord, put, writeReview } from './evaluation-fixtures.mjs';
 
 const exporter = { controlSha: 'e'.repeat(40), runId: 900, attempt: 1 };
 const noPause = () => Promise.resolve();
 
 // One registered revision with its bundle stored as an Actions artifact of the reporter run.
-async function registered(t, { env = { FACTORY_EVALUATION_DELIVERY: 'false' }, client = fakeGitHub() } = {}) {
+async function registered(t, { env = { FACTORY_EVALUATION_DELIVERY: 'false' }, client = fakeGitHub(), supported = false, legacy = false } = {}) {
   const root = temporary(t), exported = temporary(t), prepared = temporary(t);
   buildArtifacts(root);
-  exportDraft({ report: reportFor(root, usageRecord()), artifacts: root, html: null, output: exported, exporter });
+  if (supported) {
+    const review = writeReview(root, 'completed');
+    review.evaluation.findings.find(f => f.id === 'F2').feedbackReview = supportedFeedbackReview();
+    markFeedbackReviewed(review);
+    put(root, 'build-review.json', review);
+  }
+  const exportedDraft = exportDraft({ report: reportFor(root, usageRecord()), artifacts: root, html: null, output: exported, exporter });
+  if (legacy) { exportedDraft.draft.source.exporter.version = 1; put(exported, 'draft.json', exportedDraft.draft); }
   const registration = await prepareRevision(client, { input: exported, output: prepared });
   const zip = readFileSync(path.join(prepared, 'evaluation-bundle.zip'));
   client.addArtifact({ id: 5001, name: registration.artifactName, runId: 900, files: writeZip([{ path: 'evaluation-bundle.zip', data: zip }]) });
   await commitPrepared(client, { input: prepared, env, runId: 900, attempt: 1, artifactId: 5001 });
   const document = JSON.parse(readFileSync(path.join(prepared, 'evaluation.json')));
-  return { client, zip, registration, document, subject: { type: document.type, key: document.run.key, revision: document.revision, sourceInstance: document.source.instance } };
+  return { root, client, zip, registration, document, subject: { type: document.type, key: document.run.key, revision: document.revision, sourceInstance: document.source.instance } };
 }
 const fetcherFor = client => async (url, options) => {
   const match = /\/actions\/artifacts\/(\d+)\/zip$/.exec(url);
@@ -43,7 +50,9 @@ test('TestManage delivery includes explicit factory problems and the unchanged c
     const form = await new Response(options.body, { headers: { 'content-type': options.headers['Content-Type'] } }).formData();
     assert.deepEqual(Buffer.from(await form.get('bundle').arrayBuffer()), zip);
     const submission = JSON.parse(form.get('problems'));
-    assert.equal(submission.version, 1); assert.ok(Array.isArray(submission.problems));
+    assert.equal(submission.version, 1);
+    assert.deepEqual(submission.problems, [], 'legacy support is not inferred during delivery');
+    assert.ok(document.reviews.some(review => review.findings.length), 'withheld findings remain in the unchanged bundle');
     assert.equal(document.run.task.repository, subject.sourceInstance); called = true;
     return new Response(JSON.stringify({ receiptId: 'testmanage-receipt', sourceInstance: subject.sourceInstance, runKey: subject.key, revision: subject.revision, bundleSha256: options.headers['X-Evaluation-Bundle-SHA256'], state: 'stored' }), { status: 201 });
   } });
@@ -365,7 +374,7 @@ test('link mode submits JSON metadata and selected problems without ZIP, HTML or
 });
 
 test('link mode sends each item\'s feature point decisions with the same bytes on every attempt', async t => {
-  const { zip, subject, document, registration } = await registered(t);
+  const { zip, subject, document, registration } = await registered(t, { supported: true });
   const [problem] = problemSubmission(document).problems;
   const decision = { featurePointId: 47, method: 'rule', reason: 'pkg:@nocobase/db → 应用搭建/数据库' };
   const env = { EVALUATION_ENDPOINT: 'https://receiver.example/import', EVALUATION_TOKEN: 'test-only', EVALUATION_DELIVERY_FORMAT: 'testmanage3-links-v1' };
@@ -381,7 +390,12 @@ test('link mode sends each item\'s feature point decisions with the same bytes o
   assert.equal(sent.results[0].state, 'stored');
   assert.equal(bodies.length, 2);
   assert.ok(bodies[0].equals(bodies[1]));
-  assert.deepEqual(JSON.parse(bodies[1].toString('utf8')).problems[0].classification, decision);
+  const delivered = JSON.parse(bodies[1].toString('utf8')).problems[0];
+  assert.deepEqual(delivered.classification, decision);
+  assert.match(delivered.description, /诊断类别：guidance-gap/);
+  assert.match(delivered.description, /confidence=suspected; reviewerStatus=open/);
+  assert.match(delivered.description, /反馈核验：supported/);
+  assert.equal(Object.hasOwn(delivered, 'status'), false, 'resending never resets human triage');
   bodies.length = 0;
   await sendDeliveries({ targetId, items: [{ ...item, id: 'other' }] }, { env, fetcher, pause: noPause, classifications: new Map([['classified', { [problem.key]: decision }]]) });
   assert.equal('classification' in JSON.parse(bodies[1].toString('utf8')).problems[0], false);
@@ -447,4 +461,41 @@ test('an automatic resend that never went out keeps its rejection, reason and un
   assert.equal((await readOutbox(client)).outbox.entries[0].autoRetries ?? 0, 0);
   // The retry is still available once the minimum delay has passed again.
   await resend(new Date('2026-10-01T03:00:00Z'));
+});
+
+
+test('legacy TestManage replay is refused locally and cannot alter a stored receipt', async t => {
+  const env = { FACTORY_EVALUATION_DELIVERY: 'true', EVALUATION_ENDPOINT: 'https://receiver.example/import', EVALUATION_TOKEN: 'fixture' };
+  const { zip, subject, document, client } = await registered(t, { legacy: true, env });
+  const before = Buffer.from(zip);
+  const entry = (await readOutbox(client)).outbox.entries[0];
+  const receipt = { receiptId: 'historical-stored-receipt' };
+  await recordDeliveries(client, [{ ...entry, state: 'stored', attempts: [], receipt }]);
+  for (const format of ['testmanage3-problems-v1', 'testmanage3-links-v1']) {
+    let sent = 0;
+    const result = await deliverBundle({ zip, subject, config: { ...deliveryConfig(env), format }, fetcher: async () => { sent++; throw new Error('Must not transmit changed same-revision payload'); } });
+    assert.equal(result.state, 'rejected'); assert.equal(result.reason, 'feedback-policy-migration');
+    assert.deepEqual(result.attempts, []); assert.equal(sent, 0); assert.deepEqual(zip, before);
+    assert.match(result.detail, /Report Task Usage.*Reassess Build Quality/);
+    await recordDeliveries(client, [{ ...entry, ...result }]);
+    const retained = (await readOutbox(client)).outbox.entries[0];
+    assert.equal(retained.state, 'stored'); assert.deepEqual(retained.receipt, receipt); assert.equal(retained.attempts, 0);
+  }
+  assert.equal(document.source.exporter.version, 1);
+});
+
+test('policy migration re-export creates a new immutable revision; repeated v2 exports reuse it', async t => {
+  const { root, zip, document, client } = await registered(t, { legacy: true });
+  const originalBytes = Buffer.from(zip);
+  const output = temporary(t), prepared = temporary(t);
+  exportDraft({ report: reportFor(root, usageRecord()), artifacts: root, html: null, output, exporter });
+  const migration = await prepareRevision(client, { input: output, output: prepared });
+  assert.equal(migration.reused, false); assert.equal(migration.revision, document.revision + 1);
+  const migrated = JSON.parse(readFileSync(path.join(prepared, 'evaluation.json')));
+  assert.equal(migrated.source.exporter.version, 2);
+  assert.deepEqual(problemSubmission(migrated).problems, [], 're-export does not manufacture semantic review');
+  await commitPrepared(client, { input: prepared, env: { FACTORY_EVALUATION_DELIVERY: 'false' }, runId: 900, attempt: 1, artifactId: 5002 });
+  const repeat = await prepareRevision(client, { input: output, output: temporary(t) });
+  assert.equal(repeat.reused, true); assert.equal(repeat.revision, migration.revision);
+  assert.deepEqual(zip, originalBytes); assert.equal(document.source.exporter.version, 1);
 });

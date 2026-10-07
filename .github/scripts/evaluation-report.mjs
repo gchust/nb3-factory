@@ -12,8 +12,10 @@ import { isRunKey, resolveTaskIdentity } from './evaluation-identity.mjs';
 import { scrubSecrets } from './history-redaction.mjs';
 import { assertSchema, loadContract } from './json-schema.mjs';
 import { phases } from './task-usage.mjs';
+import { feedbackEvaluation } from './feedback-review.mjs';
 
-export const EXPORTER_VERSION = 1;
+// Version 2 binds the evidence-reviewed feedback projection to new revisions.
+export const EXPORTER_VERSION = 2;
 export const PRODUCER = 'nb3-factory';
 const RUBRIC_ID = 'nb3-framework';
 
@@ -274,7 +276,7 @@ function convertReview(review, role, selected, process, collectEvidence, record)
     rubric = { id: RUBRIC_ID, version, scale: { min: 0, max: 100 }, businessUiIncluded: false,
       dimensions: Object.entries(dimensionsFor(version)).map(([dimension, label]) => ({ key: dimension, label })) };
   } catch { /* Not-reviewed/failed records may carry no rubric. */ }
-  const evaluation = ['completed', 'partial'].includes(review.state) ? review.evaluation : null;
+  const evaluation = ['completed', 'partial'].includes(review.state) ? feedbackEvaluation(review) : null;
   const reviewer = object(review.reviewer) ? {
     engine: text(review.reviewer.engine, 80), model: text(review.reviewer.model, 200), version: text(review.reviewer.version, 80),
     runId: positive(Number(review.reviewer.runId)) ? Number(review.reviewer.runId) : null,
@@ -329,6 +331,16 @@ function convertReview(review, role, selected, process, collectEvidence, record)
       confidence: finding.confidence, confirmedBy: finding.confidence === 'confirmed' ? 'reviewer' : null,
       reviewerStatus: finding.status, title: finding.title, detail: finding.detail, impact: finding.impact,
       suggestedChange: finding.suggestedChange, claimed: text(finding.claimed), observed: text(finding.observed), evidence,
+      // Optional fields stay absent on legacy findings. A later semantic review never
+      // rewrites the original attribution, confidence or processing status.
+      ...(finding.diagnosis === undefined ? {} : { diagnosis: {
+        category: finding.diagnosis.category, trigger: finding.diagnosis.trigger, expected: finding.diagnosis.expected,
+        actual: finding.diagnosis.actual, workaround: finding.diagnosis.workaround, acceptance: finding.diagnosis.acceptance,
+      } }),
+      ...(finding.feedbackReview === undefined ? {} : { feedbackReview: {
+        status: finding.feedbackReview.status, reason: finding.feedbackReview.reason,
+        checks: finding.feedbackReview.checks.map(check => ({ kind: check.kind, reason: check.reason, evidence: refs(check.evidence) })),
+      } }),
       moduleKeys: modules.map(([moduleKey]) => moduleKey),
       subjectKeys: [...new Set(modules.flatMap(([, value]) => value.subjectKeys))],
     };

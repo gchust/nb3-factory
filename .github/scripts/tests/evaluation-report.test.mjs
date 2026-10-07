@@ -4,8 +4,10 @@ import path from 'node:path';
 import test from 'node:test';
 import { taskEvaluationIdentity, resolveTaskIdentity, isRunKey } from '../evaluation-identity.mjs';
 import { buildEvaluation, comparePrecedence, executionFacts, finalizeEvaluation, fingerprintEvaluation, subjectKeyOf } from '../evaluation-report.mjs';
+import { problemSubmission } from '../problem-submission.mjs';
+import { reportLinkSubmission } from '../report-link-submission.mjs';
 import { assertSchema, loadContract, validateSchema } from '../json-schema.mjs';
-import { buildArtifacts, control, put, reportFor, repository, temporary, usageRecord, writeReview } from './evaluation-fixtures.mjs';
+import { buildArtifacts, control, put, reportFor, repository, markFeedbackReviewed, supportedFeedbackReview, temporary, usageRecord, writeReview } from './evaluation-fixtures.mjs';
 
 const exporter = { controlSha: 'e'.repeat(40), runId: 900, attempt: 1 };
 const exportOf = (root, report) => buildEvaluation({ report, root, exporter });
@@ -349,4 +351,122 @@ test('identity comes from the prepare record; an Agent-side copy cannot claim a 
   document = finalize(buildEvaluation({ report: { record: usageRecord(), records: [usageRecord()] }, root: agent, taskRoot: task, exporter }).draft);
   assert.equal(document.run.key, `${repository}/batches/b-1/F00/1`, 'the prepare record wins');
   assert.ok(document.limitations.some(l => l.code === 'metadata-mismatch'));
+});
+
+test('real export preserves diagnosis and scoped semantic review before projecting only supported open feedback', t => {
+  const root = temporary(t);
+  buildArtifacts(root);
+  const raw = writeReview(root, 'completed');
+  const base = raw.evaluation.findings.find(f => f.id === 'F2');
+  const cases = [
+    { title: 'Supported guidance advice', confidence: 'suspected', category: 'guidance-gap', feedback: 'supported' },
+    { title: 'Supported capability advice', confidence: 'suspected', category: 'capability-gap', feedback: 'supported' },
+    { title: 'Supported usability advice', confidence: 'suspected', category: 'usability-improvement', feedback: 'supported' },
+    { title: 'Confirmed runtime defect', confidence: 'confirmed', category: 'runtime-defect', feedback: 'supported' },
+    { title: 'Suspected runtime defect', confidence: 'suspected', category: 'runtime-defect', feedback: 'supported' },
+    { title: 'Insufficient guidance', confidence: 'confirmed', category: 'guidance-gap', feedback: 'insufficient' },
+    { title: 'Contradicted guidance', confidence: 'confirmed', category: 'guidance-gap', feedback: 'contradicted' },
+    { title: 'Unknown processing state', confidence: 'confirmed', category: 'guidance-gap', feedback: 'supported', status: 'unknown' },
+    { title: 'Legacy without semantic review', confidence: 'confirmed', category: 'guidance-gap' },
+    { title: 'Legacy without diagnosis', confidence: 'confirmed' },
+  ];
+  raw.evaluation.findings = cases.map((item, index) => {
+    const finding = { ...structuredClone(base), id: `F${index + 1}`, title: item.title,
+      confidence: item.confidence, status: item.status ?? 'open', evidence: ['E1', 'E5', 'E6', 'E7'] };
+    if (item.category) finding.diagnosis.category = item.category;
+    else delete finding.diagnosis;
+    if (item.feedback) {
+      finding.feedbackReview = supportedFeedbackReview();
+      finding.feedbackReview.status = item.feedback;
+      if (item.category === 'runtime-defect') finding.feedbackReview.checks.find(c => c.kind === 'behavior').evidence = ['E1'];
+    }
+    return finding;
+  });
+  markFeedbackReviewed(raw);
+  put(root, 'build-review.json', raw);
+  const document = finalize(exportOf(root, reportFor(root, usageRecord())).draft);
+  const [review] = document.reviews;
+  assert.equal(review.findings.length, cases.length, 'all withheld candidates remain in the full report');
+  for (const [index, finding] of review.findings.entries()) {
+    const original = raw.evaluation.findings[index];
+    assert.deepEqual(finding.diagnosis, original.diagnosis);
+    assert.equal(finding.confidence, original.confidence);
+    assert.equal(finding.reviewerStatus, original.status);
+    assert.equal(finding.owner, original.owner);
+    assert.equal(finding.confirmedBy, original.confidence === 'confirmed' ? 'reviewer' : null);
+    if (original.feedbackReview) {
+      assert.deepEqual(finding.feedbackReview, { ...original.feedbackReview,
+        checks: original.feedbackReview.checks.map(check => ({ ...check, evidence: check.evidence.map(id => `${review.key}/${id}`) })) });
+      for (const check of finding.feedbackReview.checks)
+        assert.ok(check.evidence.every(id => document.evidence.some(item => item.id === id)));
+    } else assert.equal(Object.hasOwn(finding, 'feedbackReview'), false, 'legacy absence is retained');
+  }
+  const before = structuredClone(document);
+  const submission = problemSubmission(document);
+  assert.deepEqual(submission.problems.map(problem => problem.title), cases.slice(0, 4).map(item => item.title));
+  assert.deepEqual(reportLinkSubmission(document).problems, submission.problems);
+  assert.deepEqual(document, before, 'projection never edits archived review or human workflow state');
+  assert.match(submission.problems[0].description, /confidence=suspected; reviewerStatus=open/);
+  assert.ok(submission.problems[0].description.includes(`${review.key}/E6`));
+  assert.match(submission.problems[0].description, /app\/\.agents\/skills\/example-router\/SKILL\.md:1-2/);
+  assert.match(submission.problems[3].description, /诊断类别：runtime-defect/);
+  const malformed = structuredClone(document);
+  malformed.reviews[0].findings[0].feedbackReview.checks = [];
+  assert.deepEqual(validateSchema(loadContract('evaluation-report.v1'), malformed), [], 'shape alone does not prove semantic support');
+  assert.equal(problemSubmission(malformed).problems.some(problem => problem.title === cases[0].title), false,
+    'projection rechecks the raw support contract before submitting a separately produced DTO');
+  const invalid = structuredClone(document);
+  invalid.reviews[0].findings[0].feedbackReview.checks[0].evidence = ['E6'];
+  assert.ok(validateSchema(loadContract('evaluation-report.v1'), invalid).length, 'feedback evidence must be scoped');
+  invalid.reviews[0].findings[0].feedbackReview.checks[0].evidence = [`${review.key}/E6`];
+  invalid.reviews[0].findings[0].feedbackReview.status = 'confirmed';
+  assert.ok(validateSchema(loadContract('evaluation-report.v1'), invalid).length, 'semantic review is not original confidence');
+});
+
+test('permissive raw-review extras cannot break the strict diagnosis and feedback DTO export', t => {
+  const root = temporary(t);
+  buildArtifacts(root);
+  const raw = writeReview(root, 'completed');
+  const finding = raw.evaluation.findings.find(item => item.id === 'F2');
+  finding.diagnosis.extra = 'An uncontracted raw-review annotation.';
+  finding.feedbackReview = supportedFeedbackReview();
+  finding.feedbackReview.extra = 'A raw reviewer annotation.';
+  finding.feedbackReview.checks[0].conclusion = 'An uncontracted check annotation.';
+  markFeedbackReviewed(raw);
+  put(root, 'build-review.json', raw);
+  const document = finalize(exportOf(root, reportFor(root, usageRecord())).draft);
+  const projected = document.reviews[0].findings.find(item => item.localId === 'F2');
+  assert.equal(document.reviews[0].state, 'completed', 'raw extras remain accepted');
+  assert.deepEqual(Object.keys(projected.diagnosis).sort(), ['acceptance', 'actual', 'category', 'expected', 'trigger', 'workaround']);
+  assert.deepEqual(Object.keys(projected.feedbackReview).sort(), ['checks', 'reason', 'status']);
+  assert.deepEqual(Object.keys(projected.feedbackReview.checks[0]).sort(), ['evidence', 'kind', 'reason']);
+  for (const [key, value] of Object.entries(projected.diagnosis)) assert.equal(value, finding.diagnosis[key]);
+  assert.equal(projected.feedbackReview.status, 'supported');
+  assert.equal(projected.feedbackReview.reason, finding.feedbackReview.reason);
+  assert.equal(projected.feedbackReview.checks[0].reason, finding.feedbackReview.checks[0].reason);
+  assert.deepEqual(validateSchema(loadContract('evaluation-report.v1'), document), []);
+  assert.equal(problemSubmission(document).problems.length, 1);
+});
+
+
+test('re-export cannot promote legacy model-authored support without matching completed factory provenance', t => {
+  const root = temporary(t); buildArtifacts(root);
+  const raw = writeReview(root, 'completed');
+  raw.evaluation.findings.find(f => f.id === 'F2').feedbackReview = supportedFeedbackReview();
+  for (const mode of ['missing', 'incomplete', 'wrong-input', 'wrong-candidate']) {
+    delete raw.execution;
+    if (mode !== 'missing') {
+      markFeedbackReviewed(raw);
+      if (mode === 'incomplete') raw.execution.feedbackReview.completed = false;
+      if (mode === 'wrong-input') raw.execution.feedbackReview.inputHash = 'f'.repeat(64);
+      if (mode === 'wrong-candidate') raw.execution.feedbackReview.candidateIds = ['F99'];
+    }
+    put(root, 'build-review.json', raw);
+    const document = finalize(exportOf(root, reportFor(root, usageRecord())).draft);
+    assert.equal(document.reviews[0].state, 'completed', mode);
+    const finding = document.reviews[0].findings.find(f => f.localId === 'F2');
+    assert.equal(finding.feedbackReview.status, 'insufficient', mode);
+    assert.match(finding.feedbackReview.reason, /工厂定向复核完成记录/);
+    assert.deepEqual(problemSubmission(document).problems, [], mode);
+  }
 });

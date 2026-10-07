@@ -1,5 +1,6 @@
+import { feedbackEvaluation } from '../scripts/feedback-review.mjs';
 import { dimensionsFor, moduleRoundResult, owners, supportLabels, targetKinds, validateBuildReview } from '../scripts/build-review.mjs';
-import { effectiveSeverity, exceptionChips, findingCategory, findingStatus, findingTargets, findingTypes, isFrameworkFinding, orderFindings, renderFrameworkOverview, severityChip, severityLabels, severityRubric, typeChip, typeRubric, upstreamChip, upstreamScope } from './framework-overview.mjs';
+import { effectiveSeverity, exceptionChips, feedbackReviewLabels, feedbackReviewState, findingCategory, findingStatus, findingTargets, findingTypes, isFrameworkFinding, orderFindings, renderFrameworkOverview, severityChip, severityLabels, severityRubric, typeChip, typeRubric, upstreamChip, upstreamScope } from './framework-overview.mjs';
 import { shortSha, upstreamEntry, upstreamLink, upstreamStatus, validateUpstreamCheck } from './upstream-check.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -36,6 +37,16 @@ function retainedLegacy(report) {
 }
 
 const diagnosisLabels = [['trigger', '触发条件'], ['expected', '应有能力 / 行为'], ['actual', '实际观察'], ['workaround', '应用绕行与代价'], ['acceptance', '改进后的验收标准']];
+const feedbackCheckLabels = {
+  contract: '职责与公开约定',
+  behavior: '实际行为证据',
+  application: '应用接入与业务边界',
+  environment: '环境因素',
+  factory: '工厂因素',
+  'existing-capability': '已有能力与推荐用法',
+};
+const feedbackBoundary = '反馈复核是对原始反馈的证据核对，不等于人工确认、上游修复状态或自动修复授权；保留原评审置信度、分类与处理状态。';
+const legacyFeedback = '未提供反馈复核记录，保留为候选反馈；原评审置信度不代表已排除误报。';
 const evidenceLocation = evidence => `${evidence.path}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}`;
 const upstreamLocation = item => `${item.path}:${item.lines[0]}${item.lines[1] > item.lines[0] ? `–${item.lines[1]}` : ''}`;
 
@@ -49,6 +60,15 @@ function issueDraft(finding, report, targets, evidence, check) {
   const version = name => report.basis.packages?.find(pkg => pkg.name === name)?.version;
   const lines = [`### [${severityLabels[severity]}][${findingCategory(finding, check)}] ${finding.title}`, ''];
   if (targets.length) lines.push(`**相关对象**：${targets.map(name => version(name) ? `\`${name}\`（评审时 ${version(name)}）` : `\`${name}\``).join('、')}`, '');
+  lines.push(`**反馈证据核对**：${feedbackReviewLabels[feedbackReviewState(finding)]}`, '', finding.feedbackReview?.reason ?? legacyFeedback, '');
+  for (const item of finding.feedbackReview?.checks ?? []) {
+    const citations = item.evidence.map(id => {
+      const source = review.evidence.find(evidence => evidence.id === id);
+      return source ? `${id}（${evidenceLocation(source)}）` : id;
+    });
+    lines.push(`- ${feedbackCheckLabels[item.kind]}：${item.reason}；证据：${citations.join('、') || '未提供，仍需补证'}`);
+  }
+  lines.push('', feedbackBoundary, '');
   lines.push(finding.detail, '');
   if (finding.kind === 'misleading') lines.push(`**文档 / API 声称**：${finding.claimed}`, '', `**实际观察**：${finding.observed}`, '');
   lines.push(`**影响**：${finding.impact}`, '');
@@ -71,6 +91,12 @@ function upstreamBlock(finding, check) {
   if (!entry) return '';
   const cards = entry.evidence.map(item => `<figure class="up-code"><figcaption><span>${escape(item.label)}</span><a rel="noopener noreferrer" target="_blank" href="${escape(upstreamLink(check, item))}">${escape(upstreamLocation(item))} ↗</a></figcaption><pre>${escape(item.excerpt)}</pre></figure>`).join('');
   return `<div class="rf-upstream up-${escape(entry.status)}"><header><strong>最新上游复核</strong>${upstreamChip(finding, check)}<span>${escape(check.repository)} ${escape(check.ref)}@${escape(shortSha(check))} · ${escape(check.checkedAt)}</span></header><p>${escape(entry.summary)}</p>${entry.note ? `<p class="rf-regrade-note">${escape(entry.note)}</p>` : ''}<div class="up-code-grid">${cards}</div></div>`;
+}
+
+function feedbackReviewBlock(finding) {
+  const review = finding.feedbackReview;
+  if (!review) return `<p class="check-source">${legacyFeedback}</p>`;
+  return `<div class="rf-feedback-review"><h4>反馈证据核对</h4><p>${escape(review.reason)}</p><ul class="compact-list">${review.checks.map(item => `<li><strong>${escape(feedbackCheckLabels[item.kind])}</strong>：${escape(item.reason)} ${item.evidence.length ? refs(item.evidence) : '<span class="check-source">未提供证据，仍需补证。</span>'}</li>`).join('')}</ul><p class="check-source">${feedbackBoundary}</p></div>`;
 }
 
 export function renderLegend() {
@@ -108,7 +134,7 @@ function renderFindings(findings, framework, report, check) {
       const rechecked = actionable && upstreamEntry(check, finding);
       const evidenceHtml = actionable && (evidence.length || rechecked) ? `<details class="rf-sub"><summary>评审时证据 · 冻结快照 ${evidence.length} 条</summary><div class="rf-sub-body">${rechecked ? contrast : ''}${evidence.map(evidenceBlock).join('')}</div></details>` : refs(finding.evidence);
       const draftHtml = actionable ? `<details class="rf-sub"><summary>上游 Issue 草稿 · Markdown</summary><div class="rf-sub-body"><button class="btn small" type="button" data-copy="issue-draft-${escape(finding.id)}">复制 Markdown</button><pre id="issue-draft-${escape(finding.id)}">${escape(issueDraft(finding, report, targets, evidence, check))}</pre></div></details>` : '';
-      html += `<details class="card review-finding${strength ? ' is-strength' : ` sev-${escape(severity)}`}" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div class="rf-head"><div class="fb-chips">${chips}</div><strong>${escape(finding.id)} · ${escape(finding.title)}</strong><p class="rf-meta">${meta}</p></div><span class="rf-chevron">⌄</span></summary><div class="subsection-body"><p class="rf-detail">${escape(finding.detail)}</p>${actionable ? upstreamBlock(finding, check) : ''}${rechecked ? '' : contrast}<dl class="retro-fields"><div><dt>${strength ? '提供的帮助' : '实际影响'}</dt><dd>${escape(finding.impact)}</dd></div><div><dt>${strength ? '应保留的能力' : '建议改法'}</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${diagnosisHtml}${evidenceHtml}${draftHtml}</div></details>`;
+      html += `<details class="card review-finding${strength ? ' is-strength' : ` sev-${escape(severity)}`}" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div class="rf-head"><div class="fb-chips">${chips}</div><strong>${escape(finding.id)} · ${escape(finding.title)}</strong><p class="rf-meta">${meta}</p></div><span class="rf-chevron">⌄</span></summary><div class="subsection-body">${strength ? '' : feedbackReviewBlock(finding)}<p class="rf-detail">${escape(finding.detail)}</p>${actionable ? upstreamBlock(finding, check) : ''}${rechecked ? '' : contrast}<dl class="retro-fields"><div><dt>${strength ? '提供的帮助' : '实际影响'}</dt><dd>${escape(finding.impact)}</dd></div><div><dt>${strength ? '应保留的能力' : '建议改法'}</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${diagnosisHtml}${evidenceHtml}${draftHtml}</div></details>`;
     }
     html += '</div>';
     if (group.collapsed) html += '</div></details>';
@@ -169,7 +195,7 @@ export function renderBuildReview(input, upstreamInput = null) {
     try { validateBuildReview(report); }
     catch { report = { state: 'failed', reason: '评审数据无效，未采用评分；原始验收仍保留。', process: input.process }; }
   }
-  const review = ['completed', 'partial'].includes(report?.state) ? report.evaluation : null;
+  const review = ['completed', 'partial'].includes(report?.state) ? feedbackEvaluation(report) : null;
   // An invalid recheck is dropped with a visible note; it never blocks the report.
   let check = null, upstreamWarning = '';
   if (upstreamInput && review?.version === 2) {
@@ -218,7 +244,7 @@ export function renderBuildReview(input, upstreamInput = null) {
   html += '</div>' + retainedLegacy(report);
   if (framework) html += `<details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body">${processHtml(report?.process)}</div></details>`;
   html += `<article class="card review-ui"><header><h3>${framework ? '业务界面观察 · 非框架评分' : '界面样式与交互一致性'}</h3>${value(review.ui.score)}</header><p>${escape(review.ui.reason)}</p>${refs(review.ui.evidence)}<p class="check-source">${review.ui.status === 'reviewed' ? '评审者声明已审阅所引用的图像；请展开证据核对观察，不以文件存在代替人工确认。' : '未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。'}</p></article>${framework ? '</div></details>' : ''}</section>`;
-  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? '做得好的地方与证据' : '旧口径帮助与证据'}</h2></div></div><p class="section-intro">值得保留的框架能力、评审覆盖范围与全部原始证据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p>`;
+  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? '做得好的地方与证据' : '旧口径帮助与证据'}</h2></div></div><p class="section-intro">值得保留的框架能力、评审覆盖范围与全部原始证据。原评审置信度与反馈复核结果分别展示，均不代替人工核验。</p>`;
   const findings = review.findings.filter(finding => finding.kind !== 'strength');
   html += renderFindings(review.findings.filter(finding => finding.kind === 'strength'), framework, report, check);
   html += '<p class="check-source">问题、误导与建议统一收录在<a class="text-link" href="#problems">问题与改进</a>，不在此重复展示。</p>';

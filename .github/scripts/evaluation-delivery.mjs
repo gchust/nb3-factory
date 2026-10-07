@@ -114,6 +114,18 @@ export async function deliverBundle({ zip, subject, config, classification = {},
   const bundleSha256 = sha256(zip);
   const expected = { ...subject, bundleSha256 };
   const linked = config.format === 'testmanage3-links-v1';
+  // Old TestManage revisions already hash the original problem list/descriptions.
+  // Applying the new gate to that same revision would conflict (or submit old,
+  // unverified findings). Do not send or rewrite it: re-export with exporter v2
+  // creates a new revision, while stored receipts remain final in the registry.
+  if (config.format !== 'bundle-v1') {
+    const document = JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8'));
+    const legacyProblems = document.type === 'evaluation-report' && (document.source?.exporter?.version ?? 1) < 2 &&
+      document.reviews.some(review => review.selected && review.findings.some(finding => finding.kind !== 'strength' &&
+        ['framework', 'plugin', 'template', 'documentation'].includes(finding.owner) && !['resolved', 'not-applicable'].includes(finding.reviewerStatus)));
+    if (legacyProblems) return { state: 'rejected', attempts: [], receipt: null, bundleSha256,
+      reason: 'feedback-policy-migration', detail: '未发送：旧修订的问题投影已固定。请通过 Report Task Usage 重新导出形成新修订；需要证据复核时先运行 Reassess Build Quality。旧报告与已存回执保持不变。' };
+  }
   const { boundary, body } = linked
     ? { body: Buffer.from(JSON.stringify(reportLinkSubmission(JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8')), classification, duplicates))) }
     : multipart(zip, config.format);

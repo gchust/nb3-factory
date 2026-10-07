@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { historyFingerprint } from './review-history.mjs';
+import { validateFeedbackReview } from './feedback-review.mjs';
 
 export const rubricVersion = 2;
 const legacyDimensions = {
@@ -223,6 +224,7 @@ export function validateEvaluation(review, inputHash, catalog, expectedVersion =
         target.evidence.includes(id) && isTargetEvidence(target, review.evidence.find(e => e.id === id))))),
       'Confirmed framework feedback needs target evidence, not author self-report or QA alone');
     }
+    if (finding.feedbackReview !== undefined) validateFeedbackReview(finding.feedbackReview, review.evidence, finding);
     if (finding.kind === 'misleading') {
       text(finding.claimed, 'misleading.claimed'); text(finding.observed, 'misleading.observed');
     }

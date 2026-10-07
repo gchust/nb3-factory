@@ -254,6 +254,9 @@ const finding = (localId, subjectKeys, edit = {}) => ({
   kind: 'issue',
   owner: 'documentation',
   reviewerStatus: 'open',
+  confidence: 'suspected',
+  diagnosis: { category: 'guidance-gap', trigger: '接入', expected: '完整示例', actual: '缺少前提', workaround: '补充前提', acceptance: '示例可复用' },
+  feedbackReview: { status: 'supported', reason: '已核对指引和实际接入。', checks: ['contract', 'behavior', 'application', 'environment', 'factory', 'existing-capability'].map(kind => ({ kind, reason: `已核对 ${kind}`, evidence: subjectKeys.length ? subjectKeys.map(evidenceOf) : ['review/1/E:unmapped'] })) },
   detail: '触发条件与实际行为',
   impact: '影响',
   suggestedChange: '建议',
@@ -264,6 +267,8 @@ const finding = (localId, subjectKeys, edit = {}) => ({
 });
 const documentFor = (runKey, findings, criteria = []) => ({
   type: 'evaluation-report',
+  evidence: [...new Set(findings.flatMap(finding => [...finding.evidence, ...finding.feedbackReview.checks.flatMap(check => check.evidence)]))]
+    .map(id => ({ id, path: 'app/AGENTS.md', lines: [1, 2], observation: 'Fixture: captured guidance.' })),
   source: { instance: 'owner/repo' },
   run: { key: runKey, task: { title: '客户管理', issue: Number(runKey.split('/')[3]) } },
   reviews: [

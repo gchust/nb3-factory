@@ -34,14 +34,17 @@ test('budget alignment retains one bounded review budget, non-scored lightweight
     runner,
     /FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS \|\| REVIEW_TIMEOUT_SECONDS/,
   );
-  // Reruns share one call site and whatever is left of the same budget.
+  // Module retries and the single candidate pass share the same deadline.
   assert.match(runner, /const endsAt = Date\.now\(\) \+ remaining \* 1_000/);
   assert.match(runner, /invocationTimeoutSeconds: budget/);
   assert.match(
     runner,
     /Math\.min\(requested, deadline - Math\.ceil\(Date\.now\(\) \/ 1000\) - 30\)/,
   );
-  assert.equal((runner.match(/await runAgentInvocation\(/g) ?? []).length, 1);
+  assert.equal((runner.match(/await runAgentInvocation\(/g) ?? []).length, 2);
+  assert.match(runner, /assessmentSecondsLeft = \(\) => secondsLeft\(\) - reservedFeedbackSeconds/);
+  assert.match(runner, /Math\.min\(FEEDBACK_REVIEW_SECONDS, secondsLeft\(\)\)/);
+  assert.match(runner, /retryDelaysSeconds: \[\]/);
   assert.match(runner, /mode === 'off'/);
   assert.match(step, /continue-on-error: true/);
   assert.match(workflow, /needs\.verify-final\.result == 'success'/);

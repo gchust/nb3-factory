@@ -28,10 +28,12 @@ import {
   rubricVersion,
   safeRelative,
   reviewArtifactHash,
+  validateEvaluation,
 } from './build-review.mjs';
 import {
   assertCapturedInputs,
   finalizeAssessment,
+  materializeEvidence,
 } from './check-review-draft.mjs';
 export {
   finalizeAssessment,
@@ -46,6 +48,8 @@ import { recordTiming } from './timing.mjs';
 import { beginInvocation } from './agent-invocation-record.mjs';
 import { resolveBuildReviewMode } from './factory-lib.mjs';
 import { captureReviewHistory, historyFingerprint } from './review-history.mjs';
+
+import { applyFeedbackReview, feedbackReserve, FEEDBACK_REVIEW_SECONDS, insufficientFeedback, isFeedbackCandidate, selectFeedbackCandidates } from './feedback-review.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Default and maximum budget of one review, including its reruns.
@@ -297,6 +301,7 @@ export async function runBuildReview(
     save(output, JSON.parse(scrubSecrets(redact(JSON.stringify(report)))));
   persist();
   const diagnosing =
+    !options.source &&
     existsSync(path.join(artifacts, 'task-diagnostic.json')) &&
     readReviewJson(artifacts, 'task-diagnostic.json')?.status ===
       'needs-diagnosis';
@@ -423,7 +428,9 @@ export async function runBuildReview(
           .map((line) => `app/${line.slice(6)}`),
       ),
     ].filter((file) => captured.files.some((item) => item.path === file));
-    const firstBudget = secondsLeft();
+    const reservedFeedbackSeconds = diagnosing ? 0 : feedbackReserve(secondsLeft());
+    const assessmentSecondsLeft = () => secondsLeft() - reservedFeedbackSeconds;
+    const firstBudget = assessmentSecondsLeft();
     if (firstBudget < 30) {
       report.reason = 'Runner 剩余预算不足，未额外调用评审模型。';
       return report;
@@ -492,6 +499,7 @@ export async function runBuildReview(
       mkdirSync(tools, { mode: 0o700 });
       for (const name of [
         'build-review.mjs',
+        'feedback-review.mjs',
         'check-review-draft.mjs',
         'review-history.mjs',
         'history-redaction.mjs',
@@ -694,7 +702,7 @@ export async function runBuildReview(
     for (;;) {
       const retry = outcome.attempt;
       const delaySeconds = outcome.wait ? retryDelays[retry - 1] : 0;
-      const budget = secondsLeft() - (delaySeconds ?? 0);
+      const budget = assessmentSecondsLeft() - (delaySeconds ?? 0);
       if (
         !outcome.retryable ||
         retry > retryDelays.length ||
@@ -762,7 +770,63 @@ export async function runBuildReview(
     const { assessed, interruption } = saved;
     if (historyFingerprint(artifacts) !== basis.historyHash)
       throw new Error('Reviewer source history changed during assessment');
-    report.evaluation = assessed.evaluation;
+    // Never trust a self-authored feedbackReview in the original draft. The
+    // separate session can only append checked evidence and verdicts, not edit
+    // the assessed finding, its confidence, lifecycle or module scores.
+    report.evaluation = { ...assessed.evaluation, findings: assessed.evaluation.findings.map(finding => {
+      const original = { ...finding };
+      delete original.feedbackReview;
+      return isFeedbackCandidate(original) ? { ...original, feedbackReview: insufficientFeedback('定向证据复核尚未完成。') } : original;
+    }) };
+    const candidates = selectFeedbackCandidates(report.evaluation);
+    report.execution.feedbackReviewCalls = 0;
+    if (candidates.length) {
+      let reason;
+      const budget = Math.min(FEEDBACK_REVIEW_SECONDS, secondsLeft());
+      if (diagnosing) reason = '停止诊断只允许单次只读调用；保留待定向复核的候选。';
+      else if (budget < 30) reason = '剩余预算不足 30 秒；保留为待核实候选。';
+      else if (tainted()) reason = '冻结输入已变化；不能完成定向证据复核。';
+      else try {
+        const feedbackInput = { version: 1, inputHash: basis.inputHash, candidates,
+          evidence: report.evaluation.evidence, packages: basis.packages, budgetSeconds: budget };
+        const feedbackPrompt = readFileSync(path.join(HERE, '../prompts/feedback-review.md'), 'utf8')
+          .replaceAll('{{INPUT_HASH}}', basis.inputHash).replaceAll('{{BUDGET_SECONDS}}', String(budget));
+        prepareCall(feedbackPrompt);
+        writeFileSync(path.join(snapshot, 'AGENTS.md'), 'Read-only candidate evidence review. Follow review-prompt.md. Only write feedback-assessment.json atomically. Do not change assessment.json, build, repair, install, publish, or run application code.\n');
+        save(path.join(snapshot, 'feedback-input.json'), feedbackInput);
+        save(path.join(artifacts, 'build-review-feedback-input.json'), JSON.parse(scrubSecrets(redact(JSON.stringify(feedbackInput)))));
+        const inputDigest = digest(readFileSync(path.join(snapshot, 'feedback-input.json')));
+        appendFileSync(log, `${JSON.stringify({ type: 'factory_feedback_review', budgetSeconds: budget,
+          candidateIds: candidates.map(finding => finding.id), inputHash: basis.inputHash, inputDigest, prompt: feedbackPrompt })}\n`);
+        report.execution.feedbackReviewCalls = 1;
+        report.execution.feedbackReview = { version: 1, inputHash: basis.inputHash, candidateIds: candidates.map(finding => finding.id), completed: false };
+        const current = createReviewInvocation();
+        await runAgentInvocation({ ...current, log, append: true, parseEvent: adapter.parseEvent,
+          secrets: [...(current.secrets ?? []), ...credentialNames.map(name => env[name])], result,
+          invocationTimeoutSeconds: budget, idleTimeoutSeconds: Math.min(idleTimeoutSeconds, budget), retryDelaysSeconds: [] });
+        const call = readResult(log);
+        if (call?.status !== 'completed' || (call.completion !== 'exit' && !call.terminalEvent))
+          throw new Error(`定向复核未正常结束（${call?.status ?? 'missing'}）；未采用遗留结论`);
+        assertCapturedInputs(snapshot, captured.files);
+        readReviewJson(snapshot, 'feedback-input.json'); // Reject a replaced symlink before reading its bytes.
+        if (digest(readFileSync(path.join(snapshot, 'feedback-input.json'))) !== inputDigest)
+          throw new Error('定向复核改动了候选输入');
+        if (historyFingerprint(artifacts) !== basis.historyHash)
+          throw new Error('定向复核期间源历史发生变化');
+        const draft = readReviewJson(snapshot, 'feedback-assessment.json');
+        report.evaluation = applyFeedbackReview(report.evaluation, draft, candidates, evidence => {
+          const checked = { ...report.evaluation, evidence };
+          validateEvaluation(checked, basis.inputHash, captured.files, basis.rubricVersion);
+          return materializeEvidence(checked, snapshot, captured.files).evidence;
+        });
+        report.execution.feedbackReview.completed = true;
+      } catch (error) {
+        reason = `定向复核未完成：${brief(redact(String(error.message)))}`;
+        invocationError ??= error;
+      }
+      if (reason) report.evaluation.findings = report.evaluation.findings.map(finding => isFeedbackCandidate(finding)
+        ? { ...finding, feedbackReview: insufficientFeedback(reason) } : finding);
+    }
     if (captured.history.input.coverage !== 'available') {
       report.evaluation.limitations.unshift(
         `原始交互历史 ${captured.history.input.coverage}；不能推断完整试错过程。${captured.history.input.limitations.slice(0, 3).join('；').slice(0, 1600)}`,

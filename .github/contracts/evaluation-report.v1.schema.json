@@ -455,6 +455,43 @@
         "scores": { "type": "object", "maxProperties": 5, "minProperties": 4, "additionalProperties": { "$ref": "#/$defs/score" }, "propertyNames": { "enum": ["requirementFit", "usability", "agentFriendliness", "design", "reliability", "completeness", "outputQuality"] } }
       }
     },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "trigger", "expected", "actual", "workaround", "acceptance"],
+      "properties": {
+        "category": { "enum": ["runtime-defect", "capability-gap", "guidance-gap", "usability-improvement"] },
+        "trigger": { "$ref": "#/$defs/text" },
+        "expected": { "$ref": "#/$defs/text" },
+        "actual": { "$ref": "#/$defs/text" },
+        "workaround": { "$ref": "#/$defs/text" },
+        "acceptance": { "$ref": "#/$defs/text" }
+      }
+    },
+    "feedbackReview": {
+      "description": "Semantic evidence review, independent of original confidence and reviewerStatus. Absence means legacy unverified, never implicit support or human confirmation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "checks"],
+      "properties": {
+        "status": { "enum": ["supported", "contradicted", "insufficient"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "checks": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "reason", "evidence"],
+            "properties": {
+              "kind": { "enum": ["contract", "behavior", "application", "environment", "factory", "existing-capability"] },
+              "reason": { "type": "string", "minLength": 1, "maxLength": 2000 },
+              "evidence": { "type": "array", "maxItems": 20, "uniqueItems": true, "items": { "type": "string", "maxLength": 251, "pattern": "^review/[A-Za-z0-9._/-]+/E[1-9]\\d*$" } }
+            }
+          }
+        }
+      }
+    },
     "finding": {
       "type": "object",
       "additionalProperties": false,
@@ -466,6 +503,8 @@
         "owner": { "enum": ["framework", "plugin", "template", "documentation", "application", "factory", "environment", "unknown"] },
         "severity": { "enum": ["info", "minor", "major", "critical"] },
         "confidence": { "enum": ["confirmed", "suspected"] },
+        "diagnosis": { "$ref": "#/$defs/diagnosis" },
+        "feedbackReview": { "$ref": "#/$defs/feedbackReview" },
         "confirmedBy": { "description": "confirmed means the reviewer judged the evidence sufficient; it is never a human confirmation.", "enum": ["reviewer", null] },
         "reviewerStatus": { "description": "The reviewer's view at review time; not a receiver issue lifecycle state.", "enum": ["open", "resolved", "unknown", "not-applicable"] },
         "title": { "$ref": "#/$defs/text" },
