@@ -53,8 +53,9 @@ continuation too, because a fresh runner cannot preserve the task's limits.
 Such a rejected Re-run leaves the earlier attempt's checkpoint intact, and an
 explicit recovery from that run still accepts it. It requests no report, and
 the progress reporter ignores such an attempt, so no empty progress, usage,
-history or retro replaces the Issue's real one; it answers no comment either. "Re-run all jobs" stops at the start of prepare once an
-earlier attempt ran the build, before it records a new attempt, uploads a
+history or retro replaces the Issue's real one; it answers no comment either.
+"Re-run all jobs" stops at the start of prepare once an earlier attempt ran
+the build, before it records a new attempt, uploads a
 second task artifact, relabels the Issue or posts a status; its reports are
 marked handled without being requested, so nothing is published for that
 attempt. Only a question round really re-runs that way. A build re-run always

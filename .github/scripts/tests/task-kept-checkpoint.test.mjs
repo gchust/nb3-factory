@@ -24,6 +24,7 @@ import {
   readState,
   restoreState,
 } from '../pipeline-state.mjs';
+import { collectAgentFailure } from '../agent-failure.mjs';
 
 const repo = path.resolve(import.meta.dirname, '../../..');
 const workflow = readFileSync(
@@ -88,6 +89,19 @@ function fixture(t) {
   writeFileSync(path.join(handoff, 'retro.json'), '{}');
   writeFileSync(path.join(handoff, 'handoff.json'), '{"previousRunId":1}');
   writeFileSync(path.join(handoff, 'live-progress.pid'), '1');
+  // The source run's own invocation result (a failed provider call) and timings.
+  writeFileSync(
+    path.join(handoff, 'agent-repair-1.jsonl.result.json'),
+    JSON.stringify({
+      version: 1,
+      status: 'failed',
+      phase: 'repair',
+      endedAt: Date.now(),
+      error: '503: auth_unavailable: no auth available',
+    }),
+  );
+  writeFileSync(path.join(handoff, 'agent-repair-1.jsonl'), '{}\n');
+  writeFileSync(path.join(handoff, 'timings.jsonl'), '{"stage":"repair"}\n');
   symlinkSync('/etc/hostname', path.join(handoff, 'linked.txt'));
   const runnerTemp = path.join(root, 'runner');
   mkdirSync(runnerTemp);
@@ -126,6 +140,17 @@ test('a kept repair-phase checkpoint is complete and restorable', (t) => {
   // Not the handoff request, the source observer's files or a symlink.
   for (const file of ['handoff.json', 'live-progress.pid', 'linked.txt'])
     assert.equal(existsSync(path.join(f.kept, file)), false, file);
+  // The source run's invocation results and timings are not this run's: the
+  // failure notice must not explain this run with the source run's error.
+  for (const file of ['agent-repair-1.jsonl.result.json', 'timings.jsonl'])
+    assert.equal(existsSync(path.join(f.kept, file)), false, file);
+  assert.ok(
+    existsSync(path.join(f.handoff, 'agent-repair-1.jsonl.result.json')),
+  );
+  assert.notEqual(collectAgentFailure(f.handoff), null);
+  assert.equal(collectAgentFailure(f.kept), null);
+  // The transcript itself stays for the history.
+  assert.ok(existsSync(path.join(f.kept, 'agent-repair-1.jsonl')));
   assert.equal(
     readState(path.join(f.kept, 'pipeline-state.json')).outcome,
     'failed',
