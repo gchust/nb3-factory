@@ -89,10 +89,14 @@ jobs:
     # A dispatch reaches the contents: write publish job, so it must run the
     # workflow file from develop, like refresh-template.yml. supersede is
     # skipped for a dispatch, hence !cancelled() instead of the implied success().
+    # It fails safe: only a supersede job that ran and found a newer head skips
+    # this check. A failed supersede job (lost runner, API or output error)
+    # leaves the output empty and the check runs, since a skipped required
+    # check would pass green.
     if: >-
       !cancelled() && (
-      (github.event_name == 'pull_request' &&
-       needs.supersede.result == 'success' && needs.supersede.outputs.superseded != 'true') ||
+      (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-') &&
+       needs.supersede.outputs.superseded != 'true') ||
       (github.event_name != 'pull_request' &&
        github.actor == github.repository_owner &&
        github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))

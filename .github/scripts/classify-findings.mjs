@@ -70,10 +70,16 @@ export async function prepareClassification(
 // itself, so a classification this run started now would be discarded as
 // stale at publish time: the model call is paid for nothing.
 const WAITING = new Set(['queued', 'pending', 'waiting', 'requested']);
-export function newerQueuedRun(runs, currentRunId) {
+// Only a run on the default branch classifies the published findings: the
+// classify job refuses other branches, so a queued dispatch from a feature
+// branch never replaces this run's work.
+export function newerQueuedRun(runs, currentRunId, defaultBranch) {
   return (
     runs.find(
-      (run) => Number(run.id) > Number(currentRunId) && WAITING.has(run.status),
+      (run) =>
+        Number(run.id) > Number(currentRunId) &&
+        WAITING.has(run.status) &&
+        (!defaultBranch || run.head_branch === defaultBranch),
     ) ?? null
   );
 }
@@ -81,10 +87,31 @@ export function newerQueuedRun(runs, currentRunId) {
 // Right before the model call: the prepared input must still be the
 // published one, and no queued run may be about to supersede it. A forced
 // run only checks the input, since a queued unforced run might skip.
+// Fails open: any error reads as current, so a check that cannot run never
+// costs the classification it guards.
 export async function checkClassification(
   client,
   inputDirectory,
-  { force = false, runId = process.env.GITHUB_RUN_ID } = {},
+  options = {},
+) {
+  try {
+    return await checkClassificationOrThrow(client, inputDirectory, options);
+  } catch (error) {
+    console.log(
+      `::warning::Could not confirm the prepared findings are current (${error.message}); classifying anyway.`,
+    );
+    return { current: true, reason: 'check failed open' };
+  }
+}
+
+async function checkClassificationOrThrow(
+  client,
+  inputDirectory,
+  {
+    force = false,
+    runId = process.env.GITHUB_RUN_ID,
+    defaultBranch = process.env.DEFAULT_BRANCH,
+  } = {},
 ) {
   const prepared = validateClassificationInput(
     readClassificationJson(path.join(inputDirectory, 'input.json')),
@@ -99,9 +126,14 @@ export async function checkClassification(
     const { workflow_runs: runs = [] } = await client.request(
       'GET',
       '/actions/workflows/classify-findings.yml/runs',
-      { query: { per_page: 30 } },
+      {
+        query: {
+          per_page: 30,
+          ...(defaultBranch ? { branch: defaultBranch } : {}),
+        },
+      },
     );
-    const newer = newerQueuedRun(runs, runId);
+    const newer = newerQueuedRun(runs, runId, defaultBranch);
     if (newer)
       return {
         current: false,

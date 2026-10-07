@@ -6,9 +6,13 @@ import test from 'node:test';
 import { openPullRequest, tokenIdentity } from '../framework-fix.mjs';
 import { selectSupplement } from '../replay-build-review.mjs';
 import { selectReplayHistory } from '../replay-review-history.mjs';
-import { isReviewMarker } from '../independent-review.mjs';
+import {
+  isReviewMarker,
+  shouldReplaceReviewComment,
+} from '../independent-review.mjs';
 import { fetchTaxonomy } from '../problem-classification.mjs';
-import { newerQueuedRun } from '../classify-findings.mjs';
+import { checkClassification, newerQueuedRun } from '../classify-findings.mjs';
+import { callTimeoutMs, CALL_MARGIN_MS } from '../template-plugins.mjs';
 
 const workflow = (name) =>
   readFileSync(new URL(`../../workflows/${name}`, import.meta.url), 'utf8');
@@ -63,6 +67,41 @@ test('framework-fix finds the PR a lost response created and retries reading the
     assert.equal(url, pull[0].html_url);
     assert.deepEqual(calls, ['POST', 'GET'], 'the POST is never repeated');
   }
+  // A PR created by a lost POST can appear in the list a moment later.
+  const lagging = [];
+  const late = await openPullRequest({
+    token: 't',
+    branch: 'fix/b',
+    base: 'develop',
+    title: 'T',
+    body: 'B',
+    delayMs: 0,
+    fetchImpl: async (u, o) => {
+      lagging.push(o.method);
+      if (lagging.length === 1) return response(502, {});
+      return lagging.length < 4 ? response(200, []) : response(200, pull);
+    },
+  });
+  assert.equal(late, pull[0].html_url);
+  assert.deepEqual(lagging, ['POST', 'GET', 'GET', 'GET']);
+  // Three empty looks after a lost response is a real publish failure.
+  const empty = [];
+  await assert.rejects(
+    openPullRequest({
+      token: 't',
+      branch: 'fix/b',
+      base: 'develop',
+      title: 'T',
+      body: 'B',
+      delayMs: 0,
+      fetchImpl: async (u, o) => {
+        empty.push(o.method);
+        return empty.length === 1 ? response(503, {}) : response(200, []);
+      },
+    }),
+    /503/,
+  );
+  assert.deepEqual(empty, ['POST', 'GET', 'GET', 'GET']);
   // A plain refusal is still an error, with no lookup.
   const calls = [];
   await assert.rejects(
@@ -175,7 +214,8 @@ test('the replay history archives the review of an earlier attempt after a repor
     { runId: 200, attempt: 2 },
   );
   assert.equal(source.artifacts[0].id, 88);
-  assert.equal(source.attempt, 2);
+  // The review's attempt, so a re-run updates attempt 1's archive and comment.
+  assert.equal(source.attempt, 1);
   // A newer review in attempt 2 wins over attempt 1's.
   const newer = {
     ...review,
@@ -199,6 +239,16 @@ test('the replay history archives the review of an earlier attempt after a repor
       { runId: 200, attempt: 2 },
     ).artifacts[0].id,
     89,
+  );
+  // The history comment and asset are keyed on that attempt.
+  const history = readFileSync(
+    new URL('../agent-history.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(history, /MARKER = \(runId, attempt\) =>/);
+  assert.match(
+    workflow('publish-build-review-history.yml'),
+    /ATTEMPT: \$\{\{ steps\.source\.outputs\.attempt \}\}/,
   );
 });
 
@@ -253,6 +303,30 @@ test('one review comment per run, also found by its older attempt-keyed marker',
   assert.doesNotMatch(source, /await fetch\(/);
 });
 
+test('an incomplete publish re-run never replaces a validated review or a complete archive', () => {
+  const validNew =
+    '<!-- factory-independent-review:500 -->\n<!-- factory-independent-review-valid -->\n## x';
+  const validOld =
+    '<!-- factory-independent-review:500:1 -->\n## x\n\n评审产物身份、引用文件哈希和行号已校验；…';
+  const invalid =
+    '<!-- factory-independent-review:500 -->\n## x\n\n评审未完成或产物未通过校验，不计为通过。';
+  assert.equal(shouldReplaceReviewComment(undefined, false), true);
+  assert.equal(shouldReplaceReviewComment(invalid, false), true);
+  assert.equal(shouldReplaceReviewComment(validNew, false), false);
+  assert.equal(shouldReplaceReviewComment(validOld, false), false);
+  assert.equal(shouldReplaceReviewComment(validNew, true), true);
+  // The asset name carries a content hash, so fewer files get a new name.
+  const source = readFileSync(
+    new URL('../independent-review.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    source,
+    /-run-\$\{runId\}-\$\{digest\(JSON\.stringify\(files\)\)\.slice\(0, 16\)\}\.tar\.gz/,
+  );
+  assert.doesNotMatch(source, /-attempt-\$\{attempt\}/);
+});
+
 test('one receiver blip no longer sends every problem unclassified', async () => {
   const env = {
     EVALUATION_ENDPOINT: 'https://test3.example/main/api/evaluations/import',
@@ -298,6 +372,13 @@ test('a classification a queued run would supersede is skipped before the model 
   ];
   assert.equal(newerQueuedRun(runs, 12)?.id, 13);
   assert.equal(newerQueuedRun(runs, 13), null);
+  // Only a queued run on the default branch supersedes this one.
+  const branched = [
+    { id: 13, status: 'pending', head_branch: 'feature/x' },
+    { id: 14, status: 'queued', head_branch: 'develop' },
+  ];
+  assert.equal(newerQueuedRun(branched, 12, 'develop')?.id, 14);
+  assert.equal(newerQueuedRun([branched[0]], 12, 'develop'), null);
   assert.equal(
     newerQueuedRun([{ id: 9, status: 'pending' }], 12),
     null,
@@ -321,12 +402,32 @@ test('a classification a queued run would supersede is skipped before the model 
   assert.match(steps[check], /classify-findings\.mjs check/);
   assert.match(
     steps[model],
-    /if: steps\.prepare\.outputs\.ready == 'true' && steps\.check\.outputs\.current == 'true'/,
+    /if: steps\.prepare\.outputs\.ready == 'true' && steps\.check\.outputs\.current != 'false'/,
   );
+  // Fails open: an error in the check never costs the classification.
+  assert.match(steps[check], /continue-on-error: true/);
+  assert.match(
+    steps[check],
+    /DEFAULT_BRANCH: \$\{\{ github\.event\.repository\.default_branch \}\}/,
+  );
+  const archive = steps.find((s) =>
+    s.startsWith('name: Archive classification inputs'),
+  );
+  assert.match(archive, /steps\.check\.outputs\.current != 'false'/);
   assert.match(
     classify,
     /permissions:\n\s+contents: read\n(?:\s+#.*\n)*\s+actions: read/,
   );
+});
+
+test('a check that cannot run classifies anyway', async () => {
+  const failing = {
+    request: async () => {
+      throw new Error('API down');
+    },
+  };
+  const result = await checkClassification(failing, '/nonexistent');
+  assert.equal(result.current, true);
 });
 
 test('template checks skip build task PRs and superseded source-baseline runs', () => {
@@ -352,15 +453,33 @@ test('template checks skip build task PRs and superseded source-baseline runs', 
   const verify = jobOf(baseline, 'source-baseline');
   assert.match(verify, /needs: supersede/);
   assert.match(verify, /!cancelled\(\)/);
+  // Fails safe: only an explicit superseded=true skips the check; a failed
+  // supersede job leaves the output empty and the check runs.
   assert.match(
     verify,
-    /needs\.supersede\.result == 'success' && needs\.supersede\.outputs\.superseded != 'true'/,
+    /github\.event_name == 'pull_request' && !startsWith\(github\.head_ref, 'agent\/issue-'\) &&\s+needs\.supersede\.outputs\.superseded != 'true'/,
   );
+  assert.doesNotMatch(verify, /needs\.supersede\.result == 'success'/);
   // A dispatch still requires the owner on the default branch.
   assert.match(
     verify,
     /github\.event_name != 'pull_request' &&\s+github\.actor == github\.repository_owner/,
   );
+});
+
+test('every pnpm call of the plugin step shares one deadline inside the step limit', () => {
+  const now = 1_000_000_000_000;
+  const deadline = now / 1000 + 600;
+  assert.equal(callTimeoutMs(deadline, now), 600_000 - CALL_MARGIN_MS);
+  assert.equal(
+    callTimeoutMs(deadline, now + 300_000),
+    300_000 - CALL_MARGIN_MS,
+  );
+  assert.throws(
+    () => callTimeoutMs(deadline, now + 590_000),
+    /deadline has passed/,
+  );
+  assert.equal(callTimeoutMs(undefined, now), 12 * 60 * 1000);
 });
 
 test('every network step of the template checks has a bound below its job limit', () => {
@@ -385,7 +504,14 @@ test('every network step of the template checks has a bound below its job limit'
     new URL('../template-plugins.mjs', import.meta.url),
     'utf8',
   );
-  assert.match(plugins, /timeout: 12 \* 60 \* 1000/);
+  assert.match(
+    plugins,
+    /timeout: callTimeoutMs\(process\.env\.FACTORY_PLUGIN_STEP_DEADLINE\)/,
+  );
+  assert.match(
+    refresh,
+    /export FACTORY_PLUGIN_STEP_DEADLINE=\$\(\( \$\(date \+%s\) \+ 14 \* 60 \)\)/,
+  );
   assert.match(
     refresh,
     /- name: Install, register, and inspect the required Pro plugin baseline\n {8}timeout-minutes: 15\n/,

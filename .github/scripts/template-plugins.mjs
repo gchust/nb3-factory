@@ -185,6 +185,22 @@ export function validateInspection(response, packageName) {
   );
 }
 
+// One deadline for the whole workflow step, which runs this script twice plus
+// other commands: each pnpm call gets the time left minus a margin, so a hung
+// call ends here, where its diagnostic is saved, before the runner kills the
+// step. Without a deadline (local use) a call gets 12 minutes.
+export const CALL_MARGIN_MS = 30_000;
+export function callTimeoutMs(deadlineEpochSeconds, nowMs = Date.now()) {
+  const deadline = Number(deadlineEpochSeconds);
+  if (!Number.isSafeInteger(deadline) || deadline <= 0) return 12 * 60 * 1000;
+  const remaining = deadline * 1000 - nowMs - CALL_MARGIN_MS;
+  if (remaining <= 0)
+    throw new Error(
+      'The plugin step deadline has passed; no time is left for another pnpm call.',
+    );
+  return remaining;
+}
+
 function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
   assert.ok(
     ['install', 'inspect'].includes(mode),
@@ -203,9 +219,7 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
       encoding: 'utf8',
       stdio: ['ignore', reportName ? 'pipe' : 'inherit', 'inherit'],
       maxBuffer: 8 * 1024 * 1024,
-      // Inside the workflow's 15-minute step: a hung call must end here, where
-      // its diagnostic is saved, not when the runner kills the step.
-      timeout: 12 * 60 * 1000,
+      timeout: callTimeoutMs(process.env.FACTORY_PLUGIN_STEP_DEADLINE),
     });
     // Save the actual CLI response even when it reports failure or malformed JSON.
     if (reportName)

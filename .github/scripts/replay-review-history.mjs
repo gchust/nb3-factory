@@ -33,7 +33,10 @@ export function selectReplayHistory(run, jobs, artifacts, repository, request) {
     Date.parse(a.created_at) >= Date.parse(job.started_at) && Date.parse(a.created_at) <= Date.parse(job.completed_at));
   assert.equal(matches.length, 1, 'One retained review artifact is required; expired data cannot be recreated');
   assert.ok(!matches[0].expired && positive(matches[0].id) && positive(job.id), 'Review artifact is unavailable');
-  return { version: 1, repository, runId: run.id, attempt: run.run_attempt, status: 'review',
+  // The review's own attempt, not the run's latest: the history marker and
+  // asset name carry it, so a re-run updates that review's archive and comment
+  // instead of publishing a duplicate under the new attempt.
+  return { version: 1, repository, runId: run.id, attempt, status: 'review',
     artifacts: [{ role: 'agent', jobId: job.id, id: matches[0].id, name: matches[0].name,
       invocationExpected: job.steps?.some(s => s.name === 'Assess modules and persist evidence checkpoints' && s.started_at && s.conclusion !== 'skipped') ?? false,
       state: 'available' }] };

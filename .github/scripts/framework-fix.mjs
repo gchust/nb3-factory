@@ -493,11 +493,17 @@ export async function openPullRequest({ token, branch, base, title, body, fetchI
   // have created the PR before the response was lost: look it up first.
   if (dropped || created.status === 422 || created.status >= 500) {
     const owner = FIX_REPOSITORY.split('/')[0];
-    const existing = await githubRead(token,
-      `/repos/${FIX_REPOSITORY}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}`, { fetchImpl, delayMs })
-      .catch(() => null);
-    const pull = existing?.ok && Array.isArray(existing.data) ? existing.data[0] : null;
-    if (pull?.html_url) return pull.html_url;
+    const route = `/repos/${FIX_REPOSITORY}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}`;
+    // A PR created by a POST whose response was lost can take a moment to
+    // appear in the list: look again with backoff while it is empty. A 422
+    // means the PR already existed, so one look is enough there.
+    const looks = dropped || created.status >= 500 ? 3 : 1;
+    for (let look = 1; look <= looks; look++) {
+      const existing = await githubRead(token, route, { fetchImpl, delayMs }).catch(() => null);
+      const pull = existing?.ok && Array.isArray(existing.data) ? existing.data[0] : null;
+      if (pull?.html_url) return pull.html_url;
+      if (look < looks) await new Promise((resolve) => setTimeout(resolve, (delayMs ?? 2000) * look));
+    }
   }
   if (dropped) throw new Error(`Creating the draft PR failed: ${dropped.message}`);
   throw new Error(`Creating the draft PR failed (${created.status}): ${JSON.stringify(created.data?.errors ?? created.data?.message ?? '')}`);
