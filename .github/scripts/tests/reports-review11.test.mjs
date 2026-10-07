@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import {
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -336,10 +337,28 @@ test('framework-fix keeps the full claim for review only and publishes after a c
     /steps\.decision\.outputs\.publish == 'true'/.test(step),
   ))
     assert.doesNotMatch(step, /always\(\)|cancelled\(\)/, step.split('\n')[0]);
+  // A real cancellation comes from the run-cancelled job: status functions
+  // work only in `if:`, and a step-level cancelled() in this always() job is
+  // always false.
+  assert.match(publish, /^ {4}needs: \[claim, review, run-cancelled\]$/m);
   assert.match(
     publish,
-    /- name: Read the decision\n\s+id: decision\n\s+if: \$\{\{ !cancelled\(\) \}\}/,
+    /- name: Read the decision\n\s+id: decision\n\s+if: needs\.run-cancelled\.result != 'success'\n/,
   );
+  const prSteps = steps.filter((step) =>
+    /steps\.decision\.outputs\.publish == 'true'/.test(step),
+  );
+  assert.equal(prSteps.length, 2);
+  for (const step of prSteps)
+    assert.match(
+      step,
+      /if: steps\.decision\.outputs\.publish == 'true' && needs\.run-cancelled\.result != 'success'\n/,
+    );
+  const cancelled = jobOf(text, 'run-cancelled');
+  assert.match(cancelled, /^ {4}needs: \[claim, review\]$/m);
+  assert.match(cancelled, /^ {4}if: cancelled\(\)$/m);
+  assert.match(cancelled, /^ {4}permissions: \{\}$/m);
+  assert.match(cancelled, /^ {4}timeout-minutes: 1$/m);
 });
 
 test('the claim CLI writes the full and the publication claim', () => {
@@ -616,7 +635,10 @@ test('a cancelled framework fix is reported as cancelled, claiming no fix', () =
   );
   const publish = jobOf(workflow('framework-fix.yml'), 'publish');
   const report = publish.split('- name: Report the result to TestManage\n')[1];
-  assert.match(report, /RUN_CANCELLED: \$\{\{ cancelled\(\) \}\}/);
+  assert.match(
+    report,
+    /RUN_CANCELLED: \$\{\{ needs\.run-cancelled\.result == 'success' \}\}/,
+  );
   assert.match(report, /--cancelled "\$RUN_CANCELLED"/);
   const source = readFileSync(
     path.resolve(import.meta.dirname, '../framework-fix.mjs'),
@@ -686,4 +708,40 @@ try {
     /THROWN fixture model invocation failed: Request failed \{"quoted":"TESTMANAGE-EVENT-DATA"\}/,
   );
   assert.match(full.stderr, /TESTMANAGE-STDERR-DATA/);
+});
+
+test('no workflow uses a status function in an expression outside if:', () => {
+  // GitHub accepts cancelled(), always(), success() and failure() only in
+  // jobs.<id>.if and steps.if; in an env, with or output the whole workflow
+  // file is rejected.
+  const status = /\b(?:cancelled|always|success|failure)\(\)/;
+  const directories = [workflows, path.resolve(workflows, '../actions')];
+  let checked = 0;
+  for (const directory of directories) {
+    const files = [];
+    const walk = (dir) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const file = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(file);
+        else if (/\.ya?ml$/.test(entry.name)) files.push(file);
+      }
+    };
+    walk(directory);
+    for (const file of files) {
+      readFileSync(file, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          for (const [expression] of line.matchAll(/\$\{\{[\s\S]*?\}\}/g)) {
+            if (!status.test(expression)) continue;
+            checked++;
+            assert.match(
+              line,
+              /^\s*(?:- )?if: /,
+              `${path.relative(workflows, file)}:${index + 1}: ${line.trim()}`,
+            );
+          }
+        });
+    }
+  }
+  assert.ok(checked > 10, `${checked} expressions checked`);
 });

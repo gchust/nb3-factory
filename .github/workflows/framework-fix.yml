@@ -226,15 +226,29 @@ jobs:
           overwrite: true
           if-no-files-found: warn
 
+  # Records a real cancellation of the run. Status functions are evaluated
+  # only in `if:`, and inside publish (an always() job) a step-level
+  # cancelled() is always false, so publish reads this job's result instead,
+  # as code-agent-task.yml does for its failure notice. A review job that hit
+  # its time limit is 'cancelled' in needs.review.result, not here.
+  run-cancelled:
+    needs: [claim, review]
+    if: cancelled()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    permissions: {}
+    steps:
+      - run: 'true'
+
   # Holds the maintainer's PR token and the TestManage key, and never runs
   # Agent or repository code: it applies the validated patch to a clean base.
   # It runs whenever the claim succeeded in TestManage, which run_id proves,
   # even if the claim job then failed (for example uploading its input): a
   # claimed problem stays locked in TestManage until this job reports, so it
-  # also runs after a cancel. Its reporting steps say always() for that case;
-  # a cancelled run never opens a PR.
+  # also runs after a cancel. A cancelled run reports that and never opens a
+  # PR, even when its review had already decided to publish.
   publish:
-    needs: [claim, review]
+    needs: [claim, review, run-cancelled]
     if: ${{ always() && needs.claim.outputs.run_id != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -270,7 +284,7 @@ jobs:
           path: fix-output
       - name: Read the decision
         id: decision
-        if: ${{ !cancelled() }}
+        if: needs.run-cancelled.result != 'success'
         run: |
           publish=false
           if [[ -f fix-output/decision.json ]]; then
@@ -278,7 +292,7 @@ jobs:
           fi
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: steps.decision.outputs.publish == 'true'
+        if: steps.decision.outputs.publish == 'true' && needs.run-cancelled.result != 'success'
         with:
           repository: nocobase/nocobase3
           ref: ${{ needs.claim.outputs.base_sha }}
@@ -286,7 +300,7 @@ jobs:
           token: ${{ secrets.NOCOBASE3_PR_TOKEN }}
       - name: Open a draft PR on nocobase/nocobase3
         id: pr
-        if: steps.decision.outputs.publish == 'true'
+        if: steps.decision.outputs.publish == 'true' && needs.run-cancelled.result != 'success'
         env:
           GH_TOKEN: ${{ secrets.NOCOBASE3_PR_TOKEN }}
         run: |
@@ -307,7 +321,7 @@ jobs:
           TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
           REVIEW_RESULT: ${{ needs.review.result }}
           # A decision written before a cancel must not be reported as a result.
-          RUN_CANCELLED: ${{ cancelled() }}
+          RUN_CANCELLED: ${{ needs.run-cancelled.result == 'success' }}
           PR_URL: ${{ steps.pr.outputs.url }}
           PR_OUTCOME: ${{ steps.pr.outcome }}
           BASE_SHA: ${{ needs.claim.outputs.base_sha }}
