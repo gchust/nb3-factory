@@ -309,9 +309,11 @@ test('a rejected Re-run stops first and uploads no checkpoint or patch copy', ()
       /steps\.rerun_guard\.outcome == 'success'/,
       upload.split('\n')[0],
     );
+  // A later attempt whose guard did not accept it (failed, or skipped after
+  // a failed control checkout) counts as rejected too.
   assert.match(
     agent,
-    /rerun_rejected: \$\{\{ steps\.rerun_guard\.outcome == 'failure' \}\}/,
+    /rerun_rejected: \$\{\{ steps\.rerun_guard\.outcome == 'failure' \|\| \(github\.run_attempt > 1 && steps\.rerun_guard\.outcome != 'success'\) \}\}/,
   );
   assert.match(
     job('report-failure'),

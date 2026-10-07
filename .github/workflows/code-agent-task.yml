@@ -426,7 +426,10 @@ jobs:
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
       # A kept handed-off checkpoint (Keep the handed-off checkpoint) is a sealed patch too.
       patch_available: ${{ steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success' }}
-      rerun_rejected: ${{ steps.rerun_guard.outcome == 'failure' }}
+      # A later attempt counts as rejected unless the guard accepted it: a
+      # control checkout that failed first skips the guard, and that attempt
+      # still must not publish reports or answer a comment.
+      rerun_rejected: ${{ steps.rerun_guard.outcome == 'failure' || (github.run_attempt > 1 && steps.rerun_guard.outcome != 'success') }}
     steps:
       # Checked out first: the re-run guard below reads the pinned scripts.
       # Nothing here writes agent-artifacts.

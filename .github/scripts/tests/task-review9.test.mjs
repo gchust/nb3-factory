@@ -411,6 +411,20 @@ test('a re-run whose earlier attempts never started the agent runs as the first 
     older.stdout,
     /cannot run a GitHub Re-run as its first execution/,
   );
+  // A later attempt the guard did not accept is rejected even when the guard
+  // never ran (the control checkout before it failed). Evaluated as GitHub
+  // does: outcome strings, run_attempt compared as a number.
+  const expression = /rerun_rejected: \$\{\{ (.+) \}\}/
+    .exec(job('agent'))[1]
+    .replaceAll('steps.rerun_guard.outcome', 'outcome')
+    .replaceAll('github.run_attempt', 'attempt')
+    .replaceAll("'", '"');
+  const rejected = new Function('outcome', 'attempt', `return ${expression};`);
+  assert.equal(rejected('skipped', 2), true);
+  assert.equal(rejected('failure', 2), true);
+  assert.equal(rejected('success', 2), false);
+  assert.equal(rejected('skipped', 1), false);
+  assert.equal(rejected('failure', 1), true);
   // The pinned scripts are checked out before the guard runs.
   const agent = job('agent');
   assert.ok(
