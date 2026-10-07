@@ -8,6 +8,7 @@ on:
       - '.github/scripts/template-*.mjs'
       - '.github/scripts/overlay-factory.mjs'
       - '.github/scripts/publish-template.sh'
+      - '.github/scripts/run-factory-tests.sh'
       # Run by the job below, directly, through the overlay or through verify.sh;
       # workflow-policy.test.mjs derives this list from the imports.
       - '.github/scripts/assert-current-template.mjs'
@@ -126,6 +127,18 @@ jobs:
         if: steps.supersede.outputs.superseded != 'true'
         with:
           node-version: 24.x
+
+      # Factory regression tests already run on every PR that changes these
+      # scripts (factory-tests.yml); a refresh that may publish runs them here,
+      # the same way (run-factory-tests.sh). First, because they need only the
+      # control checkout: a failure ends the run before ten minutes of
+      # generation and installs rather than after them.
+      - name: Run factory regression tests before publication
+        if: github.event_name != 'pull_request'
+        # The suite takes about 3 minutes in factory-tests.yml. A hang must not
+        # hold template-refresh-global (and sync-issue-presets) for two hours.
+        timeout-minutes: 15
+        run: bash control/.github/scripts/run-factory-tests.sh control/.github/scripts/tests
 
       # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
@@ -268,18 +281,6 @@ jobs:
         if: steps.supersede.outputs.superseded != 'true'
         run: bash control/.github/scripts/install-browser-fonts.sh
 
-      # Factory regression tests already run on every PR that changes these
-      # scripts (factory-tests.yml); a refresh that may publish runs them here.
-      # Like factory-tests, unset the run identity: handoff, recovery and budget
-      # fixtures read GITHUB_RUN_ID/GITHUB_RUN_ATTEMPT, and a Re-run (attempt 2)
-      # would otherwise fail them.
-      - name: Run factory regression tests before publication
-        if: github.event_name != 'pull_request'
-        # The suite takes about 3 minutes in factory-tests.yml. A hang must not
-        # hold template-refresh-global (and sync-issue-presets) for two hours.
-        timeout-minutes: 15
-        run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
-
       - name: Verify factory, application, clean database, and browser login
         if: steps.supersede.outputs.superseded != 'true'
         # 96-162 s in recent runs; bounded for the same reason as the tests.
@@ -299,6 +300,8 @@ jobs:
 
       - name: Package only the verified baseline as one new root commit
         if: steps.supersede.outputs.superseded != 'true'
+        env:
+          DRY_RUN: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           git init --initial-branch=template
@@ -318,7 +321,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/template-artifact"
           git bundle create "$RUNNER_TEMP/template-artifact/template.bundle" refs/heads/template
           cp factory-template.json "$RUNNER_TEMP/template-diagnostics/factory-template.json"
-          echo "Fresh template verified. Dry run: ${{ github.event_name == 'pull_request' || inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fresh template verified. Dry run: $DRY_RUN" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save the verified baseline
         if: steps.supersede.outputs.superseded != 'true'
@@ -346,12 +349,16 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Only the recorded commit itself (the default depth of one): publishing
+      # reads its tree, makes it the new commit's parent and the backup
+      # branch's target, and pushes only the new commit, because the lease
+      # requires that commit to still be develop's head on the remote. The
+      # full history is ~217 MB.
       - name: Check out the recorded control commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.generate.outputs.base_sha }}
           path: control
-          fetch-depth: 0
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:

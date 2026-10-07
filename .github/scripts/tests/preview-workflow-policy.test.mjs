@@ -59,7 +59,12 @@ test('a failed preview does not fail the pipeline and is reported, not hidden', 
     deploy.indexOf('Report the preview on the pull request'),
   );
   assert.match(publish, /continue-on-error: true/);
-  assert.match(publish, /--status "[^"]*success[^"]*failed[^"]*"/);
+  // Through env, not an expression inside the script.
+  assert.match(
+    publish,
+    /STATUS: \$\{\{[^\n]*'success'[^\n]*'skipped'[^\n]*'failed' \}\}/,
+  );
+  assert.match(publish, /--status "\$STATUS"/);
 });
 
 test('the preview deploy stays inert without credentials', () => {
@@ -88,7 +93,7 @@ test('the preview is reported after a failed deploy, not after a manual cancel',
 
 test('preview teardown runs on pull_request_target, not pull_request', () => {
   // Only pull_request_target has secrets for a fork-originated pull request.
-  assert.match(teardown, /pull_request_target:\n\s+types: \[closed\]/);
+  assert.match(teardown, /pull_request_target:\n\s+types: \[closed, reopened\]/);
   assert.doesNotMatch(teardown, /^\s{2}pull_request:/m);
   assert.match(
     teardown,
@@ -173,8 +178,9 @@ test('the payload is published for the host to fetch, not pushed to it', () => {
   assert.match(deploy, /--payload-url '\$asset_url'/);
   assert.match(
     deploy,
-    /--payload-sha256 '\$\{\{ steps\.publish\.outputs\.payload_sha256 \}\}'/,
+    /PAYLOAD_SHA256: \$\{\{ steps\.publish\.outputs\.payload_sha256 \}\}/,
   );
+  assert.match(deploy, /--payload-sha256 '\$PAYLOAD_SHA256'/);
   assert.match(deploy, /--fetch-proxy '\$PREVIEW_FETCH_PROXY'/);
   // The digest describes the file that was uploaded, computed in that same step,
   // and it is the digest and the name the host is given.
@@ -182,8 +188,19 @@ test('the payload is published for the host to fetch, not pushed to it', () => {
   assert.match(deploy, /echo "payload_asset=\$asset" >> "\$GITHUB_OUTPUT"/);
   assert.match(
     deploy,
-    /asset_url="https:\/\/github\.com\/\$GITHUB_REPOSITORY\/releases\/download\/\$PREVIEW_RELEASE\/\$\{\{ steps\.publish\.outputs\.payload_asset \}\}"/,
+    /PAYLOAD_ASSET: \$\{\{ steps\.publish\.outputs\.payload_asset \}\}/,
   );
+  assert.match(
+    deploy,
+    /asset_url="https:\/\/github\.com\/\$GITHUB_REPOSITORY\/releases\/download\/\$PREVIEW_RELEASE\/\$PAYLOAD_ASSET"/,
+  );
+  // A staging path of each deploy's own on the host, so an earlier deploy
+  // still fetching there never shares its partial file or verified payload.
+  assert.match(
+    deploy,
+    /payload="\/srv\/nb3-preview\/tmp\/payload-pr-\$PR-\$GITHUB_RUN_ID-\$GITHUB_RUN_ATTEMPT\.tar\.gz"/,
+  );
+  assert.match(deploy, /--payload '\$payload'/);
 });
 
 test('one build deployed twice does not replace the running preview', () => {
@@ -243,7 +260,12 @@ test('the temporary payloads are deleted when the pull request closes or its pre
   // They are public while they exist, so they must not outlive the preview. A
   // pull request that was deployed more than once left more than one of them.
   assert.match(deletePayloads, /mapfile -t assets < </);
-  assert.ok(deletePayloads.includes("--json assets --jq '.assets[].name'"));
+  // The assets endpoint pages; the release object's own list does not.
+  assert.ok(
+    deletePayloads.includes(
+      'gh api --paginate "repos/$GITHUB_REPOSITORY/releases/$release/assets?per_page=100"',
+    ),
+  );
   assert.ok(
     deletePayloads.includes(
       'grep -E "^preview-pr-$pr(-[0-9a-f]{16})?\\.tar\\.gz$"',
@@ -280,20 +302,29 @@ test('deleting payloads removes only this pull request\'s assets', () => {
 echo "$*" >> ${JSON.stringify(log)}
 # Whatever a gh call reads from stdin would be lost from the eviction list.
 cat >> ${JSON.stringify(path.join(root, 'stdin.log'))}
-if [[ "$1 $2" == 'release view' ]]; then
+if [[ "$1 $2" == 'api repos/o/r/releases/tags/factory-previews' ]]; then
   case "\${GH_RELEASE:-}" in
-    missing) echo 'release not found' >&2; exit 1 ;;
+    missing) echo 'gh: Not Found (HTTP 404)' >&2; exit 1 ;;
     down) echo 'HTTP 502: Bad Gateway' >&2; exit 1 ;;
   esac
-  printf '%s\\n' preview-pr-7.tar.gz preview-pr-7-0123456789abcdef.tar.gz preview-pr-70-0123456789abcdef.tar.gz preview-pr-17.tar.gz
+  echo 42
+fi
+# Two pages, as gh --paginate prints them.
+if [[ "$1 $2 $3" == 'api --paginate repos/o/r/releases/42/assets?per_page=100' ]]; then
+  printf '%s\\n' preview-pr-7.tar.gz preview-pr-7-0123456789abcdef.tar.gz preview-pr-70-0123456789abcdef.tar.gz
+  printf '%s\\n' preview-pr-17.tar.gz preview-pr-7-fedcba9876543210.tar.gz
 fi
 `,
       { mode: 0o755 },
     );
-    const run = (pr, release = '') =>
+    const run = (pr, release = '', ...extra) =>
       spawnSync(
         'bash',
-        [path.resolve(import.meta.dirname, '..', 'delete-preview-payloads.sh'), pr],
+        [
+          path.resolve(import.meta.dirname, '..', 'delete-preview-payloads.sh'),
+          pr,
+          ...extra,
+        ],
         {
           encoding: 'utf8',
           // As in the eviction loop, whose remaining entries are on stdin.
@@ -307,18 +338,38 @@ fi
           },
         },
       );
+    const deletions = () => {
+      const lines = readFileSync(log, 'utf8')
+        .split('\n')
+        .filter((line) => line.startsWith('release delete-asset'))
+        .map((line) => line.split(' ')[3]);
+      rmSync(log);
+      return lines;
+    };
     const result = run('7');
     assert.equal(result.status, 0, result.stderr);
-    const deleted = readFileSync(log, 'utf8')
-      .split('\n')
-      .filter((line) => line.startsWith('release delete-asset'))
-      .map((line) => line.split(' ')[3]);
-    assert.deepEqual(deleted, [
+    // Assets on the second page are found too.
+    assert.deepEqual(deletions(), [
       'preview-pr-7.tar.gz',
       'preview-pr-7-0123456789abcdef.tar.gz',
+      'preview-pr-7-fedcba9876543210.tar.gz',
     ]);
     assert.equal(readFileSync(path.join(root, 'stdin.log'), 'utf8'), '');
     assert.equal(run('7; rm -rf /').status, 2);
+    // After a successful deploy: everything of this pull request but the
+    // payload just deployed.
+    const kept = run('7', '', '--keep', 'preview-pr-7-fedcba9876543210.tar.gz');
+    assert.equal(kept.status, 0, kept.stderr);
+    assert.deepEqual(deletions(), [
+      'preview-pr-7.tar.gz',
+      'preview-pr-7-0123456789abcdef.tar.gz',
+    ]);
+    // Only one of this pull request's own payload names may be kept.
+    assert.equal(
+      run('7', '', '--keep', 'preview-pr-70-0123456789abcdef.tar.gz').status,
+      2,
+    );
+    assert.equal(run('7', '', '--keep').status, 2);
     // Only a missing release is nothing to delete; any other gh failure fails.
     const missing = run('7', 'missing');
     assert.equal(missing.status, 0, missing.stderr);
@@ -464,7 +515,7 @@ test('preview connection is checked and public HTTPS gates the success report', 
     deploy,
     /node control\/\.github\/scripts\/preview-public-check.mjs/,
   );
-  assert.match(deploy, /--status "\$\{\{ steps.public.outcome == 'success'/);
+  assert.match(deploy, /STATUS: \$\{\{ steps\.public\.outcome == 'success'/);
 });
 
 test('teardown shares the deploy queue and never hides its own failure', () => {

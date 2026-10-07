@@ -34,9 +34,14 @@ require_command flock
 ensure_layout
 
 # Read under the deploy lock, so an instance caught mid-deploy is not counted
-# from a half-written preview.env.
+# from a half-written preview.env. Bounded, like every wait here: CI's step
+# timing out kills only the ssh client, and this would keep waiting. The wait
+# matches preview-deploy.sh's, at least the longest a deploy holds the lock,
+# so a deploy queued behind another one waits for it instead of failing; the
+# workflow's step leaves room for it and the evictions after it.
 exec 9>"$PREVIEW_ROOT/deploy.lock"
-flock 9
+flock -w 960 9 ||
+  die "another preview operation held the deploy lock for 960s; re-run Deploy Task Preview for this task run once the host is free (see PREVIEWS.md, 手动补发)"
 
 printf 'limit %s\n' "$PREVIEW_MAX_INSTANCES"
 if [[ -d "$(instance_dir "$pr")" ]]; then
