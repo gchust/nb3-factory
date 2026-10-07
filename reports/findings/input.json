@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ccdecdd2b64ae5a245cf810f9620e01b4f4dfafea3db49bf393e6cad0b377b08",
+  "inputHash": "20243397e4f23480ed77a15064225badf775767d8e70b09dc5c9ffa523aa46d1",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -11708,6 +11708,264 @@
         }
       ],
       "fingerprint": "f531b3aef4b0347c6fd505e0204c87b659145f31628cb472b851bd209a1c36ab"
+    },
+    {
+      "id": "612:37542332629:1:F2",
+      "report": "612:37542332629:1",
+      "issue": 612,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "seed 的相对值导入说明符在源码加载路径下缺少文档约束",
+        "detail": "task-loader 用原生动态 import 加载任务模块，不注册 TS 传输器，因此被加载的 seed 源码内 `import x from '…/data.js'`（真实文件是 .ts）不会被重写。nocobase-db 的自包含规则与 migrations.md 只约束“迁移/种子自身内容”，未点明跨文件值导入与说明符规则；`pnpm nocobase db apply` 因注册了 tsx 能通过，测试 harness 则失败，形成两条路径行为不一致。",
+        "impact": "代理与使用者在源码路径下会遇到 ERR_MODULE_NOT_FOUND，且错误信息指向一个“看起来存在”的 .js 路径，定位成本高。",
+        "suggestedChange": "在 nocobase-db 与 migrations.md 明确：种子数据内联或仅使用会被擦除的 `import type`；不要值导入同级应用模块的 .js 说明符；或在源码加载路径注册与 db apply 一致的传输器。",
+        "evidence": [
+          "E60",
+          "E53",
+          "E54",
+          "E72"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "seed 源码中出现跨文件值导入，specifier 以 .js 结尾而磁盘上是 .ts。",
+          "expected": "文档说明源码加载器不做说明符重写、种子应自包含；或加载器在源码路径注册 TS 传输器。",
+          "actual": "测试 harness 下报 Cannot find module .../it-ticket-demo.js；代理改为内联数据后才通过。",
+          "workaround": "把种子数据内联进每个 seed，跨文件仅保留 import type。",
+          "acceptance": "在 nocobase-db/migrations.md 增加一条说明符规则，并用一个源码路径种子测试覆盖。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-development",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/migration/internal/task-loader.js"
+      ],
+      "evidence": [
+        {
+          "id": "E60",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+          "observation": "task-loader.js 的 importTaskDefinition 用原生动态 import(pathToFileURL(filePath)) 加载任务模块并取 module.default；DEFAULT_TASK_EXTENSIONS 含 .js/.mjs/.cjs/.ts，但未注册任何 TS 传输器，因此被加载文件自身的相对 .js 值导入不会被重写。",
+          "lines": [
+            67,
+            79
+          ],
+          "excerpt": "        if (previous) {\n            throw new Error(`Duplicate ${kind.toLowerCase()} name \"${task.name}\" in ${previous.filePath} and ${task.filePath}.`);\n        }\n        seen.set(task.name, task);\n    }\n}\nexport function isNonEmptyString(value) {\n    return typeof value === 'string' && value.trim().length > 0;\n}\nexport function isValidTransactionMode(value) {\n    return (value === undefined || value === true || value === false || value === 'auto');\n}\nfunction isNodeError(error) {",
+          "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+        },
+        {
+          "id": "E53",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db 技能的自包含规则：迁移/种子必须在本文件内写清每个表、字段、索引、约束与元数据操作，禁止导入会演化的 Collection 定义、模型、注册表或共享常量。",
+          "lines": [
+            129,
+            135
+          ],
+          "excerpt": "The rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E54",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "迁移/种子清单章节：源码与编译产物按相同校验和记录迁移历史，构建会为每个编译目录生成 .manifest.json；已标记的 JavaScript 需要清单。",
+          "lines": [
+            122,
+            133
+          ],
+          "excerpt": "## Compiled migration and seed manifests\n\nThe application build generates `.manifest.json` in each compiled migrations and seeds directory after server compilation, path rewriting, and `afterServerBuild` hooks. Keep the manifest generator in the build when customizing it. Plugins generate their own manifests when built; an application must not regenerate manifests for installed dependencies.\n\nTypeScript and compiled JavaScript use the same source checksum for migration history, while the loader separately verifies emitted JavaScript. Marked JavaScript requires its manifest. For a database with old raw JavaScript checksums, first run the compiled representation with matching original output; verified legacy hashes are converted under the task lock. Never edit historical migrations, and never edit the history table by hand, to resolve an upgrade failure.\n\n## Reading runtime configuration\n\nMigration callbacks (`shouldRun`, `up`, `down`) and seed `run` receive a read-only `config` reader: `config.get<string>('users.initialAdmin.username')`. Missing keys return `undefined`; the type parameter is a TypeScript assertion, not runtime validation. Validate required settings when they are needed. Application startup and CLI database commands snapshot configuration through the application accessor’s `raw()` method for each execution plan, including application defaults. Custom get-only readers retain their own lookup semantics and remain live; they do not need to support an empty root key. Direct `createAppMigrator` and `createAppSeeder` callers can pass `runtimeConfig`; standalone database runners accept `config` and default to an empty reader.\n\nPlain configuration objects and arrays are copied using the application's configuration semantics; modifying a returned map does not change subsequent reads. Opaque objects and functions retain their existing configuration-library semantics. Only `get` is exposed. Configuration is not added to checksums or task history; do not log secrets yourself. A later rollback gets the configuration available at rollback time, so keep schema operations and their inverses fixed rather than deriving table or field definitions from mutable settings. Existing migration `parameters` still identify fixed targets, and `configuration` still carries source applicability settings.\n",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        },
+        {
+          "id": "E72",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609210003_it_tickets_sample_tickets.ts",
+          "observation": "示例工单种子：数据直接内联在 defineSeed 的 run 中，仅保留 import type ... from '../../../server/it-tickets/ticket.js'（类型导入会被擦除），避免值导入同级 .js 说明符。",
+          "lines": [
+            1,
+            20
+          ],
+          "excerpt": "import { defineSeed } from '@nocobase/db';\n\nimport type {\n  ItTicketCategory,\n  ItTicketCreate,\n  ItTicketRow,\n  ItTicketStatus,\n} from '../../../server/it-tickets/ticket.js';\n\n/**\n * Writes the three starter tickets, one in each state, so the list has\n * something to show the moment the application starts and so the difference\n * between an employee's view and a handler's is visible without typing.\n *\n * The rows go through the Repository rather than raw SQL so the values are\n * written in Collection terms and the driver encodes the dates itself. A row\n * that already exists is left alone, and every timestamp is fixed in the data\n * rather than taken from the clock, so two installations show the same history.\n *\n * The data stays in this file rather than in a shared module: a seed is loaded",
+          "sha256": "96f5c31762f8ec16768641c38174461e24787c84b5bb6d1ab8ea39ad4cd54d0c"
+        }
+      ],
+      "fingerprint": "6c454a803832536e3a8ce1a54f41b3f2b6ccd06ea404b60cf2bd9bc57da5c7f2"
+    },
+    {
+      "id": "612:37542332629:1:F3",
+      "report": "612:37542332629:1",
+      "issue": 612,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "misleading",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "非法用户名以 500 INTERNAL_ERROR 暴露，违背稳定错误契约",
+        "detail": "app-plugin-authentication 的 create 只对 username 做 trim/lowercase，格式约束来自 better-auth 的 username 插件；app-plugin-users 的 /api/users 错误映射只覆盖 UserAdministrationError 与 PermissionSetLastAssignmentError，未识别的 better-auth APIError 会冒泡为 500。",
+        "impact": "管理员创建含连字符用户名时收到 500 而非可识别的 400/INVALID_ARGUMENT，客户端无法给出字段级提示，也掩盖了“输入非法”这一语义。",
+        "suggestedChange": "在 users 路由的错误映射中把 better-auth 校验类 APIError 映射为 INVALID_ARGUMENT（必要时带字段），或在 authentication 侧先做格式校验并抛 UserAdministrationError。",
+        "evidence": [
+          "E65",
+          "E66",
+          "E64",
+          "E67"
+        ],
+        "claimed": "users 技能与路由文档承诺可识别的 error.reason 与稳定错误体：重复身份返回 409 ALREADY_EXISTS，其他用户输入问题返回 INVALID_ARGUMENT。",
+        "observed": "实测 POST /api/users 传含连字符的用户名得到 res.status=500、err.type=APIError、err.message=\"Username is invalid\"，未走统一错误体映射。",
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "创建用户时提交 better-auth username 插件所不允许的字符集（如连字符）。",
+          "expected": "返回 4xx，reason=INVALID_ARGUMENT，并带可本地化消息。",
+          "actual": "better-auth 的 APIError 未被 users 路由映射，返回 500 INTERNAL_ERROR，err.type=APIError。",
+          "workaround": "调用方改用满足 /^[a-zA-Z0-9_.]{3,30}$/ 的用户名。",
+          "acceptance": "新增测试：非法用户名返回 INVALID_ARGUMENT 而非 500。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "@nocobase/app-plugin-users"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+        "packages/@nocobase/app-plugin-authentication/dist/server/user-administration.js",
+        "packages/@nocobase/app-plugin-users/dist/server/routes/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E65",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/user-administration.js",
+          "observation": "user-administration.js 的 create：username = optionalUsername(input.username)，随后 assertIdentityAvailable({email, username}) 只检查唯一性冲突，再调用 better-auth createUser；这里没有用户名格式校验。",
+          "lines": [
+            88,
+            104
+          ],
+          "excerpt": "            .executeTakeFirst();\n        return row ? toAdministratedUser(row) : undefined;\n    }\n    async create(input) {\n        const context = await this.options.auth.administrationContext();\n        validatePassword(input.password, context.password.config);\n        const username = optionalUsername(input.username);\n        const email = normalizedEmail(input.email);\n        await this.assertIdentityAvailable({ email, username });\n        const user = await context.internalAdapter\n            .createUser({\n            name: requiredText(input.name, 'User name'),\n            username,\n            email,\n            emailVerified: false,\n            disabledAt: null,\n        }, { method: 'admin' })",
+          "sha256": "a37fd54ae25a187fb06f5016c6514d4f29fd37fd71745c16e6fc2d6e434e7c12"
+        },
+        {
+          "id": "E66",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/user-administration.js",
+          "observation": "optionalUsername 只做 value?.trim().toLowerCase()，并不校验字符集或长度。",
+          "lines": [
+            299,
+            303
+          ],
+          "excerpt": "function optionalUsername(value) {\n    const normalized = value?.trim().toLowerCase();\n    return normalized || undefined;\n}\nfunction normalizedEmail(value) {",
+          "sha256": "a37fd54ae25a187fb06f5016c6514d4f29fd37fd71745c16e6fc2d6e434e7c12"
+        },
+        {
+          "id": "E64",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-users/dist/server/routes/index.js",
+          "observation": "app-plugin-users 的 /api/users 错误映射只识别 PermissionSetLastAssignmentError（->FAILED_PRECONDITION/LAST_ASSIGNMENT）与 UserAdministrationError（NOT_FOUND / *_CONFLICT->ALREADY_EXISTS / 其余->INVALID_ARGUMENT）；其他异常（如 better-auth 的 APIError）返回 undefined，继续冒泡为 500。",
+          "lines": [
+            215,
+            232
+          ],
+          "excerpt": "            status: 'FAILED_PRECONDITION',\n            reason: 'LAST_ASSIGNMENT',\n            domain: 'authorization',\n            message: error.message,\n            cause: error,\n        });\n    if (error instanceof UserAdministrationError)\n        return new ApiError({\n            status: error.code === 'USER_NOT_FOUND'\n                ? 'NOT_FOUND'\n                : error.code.endsWith('_CONFLICT')\n                    ? 'ALREADY_EXISTS'\n                    : 'INVALID_ARGUMENT',\n            reason: error.code,\n            domain: 'authentication',\n            message: error.message,\n            cause: error,\n        });",
+          "sha256": "8d5e5a7cc6d645c473fe4fafb3d570b5a91b0c64fc3c7ab0f32dc8a304f8d8b7"
+        },
+        {
+          "id": "E67",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "auth.js 默认把 better-auth 的 username({ displayUsername: false }) 插件加入 plugins，用户名格式约束来自该插件，其校验失败会抛 better-auth 的 APIError。",
+          "lines": [
+            14,
+            19
+          ],
+          "excerpt": "            throw new Error('Authentication secret is required.');\n        }\n        const plugins = (config.plugins ?? []).some((plugin) => Reflect.get(plugin, 'id') === 'username')\n            ? config.plugins\n            : [username({ displayUsername: false }), ...(config.plugins ?? [])];\n        const configuredSessionCreate = config.databaseHooks?.session?.create;",
+          "sha256": "25d0f0fdc16ae9685e9ab088e6454d85c47d0cd789819d22041a7808f4598c20"
+        }
+      ],
+      "fingerprint": "80a617e739c44a544a4d0c0db2c2ebe8aa2d1389d83ec0d648143fb22873f627"
+    },
+    {
+      "id": "612:37542332629:1:F4",
+      "report": "612:37542332629:1",
+      "issue": 612,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "分配到 authenticated 默认受众的权限集会从直接角色选择器消失，应予说明",
+        "detail": "permission-set-scope.js 的 directRoleState 会先收集 subject.type='authenticated', id='*' 的分配，再把它们从直接角色候选里过滤掉（仅保留 unrestricted 或未受保护的集合）。users 技能解释了 hasAuthenticatedDefaultAccess 的语义，但没有直说这一可见后果。",
+        "impact": "使用者把一个权限集设为“所有登录用户的默认”后，会发现它在 Users 页的直接分配中消失，容易误判为配置丢失。",
+        "suggestedChange": "在 users 技能的 hasAuthenticatedDefaultAccess 段落补一句：分配到该默认受众的集合不再出现在直接角色选择器，逐人额外授权请另建集合或调整受众。",
+        "evidence": [
+          "E63",
+          "E59"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "把权限集分配给 authenticated 默认受众后进入 Users 页查看直接角色。",
+          "expected": "界面或文档明确解释该集合为何不在直接角色列表。",
+          "actual": "directRoleState 静默过滤掉该集合，文档未点明。",
+          "workaround": "为逐人授权另建未绑定 authenticated 受众的权限集。",
+          "acceptance": "技能中出现该可见后果说明，或界面给出内联解释。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-users",
+        "app/.agents/skills/nocobase-app-plugin-users"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-users/SKILL.md",
+        "packages/@nocobase/app-plugin-users/dist/server/services/permission-set-scope.js"
+      ],
+      "evidence": [
+        {
+          "id": "E63",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-users/dist/server/services/permission-set-scope.js",
+          "observation": "permission-set-scope.js 的 directRoleState：先算出 subject.type==='authenticated' && id==='*' 的默认分配集合，再返回 permissionSets.filter(key 不在默认集合 且 (unrestricted 或未受保护))。因此被分配到 authenticated 默认受众的权限集不会出现在“直接角色”选择器中。",
+          "lines": [
+            95,
+            119
+          ],
+          "excerpt": "    const scoped = connection\n        ? permissionSets.withTransaction(connection)\n        : permissionSets;\n    const [sets, assignments] = await Promise.all([\n        scoped.list(),\n        scoped.listAssignments(),\n    ]);\n    const authenticatedDefaults = new Set(assignments\n        .filter((assignment) => assignment.subject.type === 'authenticated' &&\n        assignment.subject.id === '*')\n        .map((assignment) => assignment.permissionSet));\n    return {\n        permissionSets: sets.filter(({ key }) => !authenticatedDefaults.has(key) &&\n            (permissionSets.protection(key)?.unrestricted === true ||\n                permissionSets.protection(key) === undefined)),\n        assignments,\n    };\n}\nfunction requireDirectRole(role, available) {\n    if (!available.includes(role)) {\n        throw new UserManagementError('INVALID_ROLE_SCOPE_VALUE', `Unknown application role: ${role}`);\n    }\n}\nfunction multipleRoles(value) {\n    if (typeof value === 'string') {",
+          "sha256": "fe56ab476fb20fa1a4a5f6d7b574d67f33017eae8e8eeb69e666a1ae439f7d70"
+        },
+        {
+          "id": "E59",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-users/SKILL.md",
+          "observation": "users 技能：受保护分配用 assignable/removable=false 且要在 replace() 里同样强制；hasAuthenticatedDefaultAccess:true 表示直接分配之外所有登录用户还继承单独配置的默认访问，页面会解释这一区别而不是把默认当成角色。",
+          "lines": [
+            60,
+            66
+          ],
+          "excerpt": "Set `assignable: false` or `removable: false` on an option when the Users page\nmust show a protected assignment but must not add or revoke it. Enforce the\nsame rule in `replace()` because these flags only control the Client. Set\n`hasAuthenticatedDefaultAccess: true` when the scope lists direct assignments\nbut all signed-in users also inherit separately configured default access; the\npage then explains that distinction instead of treating the default as a role.\nUse `labelI18nKey` with `labelI18nNs` on a scope or option when its owner has",
+          "sha256": "c0581e5fe8e997f9551df4efacba82ac4592cabf1f9968d1baca6ddf4114b3cf"
+        }
+      ],
+      "fingerprint": "3392f3cbd9eb9a272e05b8a54a514391f4c90237886a3c58b9bd67ccf2dedf4f"
     },
     {
       "id": "613:37542338892:1:F3",
