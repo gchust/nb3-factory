@@ -1,10 +1,16 @@
 // Fingerprints the files whose change starts the source baseline check on a
 // pull request: exactly the `on.pull_request.paths` of source-baseline.yml,
-// read from the same checkout. The check verifies nothing else from this
-// repository (workflow-policy.test.mjs keeps every script it runs inside those
-// filters), and pull request runs verify the pinned source SHA that
-// source-baseline-ref.mjs, one of those files, declares. Two runs of one pull
-// request with the same fingerprint therefore verify the same thing.
+// read from the checkout being verified. workflow-policy.test.mjs keeps every
+// script the check runs inside those filters, and pull request runs verify the
+// pinned source SHA that source-baseline-ref.mjs, one of those files, declares.
+// It is not a complete description of a run: Node.js 24.x, the runner image,
+// the npm registry and the overlay dependencies the portable job installs
+// without a lockfile are outside it. Two runs of one pull request with the same
+// fingerprint ran the same factory files against the same source, which is
+// what a pull request check is for; a re-run still verifies in full.
+//
+// The workflow runs this file from the default branch, never from the pull
+// request it fingerprints.
 //
 // Usage: node source-baseline-inputs.mjs <checkout>
 // Prints a hex SHA-256 over the matching paths and their blob ids.
@@ -17,34 +23,64 @@ import { pathToFileURL } from 'node:url';
 
 export const WORKFLOW = '.github/workflows/source-baseline.yml';
 
-// The paths list of the pull_request trigger. A plain reading of the one
-// block, not a YAML parser: the checkout has no dependencies installed, and an
-// unexpected shape fails rather than guessing.
+// One list item: `- path`, `- 'path'` or `- "path"`, optionally followed by a
+// comment. Escapes inside double quotes are not read.
+const ITEM = /^ {6}- (?:'([^']*)'|"([^"\\]*)"|([^\s'"#][^\s#]*))(?:\s+#.*)?$/;
+
+// The paths list of the pull_request trigger. A strict reading of the one
+// block, not a YAML parser, since the checkout has no dependencies installed.
+// Every line of the list must be blank, a comment or an item of one of the
+// forms above. Anything else fails, so the fingerprint can never silently
+// cover fewer files than the trigger does.
 export function pullRequestPaths(workflow) {
-  const block = /^ {2}pull_request:\n((?: {4}.*\n|\s*\n)+)/m.exec(
-    workflow,
-  )?.[1];
-  assert.ok(block, 'source-baseline.yml has no pull_request trigger');
-  const list = /^ {4}paths:\n((?: {6}.*\n|\s*\n)+)/m.exec(block)?.[1];
-  assert.ok(list, 'the pull_request trigger has no paths');
-  const paths = [...list.matchAll(/^ {6}- '([^']+)'$/gm)].map(
-    ([, value]) => value,
+  const lines = workflow.split(/\r?\n/);
+  let index = lines.indexOf('  pull_request:');
+  assert.ok(index >= 0, 'source-baseline.yml has no pull_request trigger');
+  const insideTrigger = (line) =>
+    line.trim() === '' || /^\s*#/.test(line) || /^ {4}/.test(line);
+  for (index += 1; index < lines.length; index += 1)
+    if (!insideTrigger(lines[index]) || lines[index] === '    paths:') break;
+  assert.equal(
+    lines[index],
+    '    paths:',
+    'the pull_request trigger has no paths',
   );
+  const paths = [];
+  for (index += 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (line.trim() === '' || /^\s*#/.test(line)) continue;
+    if (!/^ {6}/.test(line)) break;
+    const item = ITEM.exec(line);
+    assert.ok(item, `unreadable pull_request path entry: ${line.trim()}`);
+    const value = item[1] ?? item[2] ?? item[3];
+    assert.ok(value, `empty pull_request path entry: ${line.trim()}`);
+    paths.push(value);
+  }
   assert.ok(paths.length, 'the pull_request paths are empty');
   return paths;
 }
 
-// GitHub's filter syntax, limited to what the list uses: literal paths and `*`
-// within one path segment. Anything else is refused, so a new pattern makes
-// this fail loudly instead of hashing a different set than the trigger.
+// GitHub's filter syntax, limited to what the list uses: literal paths, `*`
+// within one path segment and `**` across segments. Anything else (`?`, `[`,
+// `!` negations) is refused, so a new kind of pattern makes this fail loudly
+// instead of hashing a different set than the trigger.
 export function pathMatcher(patterns) {
   const expressions = patterns.map((pattern) => {
     assert.match(pattern, /^[\w./*-]+$/, `unsupported path filter: ${pattern}`);
-    assert.doesNotMatch(pattern, /\*\*/, `unsupported path filter: ${pattern}`);
+    assert.doesNotMatch(
+      pattern,
+      /\*{3}/,
+      `unsupported path filter: ${pattern}`,
+    );
     const source = pattern
-      .split('*')
-      .map((part) => part.replace(/[.]/g, '\\.'))
-      .join('[^/]*');
+      .split('**')
+      .map((part) =>
+        part
+          .split('*')
+          .map((literal) => literal.replace(/[.]/g, '\\.'))
+          .join('[^/]*'),
+      )
+      .join('.*');
     return new RegExp(`^${source}$`);
   });
   return (file) => expressions.some((expression) => expression.test(file));

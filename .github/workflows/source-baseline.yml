@@ -27,10 +27,13 @@ on:
       - '.github/scripts/stop-stale-app.sh'
       - '.github/scripts/timed-command.mjs'
       - '.github/scripts/timing.mjs'
-      # overlay-factory.mjs reads these from the control checkout.
+      # overlay-factory.mjs reads these from the control checkout. It also
+      # copies docs/ into the portable application, whose verify.sh then
+      # format-checks it.
       - '.npmrc'
       - 'README.MD'
       - 'package.json'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       source_sha:
@@ -71,17 +74,30 @@ jobs:
   # develop, so every push re-runs the check, including the pushes that change
   # none of its files: about a third of the pull request runs (18 of 50 from
   # 2026-09-28 to 2026-10-07 had the inputs of the previous green run of their
-  # branch), ~13 minutes each. The fingerprint covers exactly
-  # the files of the path filter, at the merge commit this run checks, so a
-  # change on develop counts too; `record` below saves it once both jobs pass.
+  # branch), ~13 minutes each. The fingerprint covers exactly the files of the
+  # path filter, at the merge commit this run checks, so a change on develop
+  # counts too; `record` below saves it once both jobs pass. It does not cover
+  # Node.js, the runner image, the registry or the overlay's unlocked
+  # dependencies, which a re-run picks up again.
+  #
+  # Nothing the pull request controls decides the skip on its own:
+  # - the fingerprint script runs from the default branch (trusted/), reading
+  #   the merge commit's files as data;
+  # - a cache entry, which any run of this pull request could have saved,
+  #   only names a run; the API must confirm that run is this workflow, on
+  #   pull_request, for this same pull request, with both source-baseline and
+  #   portable successful. A fork's pull request lists no pull request on its
+  #   runs, so it always runs in full.
   # A pull request's cache is visible to that pull request alone, and the key
   # names the pull request as well. A re-run attempt always runs in full.
-  # Every step of the lookup fails open: no fingerprint, no skip.
+  # Every step of the lookup fails open: no confirmed run, no skip.
   supersede:
     if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
+      # The recorded run and its jobs.
+      actions: read
       contents: read
       pull-requests: read
     outputs:
@@ -103,6 +119,16 @@ jobs:
           else
             echo "superseded=false" >> "$GITHUB_OUTPUT"
           fi
+      # The fingerprint script, from the default branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.check.outputs.superseded != 'true'
+        continue-on-error: true
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: trusted
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      # The files it fingerprints, from the merge commit; never executed here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.check.outputs.superseded != 'true'
         continue-on-error: true
@@ -120,7 +146,7 @@ jobs:
         if: steps.check.outputs.superseded != 'true'
         continue-on-error: true
         run: |
-          fingerprint="$(node control/.github/scripts/source-baseline-inputs.mjs control)"
+          fingerprint="$(node trusted/.github/scripts/source-baseline-inputs.mjs control)"
           [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]]
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
       - name: Look for an earlier run of this pull request that verified them
@@ -134,16 +160,34 @@ jobs:
       - name: Skip inputs an earlier run already verified
         id: verified
         if: steps.lookup.outputs.cache-hit == 'true'
+        continue-on-error: true
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           run_id="$(head -n 1 "$RUNNER_TEMP/source-baseline-verified/run-id" 2>/dev/null || true)"
-          if [[ "$run_id" =~ ^[1-9][0-9]*$ ]]; then
-            earlier="run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run_id"
-          else
-            earlier="an earlier run"
+          if [[ ! "$run_id" =~ ^[1-9][0-9]*$ || "$run_id" == "$GITHUB_RUN_ID" ]]; then
+            echo "::notice::The verified-inputs record names no earlier run; verifying in full."
+            exit 0
           fi
-          echo "::notice::$earlier of pull request #$PR_NUMBER verified these exact inputs; skipping the source build. Re-run this workflow to verify again."
+          # Confirm the named run from the API, not from the cache entry.
+          if ! run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"; then
+            echo "::notice::Could not read run $run_id; verifying in full."
+            exit 0
+          fi
+          run_ok="$(jq --argjson pr "$PR_NUMBER" \
+            '.path == ".github/workflows/source-baseline.yml" and .event == "pull_request" and any(.pull_requests[]?; .number == $pr)' \
+            <<<"$run_json" || true)"
+          if ! passed="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?filter=latest&per_page=100" --jq \
+            '[.jobs[] | select((.name == "source-baseline" or .name == "portable") and .conclusion == "success") | .name] | unique | length')"; then
+            echo "::notice::Could not read the jobs of run $run_id; verifying in full."
+            exit 0
+          fi
+          if [[ "$run_ok" != true || "$passed" != 2 ]]; then
+            echo "::notice::Run $run_id is not a passed source baseline check of pull request #$PR_NUMBER; verifying in full."
+            exit 0
+          fi
+          echo "::notice::Run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run_id of pull request #$PR_NUMBER verified these exact inputs; skipping the source build. Re-run this workflow to verify again."
           echo "verified=true" >> "$GITHUB_OUTPUT"
 
   source-baseline:
@@ -387,9 +431,11 @@ jobs:
 
   # Records that this pull request's inputs passed both jobs, for the lookup in
   # supersede. Only after both: a failed or partial run is checked again.
+  # Never turns a verified run red: losing the record only costs a later skip.
   record:
     needs: [supersede, source-baseline, portable]
     if: github.event_name == 'pull_request' && needs.supersede.outputs.inputs != ''
+    continue-on-error: true
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
