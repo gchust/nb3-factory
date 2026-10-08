@@ -52,9 +52,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The document
+    // library is a new page somebody has to be granted, so it appears here with the id its stored grants use.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'library.documents' },
+      // The dialogs and the detail drawer under the list page inherit its grant.
+      { name: 'document-new', authorizedAs: 'library.documents' },
+      { name: 'document-detail', authorizedAs: 'library.documents' },
+      { name: 'document-detail-edit', authorizedAs: 'library.documents' },
     ]);
   });
 });

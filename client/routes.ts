@@ -1,9 +1,35 @@
-import { Home } from 'lucide-react';
+import { FileText, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
   type AppClientRouteContribution,
+  type AppClientRouteDefinition,
 } from '@nocobase/app-client/plugins';
+
+/**
+ * The document drawer and the edit dialog stacked on it.
+ *
+ * They are declared under the list page so the drawer opens over the list and
+ * closing the dialog returns to the drawer. Both inherit the list page's
+ * authorization: reaching them follows the same page grant, and the endpoints
+ * behind them check the document actions independently.
+ */
+function documentDetailRoutes(): AppClientRouteDefinition[] {
+  return [
+    {
+      name: 'document-detail',
+      path: ':documentId',
+      componentLoader: () => import('./pages/documents/detail/index.js'),
+      children: [
+        {
+          name: 'document-detail-edit',
+          path: 'edit',
+          componentLoader: () => import('./pages/documents/detail/edit.js'),
+        },
+      ],
+    },
+  ];
+}
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -43,6 +69,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The internal document library. Reading is granted by the page plus the
+    // feature's permission sets; the endpoints check the library.documents
+    // composite actions independently of this page grant.
+    name: 'documents',
+    path: '/documents',
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    navigation: { title: 'navigation.documents', icon: FileText },
+    componentLoader: () => import('./pages/documents/index.js'),
+    children: [
+      {
+        // /documents/new: create dialog. Authorization is inherited from the
+        // list page; the endpoint checks the create action independently.
+        name: 'document-new',
+        path: 'new',
+        componentLoader: () => import('./pages/documents/new.js'),
+      },
+      // /documents/:documentId (drawer) and /documents/:documentId/edit (dialog)
+      ...documentDetailRoutes(),
+    ],
   },
 ]);
 

@@ -745,6 +745,236 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('serves the document library with reading and ownership rules', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // The deployment sets the public origin, and a cookie-authenticated
+        // write is trust-checked against it. Without it every write is refused.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (username: string): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password: 'admin123' }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    interface Row {
+      readonly id: string;
+      readonly code: string;
+      readonly ownerName: string | null;
+    }
+    // A cookie-authenticated write is refused unless the request origin is
+    // trusted, so every write below carries the application's own origin.
+    const appOrigin = new URL(baseUrl).origin;
+    const writeInit = (cookie: string, body: unknown): RequestInit => ({
+      method: 'POST',
+      headers: {
+        cookie,
+        origin: appOrigin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const list = async (
+      cookie: string,
+    ): Promise<{ status: number; rows: Row[]; total: number }> => {
+      const response = await requestApp(app, `${baseUrl}/api/documents`, {
+        headers: { cookie },
+      });
+      if (response.status !== 200) {
+        return { status: response.status, rows: [], total: 0 };
+      }
+      const body = (await response.json()) as {
+        data: Row[];
+        meta: { total: number };
+      };
+      return {
+        status: response.status,
+        rows: body.data,
+        total: body.meta.total,
+      };
+    };
+
+    // Every document endpoint needs a session before it asks about permissions.
+    const anonymous = await requestApp(app, `${baseUrl}/api/documents`);
+    expect(anonymous.status).toBe(401);
+
+    const reader = await signIn('readeryi');
+    const readerList = await list(reader);
+    expect(readerList.status).toBe(200);
+    // Only the published, non-confidential sample is readable.
+    expect(readerList.rows.map((row) => row.code)).toEqual(['P']);
+    // The owner's display name is resolved for the list.
+    expect(readerList.rows[0].ownerName).toBe('资料员甲');
+
+    const maintainer = await signIn('jia');
+    const maintainerList = await list(maintainer);
+    expect(maintainerList.status).toBe(200);
+    expect(maintainerList.rows.map((row) => row.code).sort()).toEqual([
+      'C',
+      'D',
+      'P',
+    ]);
+
+    const byCode = new Map(maintainerList.rows.map((row) => [row.code, row]));
+    const publishedId = byCode.get('P')!.id;
+    const draftId = byCode.get('D')!.id;
+    const confidentialId = byCode.get('C')!.id;
+
+    const detail = async (cookie: string, id: string): Promise<number> => {
+      const response = await requestApp(app, `${baseUrl}/api/documents/${id}`, {
+        headers: { cookie },
+      });
+      return response.status;
+    };
+
+    // The reader may open the published document but not the draft or the
+    // confidential one: a hidden record answers 404, never 403.
+    expect(await detail(reader, publishedId)).toBe(200);
+    expect(await detail(reader, draftId)).toBe(404);
+    expect(await detail(reader, confidentialId)).toBe(404);
+
+    // Reading is not editing: the reader has no write action at all.
+    const readerPatch = await requestApp(
+      app,
+      `${baseUrl}/api/documents/${publishedId}`,
+      {
+        ...writeInit(reader, { title: 'taken over' }),
+        method: 'PATCH',
+      },
+    );
+    expect(readerPatch.status).toBe(403);
+    const readerDelete = await requestApp(
+      app,
+      `${baseUrl}/api/documents/${publishedId}`,
+      { method: 'DELETE', headers: { cookie: reader, origin: appOrigin } },
+    );
+    expect(readerDelete.status).toBe(403);
+
+    // The maintainer owns all three and can create, edit and delete their own.
+    const created = await requestApp(
+      app,
+      `${baseUrl}/api/documents`,
+      writeInit(maintainer, {
+        title: '新建草稿',
+        body: '由维护员创建。',
+        published: false,
+        confidential: false,
+      }),
+    );
+    expect(created.status).toBe(201);
+    const createdBody = (await created.json()) as { data: Row };
+    expect(createdBody.data.ownerName).toBe('资料员甲');
+    expect(createdBody.data.code).toMatch(/^DOC-/u);
+
+    const edited = await requestApp(
+      app,
+      `${baseUrl}/api/documents/${createdBody.data.id}`,
+      {
+        ...writeInit(maintainer, { title: '已修改的草稿' }),
+        method: 'PATCH',
+      },
+    );
+    expect(edited.status).toBe(200);
+
+    const removed = await requestApp(
+      app,
+      `${baseUrl}/api/documents/${createdBody.data.id}`,
+      { method: 'DELETE', headers: { cookie: maintainer, origin: appOrigin } },
+    );
+    expect(removed.status).toBe(204);
+
+    // Nobody may reach a record that does not exist.
+    expect(await detail(maintainer, '999999')).toBe(404);
+
+    // A per-record share is the administrator's temporary open of one draft.
+    // It grants the reader records, never the edit action, and revocation
+    // closes the document on the reader's next request.
+    const admin = await signIn('nocobase');
+    const readerSearch = await requestApp(app, `${baseUrl}/api/users`, {
+      headers: { cookie: admin },
+    });
+    expect(readerSearch.status).toBe(200);
+    const readerId = (
+      (await readerSearch.json()) as {
+        data: { id: string; username: string }[];
+      }
+    ).data.find((user) => user.username === 'readeryi')?.id;
+    expect(readerId).toBeTruthy();
+
+    const share = async (key: string, ids: string[]): Promise<void> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/authorization/sharingRules`,
+        writeInit(admin, {
+          key,
+          resource: { type: 'database.collection', id: 'documents' },
+          actions: [
+            {
+              action: 'read',
+              selection: { type: 'records', ids },
+            },
+          ],
+          subjects: [{ type: 'user', id: readerId }],
+          reason: '临时预览一份草稿。',
+        }),
+      );
+      expect(response.status).toBe(201);
+    };
+
+    await share('preview-draft', [draftId]);
+    expect(await detail(reader, draftId)).toBe(200);
+    // Reading a shared draft is still not editing it.
+    const readerPatchShared = await requestApp(
+      app,
+      `${baseUrl}/api/documents/${draftId}`,
+      { ...writeInit(reader, { title: 'taken over' }), method: 'PATCH' },
+    );
+    expect(readerPatchShared.status).toBe(403);
+
+    // Sharing a confidential document cannot open it: the collection-wide
+    // restriction intersects every branch, including a share.
+    await share('preview-confidential', [confidentialId]);
+    expect(await detail(reader, confidentialId)).toBe(404);
+
+    const revoked = await requestApp(
+      app,
+      `${baseUrl}/api/authorization/sharingRules/preview-draft`,
+      { method: 'DELETE', headers: { cookie: admin, origin: appOrigin } },
+    );
+    expect(revoked.status).toBe(204);
+    expect(await detail(reader, draftId)).toBe(404);
+
+    // The owner's access is unaffected by a share or its revocation.
+    expect(await detail(maintainer, draftId)).toBe(200);
+
+    // Disabling the reader ends the session it is already holding, while the
+    // maintainer keeps working.
+    const disable = await requestApp(
+      app,
+      `${baseUrl}/api/users/${String(readerId)}/disable`,
+      { method: 'POST', headers: { cookie: admin, origin: appOrigin } },
+    );
+    expect(disable.status).toBe(200);
+    expect((await list(reader)).status).toBe(401);
+    expect(await detail(maintainer, draftId)).toBe(200);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),

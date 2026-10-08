@@ -61,6 +61,7 @@ const enUS = {
   'status.denied': 'Access denied',
   'status.pageFailed': 'Unable to load page',
   'status.retry': 'Retry',
+  'status.sessionExpired': 'Your session has ended. Sign in again to continue.',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
   'routeOverlay.close': 'Close',
@@ -97,6 +98,77 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  library: {
+    title: 'Document library',
+    description:
+      'Published documents are open to everyone with reading access; drafts are visible only to their owner. Confidential documents are never shared.',
+    create: {
+      action: 'New document',
+      title: 'New document',
+      success: 'Created “{{title}}”.',
+    },
+    edit: {
+      title: 'Edit document',
+      success: 'Saved “{{title}}”.',
+    },
+    delete: {
+      title: 'Delete document',
+      description: 'Delete “{{title}}”? This cannot be undone.',
+    },
+    detail: { title: 'Document' },
+    form: {
+      description: 'A document has a title and an optional body.',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'The title may be at most {{max}} characters.',
+      bodyTooLong: 'The body may be at most {{max}} characters.',
+    },
+    fields: {
+      title: 'Title',
+      code: 'Code',
+      owner: 'Owner',
+      published: 'Published',
+      confidential: 'Confidential',
+      body: 'Body',
+      updatedAt: 'Updated',
+    },
+    flag: { yes: 'Yes', no: 'No' },
+    actions: {
+      label: 'Actions',
+      more: 'Actions for {{title}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    error: {
+      title: 'Unable to load documents',
+      forbidden: 'You do not have permission to view this document.',
+      requestFailed: 'The request failed. Please try again.',
+      notFound: 'This document does not exist or is no longer available.',
+    },
+    permissionSet: {
+      maintainer: 'Document maintainer',
+      reader: 'Document reader',
+    },
+    recordAccess: {
+      published: 'Published and not confidential',
+      nonConfidential: 'Not confidential',
+      readable: 'Owned by me or not confidential',
+    },
+    data: { documents: 'Documents' },
+    section: { title: 'Document library' },
+    resource: { documents: 'Documents' },
+    action: {
+      view: 'View documents',
+      create: 'Create documents',
+      edit: 'Edit documents',
+      delete: 'Delete documents',
+    },
+    scope: { documents: 'Documents' },
+    rule: {
+      confidential: {
+        title: 'Confidential documents are readable only by their owner',
+      },
+    },
+  },
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -112,8 +184,13 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
+    create: 'Create',
+    edit: 'Edit',
+    delete: 'Delete',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    signInAgain: 'Sign in again',
     language: 'Language',
   },
   notices: {
@@ -131,6 +208,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    documents: 'Document library',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
