@@ -3,6 +3,7 @@ import authConfig from '../../server/config/auth.js';
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { register } from 'tsx/esm/api';
 import {
   createTestAppConfig,
   type TestAppConfig,
@@ -102,6 +103,12 @@ import {
   type StandaloneServerOptions,
 } from '../../server/standalone.ts';
 type AppConfig = object;
+
+// The installed server loads the application's own migrations and seeds from
+// source. A seed may import `server/*.js`, which names a `.ts` file in a source
+// checkout, so this process needs the same TypeScript loader `pnpm dev` and
+// `pnpm nocobase` register before the application boots.
+register();
 
 process.env.AUTH_SECRET ??= 'test-auth-secret-at-least-32-characters';
 
