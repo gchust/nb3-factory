@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home, MessageSquareText } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,47 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The library itself. Both permission sets are granted `access`; the page only caps it at what the endpoint would
+    // return anyway, so a colleague can read the materials they are allowed to and see no others.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'materials.navigation', icon: FileText },
+    path: '/materials',
+    children: [
+      {
+        // A dialog is a route so the browser's back button and a deep link both work.
+        name: 'materials-new',
+        path: 'new',
+        componentLoader: () => import('./pages/materials/new.js'),
+      },
+      {
+        // Read-only, and the only way a colleague opens a material.
+        name: 'materials-detail',
+        path: ':materialId',
+        componentLoader: () => import('./pages/materials/detail.js'),
+      },
+      {
+        // The supervisor's edit dialog, opened from a row.
+        name: 'materials-edit',
+        path: ':materialId/edit',
+        componentLoader: () => import('./pages/materials/edit.js'),
+      },
+    ],
+  },
+  {
+    // The assistant answers nothing by itself: it hands the question to the `materials-assistant` employee, which reads
+    // materials through the same authorization the page uses. `authz: 'skip'` keeps it reachable for every signed-in
+    // user; the assistant always answers from the asker's own permissions.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'assistant.navigation', icon: MessageSquareText },
+    path: '/assistant',
   },
   {
     auth: 'guest',
