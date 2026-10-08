@@ -1,0 +1,1721 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 2,
+      "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
+      "runId": 37726011953,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/666/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 666,
+      "buildCommentId": null,
+      "title": "设备售后服务与巡检协同系统（综合业务案例）"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 465,
+      "capturedAt": "2026-10-07T23:13:18Z",
+      "inputHash": "5928d6bba9a0bb141e4dabf9bb2aedfd2030f16bbf33973cb0084559a5080d7b",
+      "reviewHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-08T04:08:34Z",
+  "precedence": {
+    "producer": {
+      "runId": 37700972296,
+      "attempt": 1,
+      "startedAt": "2026-10-07T23:13:07Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": false,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
+      "candidate": {
+        "patchSha256": "9c1d7903296801373c7c965dbfb7d326cda434fb723118e7459f7c5f0b894911",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
+      "entrySha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.27",
+      "templateVersion": "1.0.0-beta.55"
+    },
+    "dependencies": {
+      "lockfileSha256": "9724e9311413448b8e6ffe8cf2d54fdba84b211ff24ddeaaaa1232b0463500f7",
+      "baselineFingerprint": "7ce56cce82553094277ba80425926f7379025b957dc68615ae34c04011f90204",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "1.0.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "1.0.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-testing",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.17"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "1.0.0-beta.1"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.5"
+        },
+        {
+          "name": "@nocobase/jobs",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "b6ddd79d7f44d5536184230af9d834f7763a44efae354160b18342036cf30fee",
+      "files": 161
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "5928d6bba9a0bb141e4dabf9bb2aedfd2030f16bbf33973cb0084559a5080d7b",
+      "pipelineInputHash": "90bcbf316d2799355a34ec7bb95c488f0c5a90f51834cfde1fb1bd7125c8b779",
+      "reviewHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545",
+      "reviewCriteriaHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "8a215e01c271a94d6e7f2c0b6d6004b87fcb7d918345c3f8e9fca1e3437f06bb"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-1.jsonl.invocation.json",
+          "sha256": "59c327cf692524c9b6c36b6b363ef12569d71ae6c3222ed9962af5b86a5968fc"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "53fc770b79e809ca2275bf13a4426b17bbe23dda6aab77a9b427b4da1082d9e0"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "5c58fd2b7290d02722db47b5b49a0b0621879458f28492d463198216360cc553"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-2/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "6f1bf598d024c5ff54dacbbca095041754e676ea3207ebc4159831d2863f1c03"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-3/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "55e8be08d073e29717f79c7fc6cdc3b33caf003dfcfe48ec423648699105470c"
+        }
+      ]
+    },
+    "rubric": null,
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": null,
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/37700972296/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 37700972296,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-10-07T23:13:07Z",
+      "endedAt": "2026-10-08T04:07:18Z",
+      "jobSeconds": 17646,
+      "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
+      "patchSha256": "9c1d7903296801373c7c965dbfb7d326cda434fb723118e7459f7c5f0b894911",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "running",
+    "acceptance": "failed",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "已保存 Handoff，执行链仍在继续；不是终态。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/37700972296/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b01-customer-create-form.png",
+              "qa/1/b01-customer-list-after-create.png",
+              "qa/1/b01-device-list-association.png",
+              "qa/1/b01-device-duplicate-reject.png",
+              "qa/1/b01-unauth-redirect-login.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b02-ticket-detail-redirect-to-home.png",
+              "qa/1/b02-supervisor-ticket-detail-redirect.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b03-engineer-ticket-detail-redirect.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b04-engineer-a-tickets.png",
+              "qa/1/b04-engineer-b-tickets.png",
+              "qa/1/b04-supervisor-ticket-list.png",
+              "qa/1/b04-observer-tickets-due-masked.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b05-engineer-knowledge-published-only.png",
+              "qa/1/b05-supervisor-knowledge-published-and-draft.png",
+              "qa/1/b05-observer-knowledge-denied.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b06-create-form-no-attachment.png",
+              "qa/1/b02-ticket-detail-redirect-to-home.png"
+            ]
+          },
+          {
+            "id": "B07",
+            "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b07-engineer-messages.png"
+            ]
+          },
+          {
+            "id": "B08",
+            "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b08-scheduler-generate.png",
+              "qa/1/b08-engineer-inspection-completed.png",
+              "qa/1/b08-schedules-admin.png"
+            ]
+          },
+          {
+            "id": "B09",
+            "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b09-supervisor-dashboard.png",
+              "qa/1/b09-engineer-dashboard.png"
+            ]
+          },
+          {
+            "id": "B10",
+            "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b10-apikey-admin-list.png",
+              "qa/1/b10-operations-ui-crash-after-submit.png"
+            ]
+          },
+          {
+            "id": "B11",
+            "criterion": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b11-supervisor-manual-created.png",
+              "qa/1/b11-supervisor-manual-sync-not-configured.png",
+              "qa/1/b11-engineer-manual-readonly.png"
+            ]
+          },
+          {
+            "id": "B12",
+            "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 案例人工评论 #6008919420（gchust）\n\nClosed in bulk cleanup of factory build issues.",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b12-assistant-query-crash.png",
+              "qa/1/b12-i18n-chinese-tickets.png"
+            ]
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "executionKey": "run/37700972296/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-2/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B02",
+            "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B07",
+            "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B08",
+            "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B09",
+            "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B10",
+            "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B12",
+            "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 案例人工评论 #6008919420（gchust）\n\nClosed in bulk cleanup of factory build issues.",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B01",
+            "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "executionKey": "run/37700972296/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-3/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B08",
+            "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B12",
+            "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 案例人工评论 #6008919420（gchust）\n\nClosed in bulk cleanup of factory build issues.",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "failed",
+      "round": 1,
+      "executionKey": "run/37700972296/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "failed",
+      "round": 1,
+      "executionKey": "run/37700972296/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B02",
+        "text": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B03",
+        "text": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B04",
+        "text": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B05",
+        "text": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B06",
+        "text": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B07",
+        "text": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B08",
+        "text": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B09",
+        "text": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B10",
+        "text": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B11",
+        "text": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B12",
+        "text": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 案例人工评论 #6008919420（gchust）\n\nClosed in bulk cleanup of factory build issues.",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      }
+    ],
+    "firstPassWithoutRepair": "no",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 3,
+        "repairAttempts": 2,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 3,
+        "repairAttempts": 2,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/37700972296.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "failed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Built the equipment after-sales service & inspection system directly into the NocoBase 3 application (no per-feature publish plugin). Added five migrations and an idempotent seed for customers/devices/tickets/inspections/knowledge/shares/attachments/acceptance logs/reminders/manuals/assistant messages; four job permission sets with page and record scopes; a TicketService with the full 待受理→待处理→处理中→待确认→已关闭 lifecycle, workflow-triggered acceptance with retryable failure records, temporary ticket sharing, repair attachments (PNG + DOCX) behind a private read guard, in-app messages, Scheduler-driven daily inspection generation and overdue reminders, dashboard counters, an API-key device-platform interface with event-number idempotency, a manual-to-knowledge-base sync and a grounded service assistant with citations and a resolution-note draft. Added the /service client pages, routes, navigation and zh/en locales. Rewired the source-managed ticket-acceptance workflow to share the ticket service across the materialized artifact copy, and added a provider that activates the current workflow revision on boot. Self-tests: full vitest suite 42 files / 257 tests pass (including a 12-case service lifecycle/permission/integration test booted from a real install), plus scoped prettier, eslint, all three tsc projects, the workflow check, the collections --check and a full production build.",
+    "blockers": [
+      {
+        "id": "notes/run/37700972296/attempt/1/B1",
+        "phase": "implementation",
+        "title": "Workflow run modules cannot import application server code",
+        "symptom": "The ticket-acceptance workflow failed at runtime with `Run module \"../../../server/service/ticket-service.js\" resolves outside its artifact`, and a temporary test showed `Cannot find module '/tmp/.../storage/workflows/server/service/ticket-service.js'`.",
+        "rootCause": "A workflow artifact is materialized into a content-addressed copy under storage/workflows/<key>/<digest>/ and the loader enforces containment, and bare package imports are not reliably resolvable from that copy, so handler modules must be self-contained. The app registered its service under a token created by createServiceToken('...'), whose value is a fresh object, so even a handler that described the same token name would hold a different Map key.",
+        "resolution": "Added workflows/ticket-acceptance/server/tokens.ts which derives the token from a process-global Symbol.for('equipment-service/service.ticket'), and changed server/service/ticket-service.ts to use the same Symbol.for literal. The app container and the artifact copy now resolve one service. Handlers keep type-only imports for their flow context and use a structural port instead of importing the service class.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B2",
+        "phase": "implementation",
+        "title": "NocoBase 3 does not manage createdAt/updatedAt",
+        "symptom": "Writing tickets failed with `NOT NULL constraint failed: tickets.created_at`.",
+        "rootCause": "The migration declares createdAt/updatedAt NOT NULL with no database default, and the framework does not stamp them on raw repository writes.",
+        "resolution": "Every application create/update goes through server/service/timestamps.ts, which returns the values spread into the record as ISO strings (datetime fields are typed string, so a Date fails type checking too).",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B3",
+        "phase": "implementation",
+        "title": "A materialized workflow revision is disabled and not current",
+        "symptom": "Acceptance returned `{status:'skipped', reason:'not-found'}` / `'disabled'` and the ticket stayed in 待受理 even though the workflow definition was valid.",
+        "rootCause": "Workflow materialization creates a workflows row with enabled:false and no current flag; nothing in the application enables it, and there is no CLI command that does.",
+        "resolution": "Added server/providers/equipment-workflow-provider.ts, which on every boot materializes the current ticket-acceptance artifact and marks its revision current and enabled. It is idempotent and picks up a new digest after a rebuild.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B4",
+        "phase": "implementation",
+        "title": "A seed that imports server/*.js breaks source-installing tests without a TypeScript loader",
+        "symptom": "tests/logic/app-server.test.ts failed with `Cannot find module '/.../server/service-authorization.js' imported from .../database/main/seeds/...ts`.",
+        "rootCause": "An installed-from-source boot loads seeds with a native dynamic import. `tsx` remaps a `server/*.js` specifier to the `.ts` source, but the template test did not register it because the template shipped no seed importing server code.",
+        "resolution": "Registered the tsx ESM loader in tests/logic/app-server.test.ts (the same way tests/logic/service-equipment.test.ts already did) before the application boots.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B5",
+        "phase": "repair",
+        "title": "Ticket detail page unreachable because a navigation group path was prepended to absolute child paths",
+        "symptom": "Clicking a ticket, opening /main/service/tickets/<id> directly, or pushState all redirected to /main; the backend GET /main/api/service/tickets/<id> returned 200, but the client registered /service/service/tickets/service/tickets/:ticketId, so the whole accept/flow/reject/close/share/attachment/draft chain was unusable.",
+        "rootCause": "client/routes.ts declared the `service` navigation group with `path: '/service'` AND its children with absolute paths. resolveNode/resolveRouteTree in @nocobase/app-client prepends a group's path to every child, so each absolute child was prefixed a second time. The ticket-detail child was absolute as well and got doubled once more.",
+        "resolution": "Removed `path: '/service'` from the service group (kept `auth: 'required'` and navigation) so children carry the full path, and made the ticket-detail child relative (`:ticketId`). `renderRouteTree` handles slicing; the resolved tree now matches /service/tickets and /service/tickets/:ticketId. Commented the reasoning in client/routes.ts and added tests/logic/client-routes.test.ts coverage.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B6",
+        "phase": "repair",
+        "title": "Duplicate device serial surfaced as an opaque server error instead of a described conflict",
+        "symptom": "POST /service/devices with an existing serial did not return a clean rejection the UI could explain.",
+        "rootCause": "The `devices.serial` uniqueness was enforced only by the database constraint; the raw constraint error surfaced as a 500. Edits had the same problem and no self-exclusion.",
+        "resolution": "Added assertSerialAvailable(serial, exceptId?) to server/routes/service-master-data.ts, which looks the serial up first and throws ApiError ALREADY_EXISTS (reason SERVICE_DEVICE_SERIAL_EXISTS, 409). POST calls it for the new serial; PATCH calls it only when the serial changes, passing the device id so keeping its own serial is allowed. Declared 409 on both routes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B7",
+        "phase": "repair",
+        "title": "Repair ticket creation accepted a device that did not belong to the chosen customer and could be disabled",
+        "symptom": "The create form had no Customer field at all (the customer was derived from the device with no way to disagree), and a ticket could be opened against a disabled device.",
+        "rootCause": "createTicket() derived customerId from the device and never checked the pair or the device enabled flag, and the client form sent only a device so a mismatch could not even be expressed.",
+        "resolution": "createTicket() now resolves customerId = input.customerId ?? device.customerId and rejects a pair mismatch and a disabled device with TicketServiceError('VALIDATION') (400). Validation runs on create only, so historic tickets keep working. The client added an independent Customer Select (not filtered by device, so a mismatch is constructible and rejected) and sends customerId directly; Save requires title, customer and device.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B8",
+        "phase": "repair",
+        "title": "Marking an in-app message read answered 400 Field \"updatedAt\" does not exist",
+        "symptom": "POST /main/api/service/messages/<id>/read returned 400 INVALID_ARGUMENT FIELD_NOT_FOUND '\"updatedAt\" does not exist'.",
+        "rootCause": "markMessageRead used the shared touched() helper, which asks the ORM to write updatedAt, but the service_messages collection has no updatedAt column (it only has read/read_at).",
+        "resolution": "markMessageRead now writes { read: true, readAt: new Date().toISOString() } directly, with a comment explaining why touched() is wrong for this collection. Added a regression test that reads an unread message and re-lists it.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B9",
+        "phase": "repair",
+        "title": "A disabled scheduled task still produced inspections through the manual trigger",
+        "symptom": "After POST /api/scheduler/schedules/<id>/disable returned 200, the on-demand generate-inspections endpoint still returned {created:1, skipped:8}, so a disabled controlled schedule kept producing new results.",
+        "rootCause": "The on-demand trigger called the generation service directly and never consulted the schedule's enabled/lifecycleState state; the scheduler exposes enable/disable over HTTP but no trigger API whose authorization could be reused.",
+        "resolution": "Added assertScheduleEnabled(key) to server/routes/service-content.ts: it returns early when the scheduler is not installed, otherwise reads schedule_definitions (app.appName + key) read-only and throws ApiError FAILED_PRECONDITION (400, reason SERVICE_SCHEDULE_DISABLED) when the row is not enabled and active. Wired into both manual operations. No scheduler internals are resolved from the container and the tables are never written.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B10",
+        "phase": "repair",
+        "title": "Dashboard showed no per-engineer workload group",
+        "symptom": "The dashboard had total/byStatus/pending counters but no view of how many tickets each engineer held, so the two-engineer split criterion failed.",
+        "rootCause": "The dashboard route computed only aggregate counters; no per-owner breakdown existed and zero-ticket engineers could not appear from the ticket rows alone.",
+        "resolution": "The dashboard route seeds byEngineer from authorization_permission_set_assignments for service-engineer (so both engineers appear at zero), falls back to the actor for a non-supervisor, counts total/open from the same policy-scoped rows, and sorts by open then total. Added EngineerWorkload to DashboardSummary, a Card in dashboard.tsx, locale strings, and a test asserting both engineers appear.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B11",
+        "phase": "repair",
+        "title": "External ticket lookup by eventNo returned 403 FIELD_READ_FORBIDDEN",
+        "symptom": "GET /main/api/service/external/tickets?eventNo=… as the integration account returned 403 FIELD_READ_FORBIDDEN, breaking the platform's primary read path, even though lookup by ticketNo worked.",
+        "rootCause": "The service-integration permission set's readable-field list for tickets omitted externalEventNo, and the repository policy stripped/forbade the field the filter used.",
+        "resolution": "Added externalEventNo to the service-integration read fields in server/service-authorization.ts (and only that field; customerId stays hidden). The seed re-aligns the permission sets on re-run. Added a test that looks a ticket up by eventNo and reads externalEventNo back.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B12",
+        "phase": "repair",
+        "title": "A supervisor or administrator could not revoke an integration account's API key",
+        "symptom": "POST /main/api/auth/api-key/delete {keyId} as admin returned 404 KEY_NOT_FOUND for a key owned by the integration user; only the integration user could manage its own key.",
+        "rootCause": "The API Keys plugin page and Better Auth endpoints are self-service, so they only ever act on the caller's own keys, and the plugin's settings page cannot be overridden by an application (route overrides apply to App routes only). No trusted management entry existed.",
+        "resolution": "Added server/routes/service-api-keys.ts, registered in server/routes/index.ts: GET /service/integration/api-keys lists keys held by service permission-set holders (read-only apikey + user join) and POST /service/integration/api-keys/:id/revoke calls the plugin's trusted ApiKeyService.remove after ApiKeyService.get. Both are gated by requireSupervisor (service-supervisor or root), and the revoke refuses keys not owned by a service account. Added a supervisor-only card to the Operations page and en/zh locale strings. Added a test that creates a key as the integration user, lists it, revokes it as supervisor, and confirms the key then answers 401.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B13",
+        "phase": "repair",
+        "title": "Operations page crashed after an external ticket submission",
+        "symptom": "Submitting an external repair on the Operations page then reading the result crashed the page.",
+        "rootCause": "api.request returns the full response body ({ data, meta }) but submitExternal stored the envelope, so the render read fields off `{data}` instead of the ticket.",
+        "resolution": "submitExternal (and run()) now unwrap `.data` from api.request before storing/rendering.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B14",
+        "phase": "repair",
+        "title": "Assistant page crashed with TypeError on the answer list",
+        "symptom": "Submitting a question on the Assistant page raised a TypeError and the page did not render the answer.",
+        "rootCause": "ask() stored the full { data } envelope as the answer, so a later `.map` ran on the envelope rather than the answer object.",
+        "resolution": "ask() now destructures `const { data } = await api.request<{ data: AssistantAnswer }>(...)` and sets the answer to `data`.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B15",
+        "phase": "repair",
+        "title": "Assistant citations pointed at routes that do not exist",
+        "symptom": "Answer citations linked to paths the App router could not resolve (missing /service prefix).",
+        "rootCause": "The assistant route built citation routes from bare page names.",
+        "resolution": "service-assistant.ts now emits /service/tickets/<id>, /service/knowledge and /service/manuals citations that match client/routes.ts.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B16",
+        "phase": "repair",
+        "title": "Repeating an acceptance decision ran the acceptance workflow again and duplicated the log and message",
+        "symptom": "A second POST /service/tickets/:id/accept for the same pendingAcceptance ticket returned 200 and drove the acceptance workflow to run again, appending another accepted success log and another ticket.assigned in-app message to the engineer; the business requirement is that a repeated status request must not advance state or send a duplicate business message.",
+        "rootCause": "requestAcceptance built its workflow eventKey from Date.now(), so every call was a brand-new event and the workflow eventKey dedupe never engaged. The workflow itself also had no ticket-state guard, so even a repeated decision re-applied the update and re-notified.",
+        "resolution": "requestAcceptance now reads the ticket first and short-circuits: it answers {status: already-accepted} when decision.accept and ticket.acceptedAt, or {status: already-refused} when !accept and the ticket is closed, without triggering the workflow. The skipped branch uses a stable eventKey (ticket-acceptance:${ticketId}:workflow-skipped). recordStep keeps one row per (eventKey, status) and applyAcceptance is a no-op when the ticket is already past pendingAcceptance, so a genuine retry still runs but a repeat cannot duplicate the log or the assigned message. No separate retry endpoint: the ticket-detail Accept action plus the workflow run record are the recovery path, and a genuine failure keeps a real failed step. Added a test that accepts once, repeats twice, and asserts one accepted:success log, no failed log and one assigned message.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B17",
+        "phase": "repair",
+        "title": "Ticket detail never reflected the accepted priority and the accept form used a stale value",
+        "symptom": "After a supervisor accepted a ticket at a chosen priority, the detail page still showed the priority captured when the page first loaded, so a later action submitted the stale value; the acceptance form was also initialized from state that was never re-synced to the loaded ticket.",
+        "rootCause": "detail.tsx initialised acceptPriority once from the ticket already in memory and never updated it when the reloaded ticket (or a status transition) changed priority, so React state and the server record diverged.",
+        "resolution": "Added a useEffect in detail.tsx keyed on [ticketId, ticketStatus, ticketPriority] that re-syncs acceptPriority from the reloaded ticket, so the accept and edit forms always start from the server value. It deliberately does not set ownerId automatically.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B18",
+        "phase": "repair",
+        "title": "Any signed-in user could read a ticket log, share list and attachments through the observer fallback",
+        "symptom": "An engineer who was neither owner, creator, supervisor nor shared reader could open GET /service/tickets/:id and see the full acceptance/handling log, and GET /service/tickets/:id/logs answered 200 with the log message. The detail page rendered the Acceptance card for them.",
+        "rootCause": "canViewTicket treated any signed-in user as an observer and returned true, and the detail route pulled logs/shares/attachments straight from an unpolicied repository once the ticket was visible, so the record scope protected only the ticket row, not its internal children.",
+        "resolution": "Split the check into canReadTicketInFull (owner, creator, supervisor, or active share) and canViewTicketInternal, and made canViewTicket require the service-observer permission set for the summary-only branch. GET /service/tickets/:id now returns {access: full|summary} and empties logs/shares/attachments for a summary reader; shares are also hidden from an internal non-supervisor. GET .../logs, .../shares and .../attachments require internal (shares additionally supervisor) and answer 403 otherwise. The client gates the log and attachment cards on access===\"full\". Added a test for an observer seeing access:\"summary\", empty sections and 403 on all three sub-routes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B19",
+        "phase": "repair",
+        "title": "Attachment bytes leaked to anyone holding the URL, and a corrupt PNG was accepted as a photo",
+        "symptom": "An engineer with no access to the ticket could GET /main/uploads/tickets/<id>.png and receive the bytes, and a 28-byte file named corrupt.png with the wrong content was uploaded and linked as a repair photo with no failure.",
+        "rootCause": "canViewFileKey/canViewFileId resolved through the buggy observer fallback, so the /uploads/tickets/* guard allowed any signed-in user, and the file plugin stores any bytes: it enforces only a size limit, so a mislabelled or corrupt file became a ticket attachment.",
+        "resolution": "canViewFileKey and canViewFileId now require canViewTicketInternal, so the byte guard follows the same internal-access rule as the ticket. POST /service/tickets/:id/attachments calls TicketService.assertAttachmentContent, which reads the stored bytes through the Drive disk and checks the PNG signature for photo and the ZIP/DOCX signature for report; a mismatch deletes both the ticket_files record and the stored object and answers 400 with reason SERVICE_ATTACHMENT_CONTENT_INVALID. Added the same check client-side in validateAttachmentFile before upload, narrowed the accept attribute to .png/.docx, and mapped the server reason and the 413 BODY_TOO_LARGE case to real copy in useErrorMessage. Added tests: corrupt PNG -> 400 with that reason and no list entry, valid PNG -> 201 plus supervisor bytes 200 and denied bytes 403, DOCX -> 201, and a unit test for validateAttachmentFile.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B20",
+        "phase": "repair",
+        "title": "Overdue reminders failed with 400 FIELD_CAPABILITY_NOT_SUPPORTED on the date field",
+        "symptom": "POST /main/api/service/operations/send-overdue-reminders returned 400 FIELD_CAPABILITY_NOT_SUPPORTED instead of creating reminders.",
+        "rootCause": "sendOverdueReminders deduped with shorthand findOne({ filter: { ticketId, reminderDate } }), which compares a date-typed column with an equality operator the capability model does not support.",
+        "resolution": "Replaced the shorthand filter with a builder filter: builder.and([builder.number(\"ticketId\").eq(ticket.id), builder.date(\"reminderDate\").on(reminderDate)]). Added a test that creates an overdue ticket, runs the endpoint (created >= 1) and runs it again (created === 0, skipped >= 1).",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B21",
+        "phase": "repair",
+        "title": "Assistant was a standalone read-only page with no ticket-grounded draft",
+        "symptom": "The assistant page only showed retrieval results; from a ticket there was no way to ask a grounded question and carry a suggested resolution note into the record, and there was no confirmation boundary between suggestions and saved business data.",
+        "rootCause": "Only a standalone assistant route existed, and it never offered a resolution-note draft tied to the ticket being handled.",
+        "resolution": "Shared CitationList between the two surfaces, added a ticket-scoped assistant panel to the ticket detail (shown to the owner while processing/pending) that posts to /service/assistant/query and applies the returned resolutionNoteDraft to local form state only, and kept the standalone page as a read-only preview. Retrieval stays behind the ticket record scope (test: an observer cannot retrieve a confidential ticket through the assistant), the draft is never saved automatically, and closing remains a separate confirmed action. Tests assert the draft is present, citations are returned, and the ticket is unchanged by a query.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B22",
+        "phase": "repair",
+        "title": "Device create upserted by serial through PATCH instead of POST",
+        "symptom": "Saving a new device in the UI issued a PATCH keyed on the serial and matched the existing row instead of creating a new one, so \"create\" edited an existing device and a duplicate serial never reached the server conflict.",
+        "rootCause": "devices.tsx save() always sent the same upsert-style request whether editing or creating, and the serial input was disabled in both modes.",
+        "resolution": "Split the draft on an optional id: a draft with an id PATCHes /service/devices/:id, a draft without one POSTs /service/devices, so a duplicate serial reaches the server and answers 409 SERVICE_DEVICE_SERIAL_EXISTS. The serial input is disabled only while editing. Covered by the existing master-data test that asserts a duplicate create is 409.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B23",
+        "phase": "repair",
+        "title": "Observer record scope was observerVisible OR not-confidential, exposing confidential tickets",
+        "symptom": "The service-observer list and detail included the confidential platform ticket (confidential: true, observerVisible: true) and returned its summary, even though an observer must only see approved non-confidential tickets.",
+        "rootCause": "The service.ticketsObserver record-access rule combined its two conditions with anyScope, which is an OR, so a confidential ticket passed as soon as observerVisible was true.",
+        "resolution": "Added a local allOf helper that builds the and group the library keeps private (its public entry exports anyScope but not allScopes) and used it for service.ticketsObserver: observerVisible isTruly AND confidential isFalsy. Also set the seed confidential ticket to observerVisible:false. The detail route now re-checks canViewTicket for a summary reader so confidentiality does not depend on the scope alone. The new test asserts the confidential id is absent from the observer list, the detail is 404, and it never appears in assistant citations.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/B24",
+        "phase": "repair",
+        "title": "The accept-priority re-sync effect tripped the react-hooks set-state-in-effect lint gate",
+        "symptom": "client/pages/service/tickets/detail.tsx failed eslint --max-warnings 0 with a react-hooks/set-state-in-effect error and an @eslint-react/set-state-in-effect warning (\"Calling setState synchronously within an effect can trigger cascading renders\") at the acceptPriority synchronisation effect, so the application lint gate was red even though runtime and type checks passed.",
+        "rootCause": "The previous repair fixed the stale accept priority with a useEffect keyed on [ticketId, ticketStatus, ticketPriority] whose body calls setAcceptPriority(ticketPriority). The repository lint configuration forbids synchronous setState inside an effect body, so the fix satisfied the business bug but broke pnpm lint (and therefore the aggregate check).",
+        "resolution": "Removed the effect and derived the value instead. Added per-ticket override state priorityEdit: { ticketId: string; priority: string } | null; the rendered acceptPriority is priorityEdit.priority when priorityEdit.ticketId equals the current route id, otherwise the loaded ticket.priority (falling back to normal before it loads). Selecting a different ticket naturally ignores the previous override, so no effect and no cascading render is needed. The Select onValueChange stores { ticketId: id, priority: value }. Re-ran eslint on the file (0 problems), client tsc (0), prettier (clean), and the service/locale/route tests (all pass).",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/37700972296/attempt/1/I1",
+        "category": "skill/documentation",
+        "title": "Document that a source-booting test must register the TypeScript loader once a seed imports server code",
+        "detail": "The application-development Skill and the seed reference state that a seed may import server/*.js. That is correct for `pnpm dev` and `pnpm nocobase`, both of which run under tsx, but a test that boots from source with seeds.autoRun and no loader fails on the first nested .js specifier. The template's own app-server.test.ts is such a test, so an application that adds a migration+seed following the documented pattern breaks a shipped test.",
+        "suggestedChange": "Add a note to references/testing.md and the seed guidance: a test that installs from source and runs seeds must call register() from 'tsx/esm/api' before booting, with the two template test files as examples. Optionally call this out in the migration/seed scaffold so authors add it with the first seed.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I2",
+        "category": "framework/authorization",
+        "title": "Fail fast when a read/update/delete grant omits recordAccess",
+        "detail": "A data grant without a record-access rule is accepted at registration and then silently denies with NO_RECORD_ACCESS at request time. This cost a debugging cycle because the permission set looked complete.",
+        "suggestedChange": "Validate at permission-set registration that every read/update/delete grant names a record-access rule (the built-in allRecords counts) and throw with the collection/action named. Keep create exempt.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I3",
+        "category": "framework/service-provider",
+        "title": "Provide a documented process-global service token helper",
+        "detail": "createServiceToken(name) returns a fresh object, so a service registered by the application is unresolvable from another module instance that recreates the token — which is exactly what a materialized workflow artifact is. The only workaround is Symbol.for with a hand-shared string literal, which is easy to get wrong and is invisible to the type checker.",
+        "suggestedChange": "Export a helper such as globalServiceToken(name) that derives Symbol.for(name) and a ServiceToken<T>, and document it as the way to share a service across workflow artifacts, plus a note that two createServiceToken calls with one name are different keys.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I4",
+        "category": "framework/workflow",
+        "title": "Let an application declare a workflow revision active on boot",
+        "detail": "Materialization produces an enabled:false, non-current revision. Triggering a workflow that the application itself ships requires reaching into the internal workflow service via a structural cast, or manipulating the workflows table directly. Both are unsupported surfaces.",
+        "suggestedChange": "Expose a public enable/activate call on the workflow service contract (or a registration option on the plugin) so an application can declare its own workflow active without touching internals.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I5",
+        "category": "tooling/lint",
+        "title": "Resolve the no-base-to-string / no-unnecessary-type-assertion conflict for repository scalars",
+        "detail": "Repository rows expose fields as unknown. String(value) triggers @typescript-eslint/no-base-to-string, while String(value as string) triggers no-unnecessary-type-assertion because String() accepts any type. The two rules leave no assertion that satisfies both, so every call site needs a typeof-narrowing helper.",
+        "suggestedChange": "Have RepositoryRecord expose a narrow scalar union (string|number|boolean|null) for scalar fields, or ship a documented coercion helper in the db package that call sites can import instead of String().",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I6",
+        "category": "framework/routing",
+        "title": "A navigation group's path is silently prepended to absolute child paths",
+        "detail": "An app route group that declares a path AND children declared with absolute paths registers each child twice under the group prefix (e.g. /service/service/tickets), and a child record route gets doubled again. Nothing warns; the backend answers and every URL 404s/redirects to home, which reads as a broken feature rather than a route-declaration mistake. This made the whole ticket-detail workflow unreachable.",
+        "suggestedChange": "At registration, detect a child path that already starts with its parent group's path and either normalize it or throw with the route id and both paths named. Alternatively document prominently that a group either declares a path and children use relative segments, or declares no path and children carry the full path.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I7",
+        "category": "framework/database",
+        "title": "The shared timestamp helper assumes every collection has updatedAt",
+        "detail": "touched() writes updatedAt on update. A collection that intentionally has no updatedAt (an append-only inbox like service_messages, with only read/read_at) fails at request time with 400 FIELD_NOT_FOUND 'updatedAt' does not exist, and the error names a field the author never declared.",
+        "suggestedChange": "Let a collection declare its timestamp fields (or have the helper inspect the schema and write only columns that exist), and have the Collection Builder record createdAt/updatedAt presence so touched() can fail at registration instead of per request.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I8",
+        "category": "framework/api-client",
+        "title": "api.request returns the whole envelope while the data hooks unwrap it",
+        "detail": "useServiceList/useServiceObject destructure { data }, but api.request resolves to { data, meta }. Three separate pages stored the envelope and then read one level too high, producing browser crashes (TypeError …map) or blank results. The same call looked correct in both styles, so the mistake recurs.",
+        "suggestedChange": "Make the contract single: either api.request resolves to the parsed envelope everywhere and the hooks stop unwrapping, or add a typed helper such as api.requestData() that returns data only, and document the one true shape in the client reference.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I9",
+        "category": "framework/plugin-boundary",
+        "title": "Self-service plugin pages cannot be extended with a trusted administrative operation",
+        "detail": "The API Keys plugin's page is a settings page (not an App route), so route overrides and source extensions cannot touch it, and its client calls self-service Better Auth endpoints that only act on the caller's own keys — a supervisor or admin gets 404 when revoking another account's key. The only fix is for the application to reimplement a management surface using the plugin's server ApiKeyService.",
+        "suggestedChange": "Either mark the settings page overridable (allow a route override for settings pages) or give the plugin an option/hook for a trusted server-side list/revoke that an application can wire into its own administration page. Document that settings pages are otherwise off-limits to overrides.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/37700972296/attempt/1/I10",
+        "category": "framework/scheduler",
+        "title": "An on-demand trigger does not honor the schedule's enabled state",
+        "detail": "Disabling a schedule through the Scheduler HTTP API stops the clock but the application's manual 'run now' button still produced new results, violating 'a disabled controlled run produces no new results'. The scheduler exposes enable/disable but no way for a target to ask whether its schedule is currently runnable.",
+        "suggestedChange": "Expose the enabled/runnable state of a schedule to registered targets (or refuse to resolve a disabled schedule's target), and document that a manual trigger must check it. Alternatively provide a public scheduler API for 'run this schedule now' that enforces the flag.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:113064185652",
+          "executionKey": "run/37700972296/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 2639631,
+              "output": 464693,
+              "cacheRead": 75934848,
+              "cacheWrite": 0,
+              "total": 79039172
+            },
+            "repair": {
+              "input": 2474055,
+              "output": 352918,
+              "cacheRead": 57960832,
+              "cacheWrite": 0,
+              "total": 60787805
+            },
+            "qa": {
+              "input": 511779,
+              "output": 175341,
+              "cacheRead": 21426432,
+              "cacheWrite": 0,
+              "total": 22113552
+            },
+            "qaFocused": {
+              "input": 1207955,
+              "output": 308289,
+              "cacheRead": 51424512,
+              "cacheWrite": 0,
+              "total": 52940756
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1984012,
+              "output": 296222,
+              "cacheRead": 93312,
+              "cacheWrite": 0,
+              "total": 2373546
+            }
+          },
+          "records": 3090,
+          "missing": 3,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 8817432,
+        "output": 1597463,
+        "cacheRead": 206839936,
+        "cacheWrite": 0,
+        "total": 217254831,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 17646,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 17651,
+      "jobs": [
+        {
+          "id": 113064069284,
+          "name": "prepare",
+          "executionKey": "run/37700972296/attempt/1",
+          "seconds": 20
+        },
+        {
+          "id": 113064185652,
+          "name": "agent",
+          "executionKey": "run/37700972296/attempt/1",
+          "seconds": 17626
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/1/b01-customer-create-form.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-customer-create-form.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-customer-create-form.png",
+      "lines": null,
+      "sha256": "1c2ceb1b256e4d273aec3920f6c70da816ca4f28883e512d042d3d68655b6875",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-customer-create-form.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-customer-list-after-create.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-customer-list-after-create.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-customer-list-after-create.png",
+      "lines": null,
+      "sha256": "f55f89f4ffcbf125dd51c03066bbd27813764a6b55e53d16940e54fc24356e4a",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-customer-list-after-create.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-device-list-association.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-device-list-association.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-device-list-association.png",
+      "lines": null,
+      "sha256": "256d24a3bed3d6af6448c67e39e239e67fa13a7907a820f1593b724f42afe02d",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-device-list-association.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-device-duplicate-reject.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-device-duplicate-reject.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-device-duplicate-reject.png",
+      "lines": null,
+      "sha256": "d1462d25315065573c7e222ba69e9f5f9c2efa37a39b94961668305aaaca179f",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-device-duplicate-reject.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-unauth-redirect-login.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-unauth-redirect-login.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-unauth-redirect-login.png",
+      "lines": null,
+      "sha256": "897a2a7e8258ea597fdf9a77d6a4f555899b2d201b7ec889419c769931ccf9f7",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-unauth-redirect-login.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-ticket-detail-redirect-to-home.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-ticket-detail-redirect-to-home.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-ticket-detail-redirect-to-home.png",
+      "lines": null,
+      "sha256": "d1099f233897ba746a69744dbd70061a36ee36d25077f15fb1f68026582ce989",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-ticket-detail-redirect-to-home.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-supervisor-ticket-detail-redirect.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-supervisor-ticket-detail-redirect.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-supervisor-ticket-detail-redirect.png",
+      "lines": null,
+      "sha256": "fbe4cab492d73ced5d6744927f12a1872c66098b355c9c62357f2204f0534146",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-supervisor-ticket-detail-redirect.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-engineer-ticket-detail-redirect.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-engineer-ticket-detail-redirect.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-engineer-ticket-detail-redirect.png",
+      "lines": null,
+      "sha256": "b601730a4aa59a626bcee11603263c4ccb35fe9d12f41efc96a1f8817e5cb900",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-engineer-ticket-detail-redirect.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-engineer-a-tickets.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-engineer-a-tickets.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-engineer-a-tickets.png",
+      "lines": null,
+      "sha256": "9945b0c76cdcdf5932e698617fe4646ca6a7970546cebc93435c26d523443207",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-engineer-a-tickets.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-engineer-b-tickets.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-engineer-b-tickets.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-engineer-b-tickets.png",
+      "lines": null,
+      "sha256": "c18e2c731a54cc2c3f87ff31b59ca2353cecefaa703dc3de00ee0b590e6fa2de",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-engineer-b-tickets.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-supervisor-ticket-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-supervisor-ticket-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-supervisor-ticket-list.png",
+      "lines": null,
+      "sha256": "5bce3b46764c2aadc32acb749a921bc2aee1e641f0594ba1200c59ea87c15769",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-supervisor-ticket-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-observer-tickets-due-masked.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-observer-tickets-due-masked.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-observer-tickets-due-masked.png",
+      "lines": null,
+      "sha256": "7257a56a8324fe1b2d2fd5661307a944a54497c6242205b07d498d3bef614d7d",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-observer-tickets-due-masked.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-engineer-knowledge-published-only.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-engineer-knowledge-published-only.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-engineer-knowledge-published-only.png",
+      "lines": null,
+      "sha256": "69bf9106b7b99831d983dd771e511ae56527bde46b9f16327f9cee1962efcaf6",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-engineer-knowledge-published-only.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-supervisor-knowledge-published-and-draft.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-supervisor-knowledge-published-and-draft.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-supervisor-knowledge-published-and-draft.png",
+      "lines": null,
+      "sha256": "b6106b26eb36511961522086cab4c88c1944bf8a5e0df8704d3922f109ae30db",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-supervisor-knowledge-published-and-draft.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-observer-knowledge-denied.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-observer-knowledge-denied.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-observer-knowledge-denied.png",
+      "lines": null,
+      "sha256": "aaf25215b7a1ca8f11ad3282eb6dfe753c1ac1fddd5f7bf38d10cc11caf18924",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-observer-knowledge-denied.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-create-form-no-attachment.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-create-form-no-attachment.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-create-form-no-attachment.png",
+      "lines": null,
+      "sha256": "8b57ef96b0b0cceb34e84927d4bda7fc3677e476229463c37126c700b70938c0",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-create-form-no-attachment.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b07-engineer-messages.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b07-engineer-messages.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b07-engineer-messages.png",
+      "lines": null,
+      "sha256": "616895e2dd920b869f4144ed448b4af3c37ddb0e72b01f5982ef27df72b1e44f",
+      "observation": "验收项 B07 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b07-engineer-messages.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b08-scheduler-generate.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b08-scheduler-generate.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b08-scheduler-generate.png",
+      "lines": null,
+      "sha256": "9fb6836563996063c70186c44c62882bc285d10b813191d5a0030cb62d0688f5",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b08-scheduler-generate.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b08-engineer-inspection-completed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b08-engineer-inspection-completed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b08-engineer-inspection-completed.png",
+      "lines": null,
+      "sha256": "44b2e3c40b1f66dd49eca7082d973b40d05f20552d7f8be4f9dc60ac09de83b5",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b08-engineer-inspection-completed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b08-schedules-admin.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b08-schedules-admin.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b08-schedules-admin.png",
+      "lines": null,
+      "sha256": "e0d5662184e05c21b91c1ac325d88bbf4543cafffff2c43dde51db43a6bd95a7",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b08-schedules-admin.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b09-supervisor-dashboard.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b09-supervisor-dashboard.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b09-supervisor-dashboard.png",
+      "lines": null,
+      "sha256": "c7b7fff8b73c344e525d62a1958c4afca7e57b9b5dd3cf8b6a079fe570e46fd2",
+      "observation": "验收项 B09 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b09-supervisor-dashboard.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b09-engineer-dashboard.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b09-engineer-dashboard.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b09-engineer-dashboard.png",
+      "lines": null,
+      "sha256": "f59a4dc938b848b14d4f9959402cc138c95a8152f587e9727a67cbb0a7a30fd9",
+      "observation": "验收项 B09 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b09-engineer-dashboard.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b10-apikey-admin-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b10-apikey-admin-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b10-apikey-admin-list.png",
+      "lines": null,
+      "sha256": "8d9b3220cab941590bf1f76021b4101ab857399410ac5aaaa10a9ec87c32f96a",
+      "observation": "验收项 B10 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b10-apikey-admin-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b10-operations-ui-crash-after-submit.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b10-operations-ui-crash-after-submit.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b10-operations-ui-crash-after-submit.png",
+      "lines": null,
+      "sha256": "7b962c3d75a4288a81c62c564bed38d59e8e4200e46994f5cf64a98aaf29007d",
+      "observation": "验收项 B10 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b10-operations-ui-crash-after-submit.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b11-supervisor-manual-created.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b11-supervisor-manual-created.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b11-supervisor-manual-created.png",
+      "lines": null,
+      "sha256": "0db98dafb7524029189a0cea971b1669b8e99d8f8aa93a928371c639d887aa5c",
+      "observation": "验收项 B11 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b11-supervisor-manual-created.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b11-supervisor-manual-sync-not-configured.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b11-supervisor-manual-sync-not-configured.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b11-supervisor-manual-sync-not-configured.png",
+      "lines": null,
+      "sha256": "f20a3c399adc02639de3745d26c047e96373adedd30f4ef90ac305ce5a19c54f",
+      "observation": "验收项 B11 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b11-supervisor-manual-sync-not-configured.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b11-engineer-manual-readonly.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b11-engineer-manual-readonly.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b11-engineer-manual-readonly.png",
+      "lines": null,
+      "sha256": "c0da66907ccced905d3da68761e9a04447c2a4a417b876338c30fe6de58ce914",
+      "observation": "验收项 B11 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b11-engineer-manual-readonly.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b12-assistant-query-crash.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b12-assistant-query-crash.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b12-assistant-query-crash.png",
+      "lines": null,
+      "sha256": "2e763e8bb7e3c41e858622a6f2ae101bcb83e4086eeb2b349d48f2c45eebbe35",
+      "observation": "验收项 B12 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b12-assistant-query-crash.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b12-i18n-chinese-tickets.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b12-i18n-chinese-tickets.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b12-i18n-chinese-tickets.png",
+      "lines": null,
+      "sha256": "3f7cae717379df58641db3368743f706849763c230ec597cf335c7c2c325e9e6",
+      "observation": "验收项 B12 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b12-i18n-chinese-tickets.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #666",
+      "url": "https://github.com/gchust/nb3-factory/issues/666",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37700972296 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37700972296/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/666/runs/37700972296/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
