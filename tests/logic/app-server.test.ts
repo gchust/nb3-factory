@@ -49,7 +49,10 @@ import {
   type RealtimeServerMessage,
 } from '@nocobase/app-server/realtime';
 import {
+  apiDocsToken,
   defineApiRoutes,
+  findApiDocumentSchemaProblems,
+  findUndeclaredApiRoutes,
   healthCheckApiRoutes,
 } from '@nocobase/app-server/router';
 import {
@@ -89,6 +92,7 @@ import {
   type AppServerPlugin,
   type ResolvedAppServerPlugins,
 } from '@nocobase/app-server/plugins';
+import { aiManagerToken } from '@nocobase/app-plugin-ai-employee/server';
 import authenticationServerPlugin from '@nocobase/app-plugin-authentication/server';
 import authorizationServerPlugin from '@nocobase/app-plugin-authorization/server';
 
@@ -743,6 +747,136 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('serves Materials with the two access levels and documents the API', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // Better Auth only accepts a cookie-authenticated write whose origin it trusts; without a configured public
+        // origin it cannot trust the test's own, and every write would fail as INVALID_CSRF_ORIGIN before
+        // authorization is reached.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const origin = new URL(baseUrl).origin;
+
+    // Reading requires a session; nothing about materials is public.
+    const anonymous = await requestApp(app, `${baseUrl}/api/materials`);
+    expect(anonymous.status).toBe(401);
+
+    async function signIn(username: string, password: string): Promise<string> {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    }
+    const colleague = await signIn('colleague', 'colleague123');
+    const supervisor = await signIn('supervisor', 'supervisor123');
+
+    // A colleague reads the two unrestricted materials and not the supervisor-only one.
+    const colleagueList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: colleague },
+    });
+    expect(colleagueList.status).toBe(200);
+    const colleagueBody = (await colleagueList.json()) as {
+      data: { id: number }[];
+      meta: { total: number };
+    };
+    expect(colleagueBody.meta.total).toBe(2);
+    expect(colleagueBody.data.map((material) => material.id)).toEqual([2, 1]);
+
+    // A material the caller may not read answers 404, exactly as an unknown id does.
+    const restricted = await requestApp(app, `${baseUrl}/api/materials/3`, {
+      headers: { cookie: colleague },
+    });
+    expect(restricted.status).toBe(404);
+
+    const colleagueWrite = (method: string, path: string, payload?: unknown) =>
+      requestApp(app, `${baseUrl}${path}`, {
+        method,
+        headers: {
+          cookie: colleague,
+          'content-type': 'application/json',
+          origin,
+        },
+        ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+      });
+    expect(
+      (
+        await colleagueWrite('POST', '/api/materials', {
+          title: 'attempted',
+          body: 'attempted',
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await colleagueWrite('PATCH', '/api/materials/1', {
+          title: 'attempted',
+          body: 'attempted',
+        })
+      ).status,
+    ).toBe(403);
+    expect((await colleagueWrite('DELETE', '/api/materials/1')).status).toBe(
+      403,
+    );
+
+    // A supervisor reads every material and maintains it.
+    const supervisorList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: supervisor },
+    });
+    await expect(supervisorList.json()).resolves.toMatchObject({
+      meta: { total: 3 },
+    });
+    const updated = await requestApp(app, `${baseUrl}/api/materials/1`, {
+      method: 'PATCH',
+      headers: {
+        cookie: supervisor,
+        'content-type': 'application/json',
+        origin,
+      },
+      body: JSON.stringify({
+        title: '设备报修电话（更新）',
+        body: '400-000-9999',
+      }),
+    });
+    expect(updated.status).toBe(200);
+
+    // The colleague reads the supervisor's new content: the assistant answers from what is stored now.
+    const reread = await requestApp(app, `${baseUrl}/api/materials/1`, {
+      headers: { cookie: colleague },
+    });
+    await expect(reread.json()).resolves.toMatchObject({
+      data: { title: '设备报修电话（更新）', body: '400-000-9999' },
+    });
+
+    // Every application route declares itself, and the document has no schema problems.
+    expect(findUndeclaredApiRoutes(app.application)).toEqual([]);
+    const document = await app.application.container
+      .resolve(apiDocsToken)
+      .getDocument();
+    expect(findApiDocumentSchemaProblems(document)).toEqual([]);
+
+    // The assistant is registered beside the built-in one, and with no LLM service configured it must report that
+    // rather than answer.
+    const ai = app.application.container.resolve(aiManagerToken);
+    const employees = await ai.employeeManager.listEmployees();
+    expect(employees.map((employee) => employee.username)).toEqual(
+      expect.arrayContaining(['atlas', 'materials-assistant']),
+    );
+    expect(await ai.llmServiceManager.listLLMServices()).toEqual([]);
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {
