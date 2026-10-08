@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "64c7b29dcabaf02db3fd3690c589076ddf4873449d0e313ca88a6df708e34806",
+  "inputHash": "11f5769bd1bb0aca19c6532169927a5fe5aba8d944ba481ed9a47b69660d002a",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -796,6 +796,16 @@
       "id": "652:37621554092:1:F6",
       "report": "652:37621554092:1",
       "fingerprint": "55d780d050ce06ad70ba0b409f8031691f6ae83da0880fc5099b1a79c92c9be4"
+    },
+    {
+      "id": "665:37700965959:1:F3",
+      "report": "665:37700965959:1",
+      "fingerprint": "0aa6d3c62cdb18906d6114e803af3e74c4f4dd501fc2b944f9821a6c7eb06b8f"
+    },
+    {
+      "id": "665:37700965959:1:F4",
+      "report": "665:37700965959:1",
+      "fingerprint": "884c1b6698b8fde3927324f499c5022cfab10d64fdcfa9596cf09a96d069d9c4"
     }
   ],
   "groups": [
@@ -1485,15 +1495,29 @@
       "members": [
         "652:37621554092:1:F10"
       ]
+    },
+    {
+      "title": "插件 registry 语言字典缺少组件引用的键，非英文语言回落到英文",
+      "reason": "单条保留。665:F3（E37/E38）显示 @nocobase/app-plugin-ai-employee 的 registry nocobase-ai/locales en-US.js 与 zh-CN.js 两个字典都缺少 tool.output 与 businessReport.chartFailed/previewUnavailable/failed；E41 的 business-report-renderer 仍用这些键调用 useAITranslate，E39 说明 useAITranslate 未命中字典时回落到调用方传入的内联英文，E42 表明应用侧副本补齐后中文才正确。触发条件（切中文渲染这些组件）、期望（四个键显示中文）与实际（回落到英文）一致，均指向插件自带字典副本缺键同一缺口，修复方向（补齐 registry 字典并加键集合断言）一致。现有分组中没有其它 i18n/翻译键缺失发现（其余入口/路径发现针对包定位而非字典键），且与其同报告的 665:F4 属不同根因，故单独保留。",
+      "members": [
+        "665:37700965959:1:F3"
+      ]
+    },
+    {
+      "title": "布尔字段的算子白名单未在 nocobase-db 指引中说明",
+      "reason": "单条保留。665:F4（E29/E30/E31）显示 @nocobase/db 的 OPERATORS_BY_TYPE 对 boolean 只允许 $isTruly/$isFalsy/$empty/$notEmpty，对 boolean 使用 $eq/$ne 会在查询期抛 FIELD_CAPABILITY_NOT_SUPPORTED；E35 显示 nocobase-db SKILL 只讲三参 where 等基本用法，通篇没有按字段类型的算子白名单说明，属文档缺失。462:F3 虽同样引用 OPERATORS_BY_TYPE 与 FIELD_CAPABILITY_NOT_SUPPORTED，但其根因是 condition()/FilterOperator 不按字段类型收窄运算符的框架 API 缺陷，修复方向为类型化或在装配期拒绝，与本文档缺口分属框架根因与缺说明两类；按“应用侧 workaround 与框架根因区分、缺说明与错误说明区分”的规则不合并，故单独保留。",
+      "members": [
+        "665:37700965959:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37648211869",
+    "runId": "37706570752",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-07T15:59:33.962Z"
+    "completedAt": "2026-10-08T00:14:57.912Z"
   }
 }
