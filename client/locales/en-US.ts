@@ -59,6 +59,7 @@ const enUS = {
   'status.loadingSettings': 'Loading settings',
   'status.loadingDev': 'Loading dev tools',
   'status.denied': 'Access denied',
+  'status.sessionExpired': 'Your session has ended. Sign in again to continue.',
   'status.pageFailed': 'Unable to load page',
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
@@ -96,6 +97,63 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep each material and its files together, so nothing gets lost in chat.',
+    create: {
+      action: 'New material',
+      title: 'New material',
+      success: 'Created “{{title}}”.',
+    },
+    edit: {
+      title: 'Edit material',
+      action: 'Edit',
+      success: 'Saved “{{title}}”.',
+    },
+    list: {
+      title: 'Title',
+      attachments: 'Attachments',
+      updatedAt: 'Updated',
+      fileCount: '{{count}} attachment(s)',
+      open: 'Open {{title}}',
+    },
+    empty: {
+      title: 'No materials yet',
+      description: 'Create a material and upload its site photos or documents.',
+    },
+    detail: {
+      files: 'Attachments',
+      preview: 'Preview',
+      updatedAt: 'Updated {{date}}',
+      noFiles: 'This material has no attachments yet.',
+      selectHint: 'Choose an attachment to preview it here.',
+      download: 'Download',
+      remove: 'Remove',
+      removeSaved: 'The attachment has been removed from this material.',
+    },
+    form: {
+      title: 'Title',
+      titlePlaceholder: 'For example: Site photos of the east gate',
+      titleRequired: 'Enter a title before saving.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      attachments: 'Attachments',
+      attachmentsHint:
+        'PNG images and DOCX documents. Each file uploads as soon as it is chosen; save the material separately.',
+      uploading: 'Upload in progress. Wait for it to finish before saving.',
+      uploadFailed: 'The file could not be uploaded.',
+      create: 'Create',
+      save: 'Save',
+      creating: 'Creating…',
+      saving: 'Saving…',
+    },
+    error: {
+      title: 'Materials could not be loaded',
+      forbidden: 'You do not have permission to view these materials.',
+      notFound: 'This material does not exist or has been deleted.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -115,6 +173,7 @@ const enUS = {
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
+    signInAgain: 'Sign in again',
   },
   notices: {
     serverLocaleFallback:
@@ -131,6 +190,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -159,6 +219,14 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      files: {
+        imagePreviewFailed:
+          'This image could not be displayed. The file may be corrupted or temporarily unavailable.',
+      },
+    },
   },
 };
 

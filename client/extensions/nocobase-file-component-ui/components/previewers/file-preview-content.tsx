@@ -71,10 +71,11 @@ export function FilePreviewContent(
   switch (kind) {
     case 'image':
       return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
+        <ImagePreview
+          key={url ?? file.id}
+          file={file}
+          url={url}
+          onDownload={onDownload}
         />
       );
     case 'pdf':
@@ -97,6 +98,42 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+/**
+ * A raster image, with the failure branch the image kind otherwise lacks: a
+ * corrupted or temporarily unavailable file fires `error` on the element, and
+ * the user is told the preview failed instead of being left with a broken image.
+ */
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('files.imagePreviewFailed', {
+          defaultValue:
+            'This image could not be displayed. The file may be corrupted or temporarily unavailable.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

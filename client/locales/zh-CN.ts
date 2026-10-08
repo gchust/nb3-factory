@@ -55,6 +55,7 @@ const zhCN: AppResource = {
   'status.loadingSettings': '正在加载设置',
   'status.loadingDev': '正在加载开发工具',
   'status.denied': '无权访问',
+  'status.sessionExpired': '登录状态已失效，请重新登录后继续。',
   'status.pageFailed': '无法加载页面',
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
@@ -89,6 +90,62 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '项目资料',
+    description: '把每份资料和它的附件放在一起，不用再在聊天记录里翻找文件。',
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      success: '已创建“{{title}}”。',
+    },
+    edit: {
+      title: '编辑资料',
+      action: '编辑',
+      success: '已保存“{{title}}”。',
+    },
+    list: {
+      title: '标题',
+      attachments: '附件',
+      updatedAt: '更新时间',
+      fileCount: '{{count}} 个附件',
+      open: '打开 {{title}}',
+    },
+    empty: {
+      title: '还没有资料',
+      description: '新建一份资料，并上传现场照片或 Word 文档。',
+    },
+    detail: {
+      files: '附件',
+      preview: '预览',
+      updatedAt: '更新于 {{date}}',
+      noFiles: '这份资料还没有附件。',
+      selectHint: '选择一份附件，在这里查看真实内容。',
+      download: '下载',
+      remove: '移除',
+      removeSaved: '该附件已从这份资料中移除。',
+    },
+    form: {
+      title: '标题',
+      titlePlaceholder: '例如：东门工地现场照片',
+      titleRequired: '保存前请填写标题。',
+      titleTooLong: '标题最多 {{max}} 个字。',
+      attachments: '附件',
+      attachmentsHint:
+        '支持 PNG 图片和 DOCX 文档。选择文件后立即上传，资料本身另行保存。',
+      uploading: '文件正在上传，请等上传完成后再保存。',
+      uploadFailed: '文件上传失败。',
+      create: '创建',
+      save: '保存',
+      creating: '正在创建…',
+      saving: '正在保存…',
+    },
+    error: {
+      title: '资料加载失败',
+      forbidden: '你没有查看这些资料的权限。',
+      notFound: '这份资料不存在或已被删除。',
+      requestFailed: '请求失败，请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -108,6 +165,7 @@ const zhCN: AppResource = {
     cancel: '取消',
     confirm: '确认',
     language: '语言',
+    signInAgain: '重新登录',
   },
   notices: {
     serverLocaleFallback: '服务端不支持该语言，服务端内容已回落为英文。',
@@ -122,6 +180,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -150,6 +209,13 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      files: {
+        imagePreviewFailed: '无法显示这张图片，文件可能已损坏或暂时不可用。',
+      },
+    },
   },
 };
 

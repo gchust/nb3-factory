@@ -55,6 +55,13 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      // The materials pages opt out of page authorization for the same reason:
+      // the data boundary is each owner's records, not a page grant. A second
+      // engineer who can read the page still cannot read the first one's files.
+      { name: 'materials', authorizedAs: null },
+      { name: 'material-create', authorizedAs: null },
+      { name: 'material-detail', authorizedAs: null },
+      { name: 'material-edit', authorizedAs: null },
     ]);
   });
 });

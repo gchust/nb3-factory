@@ -126,7 +126,7 @@ function OpenFilePreviewDialog(
             ) : null}
           </div>
         </div>
-        <PreviewBody
+        <FilePreviewBody
           key={`${file.id}:${String(file.updatedAt)}:${file.contentUrl}`}
           file={file}
           onDownload={
@@ -163,7 +163,12 @@ function reportDownloadError(
   );
 }
 
-function PreviewBody({
+/**
+ * The body of a file preview: resolves the preview kind, fetches what it needs
+ * and renders the real content. Exported so a page can embed the same preview
+ * inline, not only inside the dialog.
+ */
+export function FilePreviewBody({
   file,
   onDownload,
 }: {
