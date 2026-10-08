@@ -57,6 +57,7 @@ const zhCN: AppResource = {
   'status.denied': '无权访问',
   'status.pageFailed': '无法加载页面',
   'status.retry': '重试',
+  'status.sessionExpired': '登录已失效，请重新登录后继续。',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
   'routeOverlay.close': '关闭',
@@ -90,6 +91,77 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  library: {
+    title: '资料库',
+    description:
+      '已发布的资料对有阅读资格的同时开放；草稿仅负责人本人可见。保密资料不会共享给任何人。',
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      success: '已创建“{{title}}”。',
+    },
+    edit: {
+      title: '编辑资料',
+      success: '已保存“{{title}}”。',
+    },
+    delete: {
+      title: '删除资料',
+      description: '确定删除“{{title}}”？此操作无法撤销。',
+    },
+    detail: { title: '资料' },
+    form: {
+      description: '资料包含标题和可选的正文。',
+      titleRequired: '请输入标题。',
+      titleTooLong: '标题最多 {{max}} 个字符。',
+      bodyTooLong: '正文最多 {{max}} 个字符。',
+    },
+    fields: {
+      title: '标题',
+      code: '编号',
+      owner: '负责人',
+      published: '已发布',
+      confidential: '保密',
+      body: '正文',
+      updatedAt: '更新时间',
+    },
+    flag: { yes: '是', no: '否' },
+    actions: {
+      label: '操作',
+      more: '“{{title}}”的操作',
+      edit: '编辑',
+      delete: '删除',
+    },
+    error: {
+      title: '无法加载资料',
+      forbidden: '你没有查看该资料的权限。',
+      requestFailed: '请求失败，请重试。',
+      notFound: '该资料不存在或已不可用。',
+    },
+    permissionSet: {
+      maintainer: '资料维护员',
+      reader: '资料阅读员',
+    },
+    recordAccess: {
+      published: '已发布且非保密',
+      nonConfidential: '非保密',
+      readable: '本人负责或非保密',
+    },
+    data: { documents: '资料' },
+    section: { title: '资料库' },
+    resource: { documents: '资料' },
+    action: {
+      view: '查看资料',
+      create: '新建资料',
+      edit: '编辑资料',
+      delete: '删除资料',
+    },
+    scope: { documents: '资料' },
+    rule: {
+      confidential: {
+        title: '保密资料仅负责人本人可读',
+      },
+    },
+  },
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -105,8 +177,13 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    saving: '正在保存…',
+    create: '创建',
+    edit: '编辑',
+    delete: '删除',
     cancel: '取消',
     confirm: '确认',
+    signInAgain: '重新登录',
     language: '语言',
   },
   notices: {
@@ -122,6 +199,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    documents: '资料库',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
