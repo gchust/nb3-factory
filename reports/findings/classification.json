@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "11f5769bd1bb0aca19c6532169927a5fe5aba8d944ba481ed9a47b69660d002a",
+  "inputHash": "03f7a01a6d3544fa2a1d2be6c8dd1c187b3c433f835f4674568207928b0d1a2a",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -798,6 +798,16 @@
       "fingerprint": "55d780d050ce06ad70ba0b409f8031691f6ae83da0880fc5099b1a79c92c9be4"
     },
     {
+      "id": "664:37700959785:1:F1",
+      "report": "664:37700959785:1",
+      "fingerprint": "a10a6141423fd2117a3e1b13b81048bb44d17bf0e2b4c1408ea151bedc46529e"
+    },
+    {
+      "id": "664:37700959785:1:F2",
+      "report": "664:37700959785:1",
+      "fingerprint": "29264838152610219173f893162901496b5cff1395ee604a11f39501972207f6"
+    },
+    {
       "id": "665:37700965959:1:F3",
       "report": "665:37700965959:1",
       "fingerprint": "0aa6d3c62cdb18906d6114e803af3e74c4f4dd501fc2b944f9821a6c7eb06b8f"
@@ -823,7 +833,7 @@
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。",
+      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
@@ -832,7 +842,8 @@
         "531:37074013613:1:F2",
         "543:37156754926:1:F3",
         "555:37238852759:1:F2",
-        "578:37394457519:1:F2"
+        "578:37394457519:1:F2",
+        "664:37700959785:1:F2"
       ]
     },
     {
@@ -1219,12 +1230,14 @@
       ]
     },
     {
-      "title": "defineFileRepositoryApiRoutes/ServerFileRepository 缺少一等的主体感知内容读取与鉴权入口，应用被迫重写受保护字节路由",
-      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）显示内容路由固定绑定公开的 unwritablePolicy、注释声明 authentication/authorization application-owned，上传动作默认只在缺 principal 时返回 403，受保护字节只能靠顺序敏感的自定义根守卫；543:F2（E3/E4/E16/E22）显示 FileOperations 仅暴露 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，没有按主体读取内容的方法，应用只能自建 material-content 根路由并逐行复制 UUID 校验、ownerId 过滤、404 语义与 nosniff/CSP/Content-Disposition。两者同为“受保护内容没有可注入主体过滤的一等入口”，修复方向一致：在 defineFileRepositoryApiRoutes 或 ServerFileRepositoryManager/FileOperations 上提供可注入的认证/授权与主体读取钩子。 649:F5（E54/E55/E56/E57）显示 app-plugin-file 的 accessPath/<uuid> 内容路由刻意绕过 exposure 的 RepositoryPolicy、仅凭不可猜 UUID 服务任何人，框架只提供“应用在贡献路径自挂认证/授权”，没有把内容路由绑定到父记录关系的逐记录授权原语，应用只能关闭 read metadata 并以会话守卫兜底；与 519:F4、543:F2 同为“受保护内容缺少一等的逐记录授权/主体读取入口”，修复方向一致，故并入。",
+      "title": "文件内容字节路由默认公开且缺少受支持的受保护/主体感知接入点，应用被迫逐路径自挂鉴权或重写字节路由",
+      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）、543:F2（E3/E4/E16/E22）、649:F5（E54/E55/E56/E57）均记录 app-plugin-file 的 content 字节路由固定绑定公开的 unwritablePolicy、刻意绕过 exposure Policy，框架没有一等的主体感知/逐记录鉴权或内容读取入口；应用只能在贡献前自挂顺序敏感守卫，或重写整套字节路由（重复 UUID 校验、ownerId 过滤、安全头与流式逻辑）。545:F4（E28/E30/E32）与 664:F1（E1/E2/E13）在同一 routes.js 注释与类型上复现：内容路由默认 public、认证授权归应用所有，FileRepositoryApiExposure/DefineFileRepositoryApiRoutesOptions 没有 restricted/属主/鉴权钩子，应用必须逐 accessPath 补挂 authentication.required()+授权，遗漏即按 UUID 公开可读。五条的触发条件（用内容路由提供受业务规则约束的/私有附件）、受影响 API（defineFileRepositoryApiRoutes、ServerFileRepository、FileRepositoryApiExposure）与修复方向（提供可选的受限/主体感知内容鉴权入口，默认仍 public 以兼容）一致，故合并；文档未给出可执行机制（531:F3）属另一缺口，单列。",
       "members": [
         "519:36938138067:1:F4",
         "543:37156754926:1:F2",
-        "649:37621548882:1:F5"
+        "649:37621548882:1:F5",
+        "545:37172547326:1:F4",
+        "664:37700959785:1:F1"
       ]
     },
     {
@@ -1254,13 +1267,6 @@
       "reason": "单条保留：545:F2（E8/E10/E11）显示 normalizeTemporalValue 对 datetime 字段的裸 YYYY-MM-DD 抛 RepositoryError(INVALID_MUTATION)，要求 V1 时间值且至多毫秒精度，而 nocobase-db SKILL.md 未提示该输入边界，应用只能自写 normalizeTemporal 做归一。该缺口属时间字段值格式的独立文档问题，与 decimal 方言返回类型未文档化（473:F2）、SQLite 将 Date 绑定为 epoch 毫秒（533:F2）、uuid 主键需调用方提供 id（543:F5）等根因不同，无可合并成员，故单独保留。",
       "members": [
         "545:37172547326:1:F2"
-      ]
-    },
-    {
-      "title": "文件内容字节路由默认公开，应用须逐路径补挂鉴权，易遗漏",
-      "reason": "单条保留：545:F4（E28/E30/E32）显示 app-plugin-file 的 routes.js 把内容字节路由定义为公开的初版路由、认证授权由应用拥有，安全边界完全依赖应用在每个 accessPath 补挂中间件；其期望与修复方向是更安全的默认或注册期告警。这与 519:F4/543:F2 的“缺少一等鉴权/主体读取入口、应用被迫重写受保护字节路由”能力缺口不同，也与 531:F3 的机制/示例缺失、519:F3 的指引冲突不同，根因与修复方向均不一致，故单独保留。",
-      "members": [
-        "545:37172547326:1:F4"
       ]
     },
     {
@@ -1515,9 +1521,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37706570752",
+    "runId": "37713061145",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-08T00:14:57.912Z"
+    "completedAt": "2026-10-08T01:29:52.534Z"
   }
 }
