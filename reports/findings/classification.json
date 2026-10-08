@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "03f7a01a6d3544fa2a1d2be6c8dd1c187b3c433f835f4674568207928b0d1a2a",
+  "inputHash": "b634fdba288cfcecbef3be7723507a8a5bf5b1b01a766d714f19855d94ea96b2",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -816,6 +816,26 @@
       "id": "665:37700965959:1:F4",
       "report": "665:37700965959:1",
       "fingerprint": "884c1b6698b8fde3927324f499c5022cfab10d64fdcfa9596cf09a96d069d9c4"
+    },
+    {
+      "id": "666:37725948781:1:F3",
+      "report": "666:37725948781:1",
+      "fingerprint": "a2ce84c8a9c1b597cf037d89751f0e21c63f49e7cb510c77ac8b281a418963bf"
+    },
+    {
+      "id": "666:37725948781:1:F4",
+      "report": "666:37725948781:1",
+      "fingerprint": "2efd392c75d46e166224ca763b18f9d470b9f8c2c380204dd3a5a431b9ded410"
+    },
+    {
+      "id": "666:37725948781:1:F5",
+      "report": "666:37725948781:1",
+      "fingerprint": "3d9d2d678fc9410386fe8c780864b30ca3a3b11f9a01553d9cf36682d46230e9"
+    },
+    {
+      "id": "666:37725948781:1:F6",
+      "report": "666:37725948781:1",
+      "fingerprint": "6d76a0aaa6ec105776d973b10c94c5dd52880f73e14b545fb0d07ef4090bba9e"
     }
   ],
   "groups": [
@@ -871,13 +891,14 @@
       ]
     },
     {
-      "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
-      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。",
+      "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影或私有 runner/私有表",
+      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。 新增 666:F3（E65/E66/E68/E79）：公开 SchedulerService 仅 registerTarget/defineSchedule，HTTP 仅 list/get/occurrences/enable/disable，Skill 明确 store、target registry、schedule executor 对插件私有；应用 runScheduleNow 只能读私有 schedule_definitions、访问私有 executor.runner 并手工 recordEvent。与上述各条同为公开面缺少受控单次执行入口、修复方向一致（提供遵守 enabled、写入同一 occurrence 的受支持触发入口），故合并。",
       "members": [
         "466:36473812582:1:F3",
         "478:36522310216:1:F3",
         "509:36811890057:1:F1",
-        "533:37094050741:1:F4"
+        "533:37094050741:1:F4",
+        "666:37725948781:1:F3"
       ]
     },
     {
@@ -1383,10 +1404,11 @@
       ]
     },
     {
-      "title": "app-client 的 resolveRouteTree 对以父段开头的子路由 path 静默拼接，不校验也不告警",
-      "reason": "单条保留。resolveRouteTree 仅剥离前导斜杠再前置 parentPath，对会重复父段的路径照常注册且不抛错/告警，而同文件对缺失 path、非法 componentLoader、重复子 id 均有校验，属框架解析期缺少 path 语义校验。与同报告 600:F2（文档误导）同因不同侧，按“同报告不得合并”单独保留。",
+      "title": "app-client 的 resolveRouteTree 对以父段开头或以 / 开头的子路由 path 静默拼接父段，不校验也不告警",
+      "reason": "单条保留。resolveRouteTree 仅剥离前导斜杠再前置 parentPath，对会重复父段的路径照常注册且不抛错/告警，而同文件对缺失 path、非法 componentLoader、重复子 id 均有校验，属框架解析期缺少 path 语义校验。与同报告 600:F2（文档误导）同因不同侧，按“同报告不得合并”单独保留。 新增 666:F6（E75/E76/E82）：plugins.js 解析子路由时 normalize 后直接 `${parentPath}${relative}`，不把以 / 开头的子项当绝对路径；child-routes.md 只说明子路由相对父路由声明，应用按“分组带 path + 子项以 / 开头”书写会被静默双重前缀，直到让分组不带 path 才恢复。与 600:F3 同为解析期缺少 path 语义校验、无告警的根因，故合并。",
       "members": [
-        "600:37453053696:1:F3"
+        "600:37453053696:1:F3",
+        "666:37725948781:1:F6"
       ]
     },
     {
@@ -1515,15 +1537,29 @@
       "members": [
         "665:37700965959:1:F4"
       ]
+    },
+    {
+      "title": "Workflow 公开契约不含激活/启用，源码托管应用须访问包内方法并直写工作流状态表",
+      "reason": "单条保留：666:F4 的证据（E69/E70/E72/E77）显示 @nocobase/app-plugin-workflow 的公开 token 仅暴露 registerInstruction/trigger，公开的 WorkflowServiceContract 不包含 discoverArtifacts/ensureArtifactMaterialized，也没有“激活并启用某工作流”的公开方法；Skill 虽说明 Artifact 的构建、同步、启用、调用是彼此独立的阶段，但应用 Provider 只能把 workflowServiceToken 断言为私有运行时接口、调用包内方法，并直接 updateMany/updateOne workflows 表把 revision 置 current 且 enabled。该“公开契约缺少启用/激活能力”的根因在既有分组中没有对应成员（旧的分流/通知类发现与工作流服务契约无关），无可合并对象，故单独保留。",
+      "members": [
+        "666:37725948781:1:F4"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明 datetime 输入形状与 createdAt/updatedAt 的写入责任",
+      "reason": "单条保留：666:F5 是一处跨两个根因的写入语义文档缺口。E73 证明 Repository 仅接受完整 V1 时间值，date-only 与 datetime-local 部分值抛 INVALID_MUTATION，应用因此自写 normalizeDateTime（E80）；E74 的迁移示例只声明 createdAt 为 not null，E81 显示框架不自动填充 createdAt/updatedAt、应用自写 stamped/touched。既有 545:F2 只覆盖“datetime 拒绝 date-only 字符串”，496:F4/647:F3 只覆盖“时间戳由写入方自带”，本条各匹配一半；并入任一组都会把另一不同根因混入，故单独保留。",
+      "members": [
+        "666:37725948781:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37713061145",
+    "runId": "37743326639",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-08T01:29:52.534Z"
+    "completedAt": "2026-10-08T07:29:27.142Z"
   }
 }
