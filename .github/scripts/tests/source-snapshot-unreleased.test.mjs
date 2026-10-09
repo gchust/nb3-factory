@@ -127,7 +127,7 @@ test('exports verified package bytes from the current unreleased session without
     fetcher,
   );
   assert.deepEqual(result.source, {
-    repository: 'nocobase/nocobase3',
+    repository: 'nocobase/nocobase',
     sha: sourceSha,
   });
   assert.equal(requests.length, 4);

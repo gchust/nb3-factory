@@ -29,7 +29,7 @@ QA：delivery-notes.json（可选） ┤                  │
 
 ### 最新上游复核（可选输入）
 
-facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 某个完整提交 SHA 的复核：每条发现的 `status`（present 仍存在 / fixed 已修复 / changed 已变化 / unknown 无法判断）、`summary`、可选 `note`、可选 `suggestedSeverity` / `suggestedType`，以及至少一条带 `path`、`lines`、`excerpt` 的上游证据。渲染时校验：SHA 必须完整、发现 ID 必须属于本次评审、路径必须是仓库内相对路径；无效时整份复核不采用并显示提示，报告照常生成。复核建议改级时同时显示原级别（划掉）与建议级别，排序与默认展开按建议级别，原评审不改写。上游证据链接到 GitHub 对应提交的具体行。复核数据参与 reportId，更新复核会改变页面身份。当前流水线尚不自动生成 `upstreamCheck`；没有它时首屏与详情都写“最新 NocoBase3 源码未复核”。
+facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase` 某个完整提交 SHA 的复核：每条发现的 `status`（present 仍存在 / fixed 已修复 / changed 已变化 / unknown 无法判断）、`summary`、可选 `note`、可选 `suggestedSeverity` / `suggestedType`，以及至少一条带 `path`、`lines`、`excerpt` 的上游证据。渲染时校验：SHA 必须完整、发现 ID 必须属于本次评审、路径必须是仓库内相对路径；无效时整份复核不采用并显示提示，报告照常生成。复核建议改级时同时显示原级别（划掉）与建议级别，排序与默认展开按建议级别，原评审不改写。上游证据链接到 GitHub 对应提交的具体行。复核数据参与 reportId，更新复核会改变页面身份。当前流水线尚不自动生成 `upstreamCheck`；没有它时首屏与详情都写“最新 NocoBase3 源码未复核”。
 
 ### 跨报告问题汇总
 
@@ -67,7 +67,7 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 同名不同说明、不同处理状态或现场卡点不合并。原始复盘仍可展开核对，不改写任何原始 JSON。
 缺复盘只显示简短的可选笔记说明，不再显示两个“未提供”大占位框。跳过评测、未执行、评测失败、
 部分完成、已评测但未提出建议分别说明，不能把未知变成零问题。保留旧 `#improvements` 深链接。
-首屏标题下显示本轮的版本基线：应用模板（如 `@nocobase/app-template-default@1.0.0-beta.47`）、`@nocobase/create-app` 生成器版本，源码快照任务另显示 `nocobase/nocobase3` 提交；
+首屏标题下显示本轮的版本基线：应用模板（如 `@nocobase/app-template-default@1.0.0-beta.47`）、`@nocobase/create-app` 生成器版本，源码快照任务另显示 `nocobase/nocobase` 提交；
 执行与用量之后可展开实际安装的 `@nocobase/*` 包版本与锁文件指纹。数据来自安装依赖后、Agent 开始前记录的 `baseline.json`，缺失的值显示“未记录”，不从评审包列表或当前模板推断，也不代表 NocoBase3 当前最新版本。
 模板版本为 v9；合并后新报告使用该版式，已有页面须对对应 Run 补发报告才会更新。补发仅复用原始材料，不补造诊断、不重新评审、更不等于重新核对最新上游代码。
 

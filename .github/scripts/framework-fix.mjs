@@ -1,6 +1,6 @@
 // Framework problem fixes. TestManage owns the problem and its fix-run record;
 // this control plane owns claiming it, one Claude Code review, and publishing a
-// draft PR to nocobase/nocobase3. The Agent never holds the PR token or the
+// draft PR to nocobase/nocobase. The Agent never holds the PR token or the
 // TestManage key: it writes files and a verdict, which later jobs validate.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -10,12 +10,12 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { readResult } from './agent-result.mjs';
 
-export const FIX_REPOSITORY = 'nocobase/nocobase3';
+export const FIX_REPOSITORY = 'nocobase/nocobase';
 export const VERDICTS = ['confirmed', 'already_fixed', 'not_reproducible', 'not_framework', 'needs_info'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const SHA = /^[0-9a-f]{40}$/;
-const PULL_URL = /^https:\/\/github\.com\/nocobase\/nocobase3\/pull\/[1-9]\d*$/;
-const TRUSTED_BASE_REFS = [/^develop$/, /^main$/, /^release\/[A-Za-z0-9._-]+$/, /^release-beta\/[A-Za-z0-9._-]+$/];
+const PULL_URL = /^https:\/\/github\.com\/nocobase\/nocobase\/pull\/[1-9]\d*$/;
+const TRUSTED_BASE_REFS = [/^v3-develop$/, /^develop$/, /^main$/, /^release\/[A-Za-z0-9._-]+$/, /^release-beta\/[A-Za-z0-9._-]+$/];
 const SUMMARY_LIMIT = 2000;
 const ANALYSIS_LIMIT = 20000;
 
@@ -24,7 +24,7 @@ export function parseInputs(env = process.env) {
   if (!/^[1-9]\d{0,9}$/.test(problemId)) throw new Error('problem_id must be a positive integer.');
   const externalRunId = String(env.EXTERNAL_RUN_ID ?? '').trim().toLowerCase();
   if (externalRunId && !UUID.test(externalRunId)) throw new Error('external_run_id must be a UUID or empty.');
-  const baseRef = String(env.BASE_REF ?? '').trim() || 'develop';
+  const baseRef = String(env.BASE_REF ?? '').trim() || 'v3-develop';
   if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(baseRef) || baseRef.includes('..')
     || baseRef.endsWith('/') || baseRef.endsWith('.lock') || baseRef.includes('//')) {
     throw new Error('base_ref must be a plain branch name.');
@@ -33,7 +33,7 @@ export function parseInputs(env = process.env) {
   // builds) beside the Claude credential, so only long-lived branches that
   // maintainers control may be reviewed. Anyone can push a feature branch.
   if (!TRUSTED_BASE_REFS.some((pattern) => pattern.test(baseRef))) {
-    throw new Error('base_ref must be develop, main, release/* or release-beta/*.');
+    throw new Error('base_ref must be v3-develop, develop, main, release/* or release-beta/*.');
   }
   return { problemId: Number(problemId), externalRunId: externalRunId || null, baseRef };
 }
@@ -140,7 +140,7 @@ export function buildPrompt({ snapshot, runId, baseRef, baseSha, verdictPath, de
 2. 阅读问题上下文；有原始报告链接时，可以用 \`curl -sL\` 获取报告查看证据。
 3. 在当前源码中定位相关代码，用证据判断问题是否仍然存在：阅读实现、写一个最小复现测试或脚本、必要时查看 \`git log\`。
 4. 给出以下结论之一：
-   - \`confirmed\`：在当前源码中确实存在，并且应该在 nocobase3 仓库（包、模板、Skills、CLI、文档）中修复。
+   - \`confirmed\`：在当前源码中确实存在，并且应该在 nocobase/nocobase 仓库（包、模板、Skills、CLI、文档）中修复。
    - \`already_fixed\`：曾经存在，但当前源码已经修复（给出修复代码或提交作为证据）。
    - \`not_reproducible\`：按描述在当前源码中找不到这个问题。
    - \`not_framework\`：问题来自生成的应用、工厂流水线或搭建 Agent 自身，而不是框架。

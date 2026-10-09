@@ -82,7 +82,11 @@ test('records actual installed version, explicit missing package and safely link
 
 test('records the template name and exact creator version the application was generated from', (t) => {
   const { root, put } = fixture(t);
-  assert.equal(captureBaseline(root).template, null, 'an unnamed template is not guessed');
+  assert.equal(
+    captureBaseline(root).template,
+    null,
+    'an unnamed template is not guessed',
+  );
   put('factory-template.json', {
     template: '@nocobase/app-template-default',
     templateVersion: '1.0.0-beta.47',
@@ -155,5 +159,21 @@ test('source workflow stays isolated from default baseline replacement and model
   assert.doesNotMatch(
     workflow,
     /git push|secrets\.|CODE_AGENT_API_KEY|HUB_API_KEY/,
+  );
+});
+
+test('source baseline records the new upstream and preserves archived template provenance', (t) => {
+  const { root, put } = fixture(t);
+  const sourceSha = 'a'.repeat(40);
+  assert.equal(
+    captureBaseline(root, { sourceSha }).source.repository,
+    'nocobase/nocobase',
+  );
+  put('factory-template.json', {
+    source: { repository: 'nocobase/nocobase3', sha: sourceSha },
+  });
+  assert.equal(
+    captureBaseline(root, { sourceSha }).source.repository,
+    'nocobase/nocobase3',
   );
 });

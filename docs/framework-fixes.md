@@ -1,11 +1,11 @@
 # Re-check and fix framework problems with Claude Code
 
-`framework-fix.yml` hands one TestManage problem to Claude Code. Claude Code re-checks it against the current `nocobase/nocobase3` source and, when the problem is real and the fix is contained, prepares a fix. The workflow then opens a draft PR on `nocobase/nocobase3` under the maintainer's GitHub account. Every run reports its verdict back to the problem in TestManage.
+`framework-fix.yml` hands one TestManage problem to Claude Code. Claude Code re-checks it against the current `nocobase/nocobase` source and, when the problem is real and the fix is contained, prepares a fix. The workflow then opens a draft PR on `nocobase/nocobase` under the maintainer's GitHub account. Every run reports its verdict back to the problem in TestManage.
 
 ## Starting a run
 
 - From TestManage: open a problem and choose **交给 Claude Code 复核修复**. TestManage records a fix run, then dispatches the workflow with `problem_id` and `external_run_id`.
-- Manually: run the workflow from the Actions page, or run `gh workflow run framework-fix.yml -f problem_id=<id>`. Leave `external_run_id` empty. TestManage then registers the run when the workflow claims the problem. `base_ref` defaults to `develop` and must be `develop`, `main`, `release/*` or `release-beta/*`: the review job runs that branch's code beside the Claude credential, so feature branches are refused.
+- Manually: run the workflow from the Actions page, or run `gh workflow run framework-fix.yml -f problem_id=<id>`. Leave `external_run_id` empty. TestManage then registers the run when the workflow claims the problem. `base_ref` defaults to `v3-develop` and must be `v3-develop`, `develop`, `main`, `release/*` or `release-beta/*`: the review job runs that branch's code beside the Claude credential, so feature branches are refused.
 
 TestManage admits one active fix per problem. A manual run for a problem that already has an active fix fails at the claim.
 
@@ -13,11 +13,11 @@ TestManage admits one active fix per problem. A manual run for a problem that al
 
 Each job holds only the credential it needs:
 
-| Job       | Credential                               | Does                                                                                                                                                                                                                                                             |
-| --------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `claim`   | `EVALUATION_TOKEN`                       | Claims the problem through `POST /problem-fixes/factory/claims`, receives the frozen snapshot (description, comments and factory report links), and resolves the base commit.                                                                                    |
-| `review`  | `CLAUDE_CODE_OAUTH_TOKEN`                | Checks out `nocobase/nocobase3` at that commit, installs its dependencies, and runs the pinned Claude Code once through the factory harness. It then turns the working tree into a patch (edits under `.github/` are dropped) and decides what may be published. |
-| `publish` | `NOCOBASE3_PR_TOKEN`, `EVALUATION_TOKEN` | Applies the patch to a clean checkout, commits as the token's account, pushes `fix/testmanage-problem-<id>-<run>`, and opens a draft PR. Then posts the result through `POST /problem-fixes/factory/runs/<run>/result`. Never runs Agent or repository code.     |
+| Job       | Credential                               | Does                                                                                                                                                                                                                                                            |
+| --------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `claim`   | `EVALUATION_TOKEN`                       | Claims the problem through `POST /problem-fixes/factory/claims`, receives the frozen snapshot (description, comments and factory report links), and resolves the base commit.                                                                                   |
+| `review`  | `CLAUDE_CODE_OAUTH_TOKEN`                | Checks out `nocobase/nocobase` at that commit, installs its dependencies, and runs the pinned Claude Code once through the factory harness. It then turns the working tree into a patch (edits under `.github/` are dropped) and decides what may be published. |
+| `publish` | `NOCOBASE3_PR_TOKEN`, `EVALUATION_TOKEN` | Applies the patch to a clean checkout, commits as the token's account, pushes `fix/testmanage-problem-<id>-<run>`, and opens a draft PR. Then posts the result through `POST /problem-fixes/factory/runs/<run>/result`. Never runs Agent or repository code.    |
 
 `review` restores the nocobase3 pnpm store from a cache keyed on the monorepo lockfile and pnpm version, and saves it right after the install, before the Agent starts, so nothing the Agent adds to the store is cached.
 
@@ -54,14 +54,14 @@ The invocation runs with `FACTORY_AGENT_ROLE=framework-fix`, so its phase is `fr
 
 ## Configuration
 
-| Name                          | Kind     | Purpose                                                                                                                                                                                                                               |
-| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE_CODE_OAUTH_TOKEN`     | Secret   | Output of `claude setup-token` on the account whose Claude subscription pays for the runs.                                                                                                                                            |
-| `NOCOBASE3_PR_TOKEN`          | Secret   | A token of the GitHub account that authors the PRs. It needs Contents and Pull requests write access on `nocobase/nocobase3`: use a fine-grained token if the organization allows them, otherwise a classic token with `public_repo`. |
-| `EVALUATION_TOKEN`            | Secret   | Existing TestManage source-bound integration key, the same one used for report delivery.                                                                                                                                              |
-| `TESTMANAGE_API_BASE`         | Variable | Optional. Defaults to `EVALUATION_ENDPOINT` without `/evaluations/import`.                                                                                                                                                            |
-| `FRAMEWORK_FIX_CLAUDE_MODEL`  | Variable | Optional. Defaults to `opus`.                                                                                                                                                                                                         |
-| `FRAMEWORK_FIX_CLAUDE_EFFORT` | Variable | Optional. Defaults to `high`.                                                                                                                                                                                                         |
-| `CLAUDE_CODE_VERSION`         | Variable | Optional override of the pinned Claude Code version shared with the other factory workflows.                                                                                                                                          |
+| Name                          | Kind     | Purpose                                                                                                                                                                                                                              |
+| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CLAUDE_CODE_OAUTH_TOKEN`     | Secret   | Output of `claude setup-token` on the account whose Claude subscription pays for the runs.                                                                                                                                           |
+| `NOCOBASE3_PR_TOKEN`          | Secret   | A token of the GitHub account that authors the PRs. It needs Contents and Pull requests write access on `nocobase/nocobase`: use a fine-grained token if the organization allows them, otherwise a classic token with `public_repo`. |
+| `EVALUATION_TOKEN`            | Secret   | Existing TestManage source-bound integration key, the same one used for report delivery.                                                                                                                                             |
+| `TESTMANAGE_API_BASE`         | Variable | Optional. Defaults to `EVALUATION_ENDPOINT` without `/evaluations/import`.                                                                                                                                                           |
+| `FRAMEWORK_FIX_CLAUDE_MODEL`  | Variable | Optional. Defaults to `opus`.                                                                                                                                                                                                        |
+| `FRAMEWORK_FIX_CLAUDE_EFFORT` | Variable | Optional. Defaults to `high`.                                                                                                                                                                                                        |
+| `CLAUDE_CODE_VERSION`         | Variable | Optional override of the pinned Claude Code version shared with the other factory workflows.                                                                                                                                         |
 
 The workflow runs only from the default branch. This repository is public, so its Actions logs and artifacts are public too, including the Agent transcript (the harness redacts known credentials). Treat problem descriptions accordingly.

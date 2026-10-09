@@ -17,10 +17,10 @@ on:
         type: string
         default: ''
       base_ref:
-        description: nocobase/nocobase3 branch to review and fix against (develop, main, release/* or release-beta/*)
+        description: nocobase/nocobase branch to review and fix against (v3-develop, develop, main, release/* or release-beta/*)
         required: false
         type: string
-        default: develop
+        default: v3-develop
 
 permissions: {}
 
@@ -105,7 +105,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: nocobase/nocobase3
+          repository: nocobase/nocobase
           ref: ${{ needs.claim.outputs.base_sha }}
           path: workspace
           persist-credentials: false
@@ -294,11 +294,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.decision.outputs.publish == 'true' && needs.run-cancelled.result != 'success'
         with:
-          repository: nocobase/nocobase3
+          repository: nocobase/nocobase
           ref: ${{ needs.claim.outputs.base_sha }}
           path: publish
           token: ${{ secrets.NOCOBASE3_PR_TOKEN }}
-      - name: Open a draft PR on nocobase/nocobase3
+      - name: Open a draft PR on nocobase/nocobase
         id: pr
         if: steps.decision.outputs.publish == 'true' && needs.run-cancelled.result != 'success'
         env:
