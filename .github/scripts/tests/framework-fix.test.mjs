@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -33,14 +34,35 @@ const usage = {
 
 test('inputs accept a problem, an optional TestManage run and a plain base branch', () => {
   assert.deepEqual(parseInputs({ PROBLEM_ID: '42', EXTERNAL_RUN_ID: RUN.toUpperCase(), BASE_REF: '' }), { problemId: 42, externalRunId: RUN, baseRef: 'v3-develop' });
-  assert.deepEqual(parseInputs({ PROBLEM_ID: '1', EXTERNAL_RUN_ID: '', BASE_REF: 'release/3.0' }), { problemId: 1, externalRunId: null, baseRef: 'release/3.0' });
   assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'v3-develop' }).baseRef, 'v3-develop');
-  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'main' }).baseRef, 'main');
-  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'release-beta/2026-08-26.1' }).baseRef, 'release-beta/2026-08-26.1');
   for (const bad of [{ PROBLEM_ID: '0' }, { PROBLEM_ID: '1;rm' }, { PROBLEM_ID: '1', EXTERNAL_RUN_ID: 'x' }, { PROBLEM_ID: '1', BASE_REF: '../main' }, { PROBLEM_ID: '1', BASE_REF: 'a..b' }, { PROBLEM_ID: '1', BASE_REF: '-x' }, { PROBLEM_ID: '1', BASE_REF: 'feat-cli' }, { PROBLEM_ID: '1', BASE_REF: 'codex/fix-dev-route-loading' }, { PROBLEM_ID: '1', BASE_REF: 'release/3.0/evil' }]) {
     assert.throws(() => parseInputs(bad));
   }
   assert.equal(workBranch(42, RUN), 'fix/testmanage-problem-42-0f8b3c2e');
+});
+
+test('framework fixes reject legacy and unverified release branches after the upstream migration', () => {
+  for (const baseRef of ['develop', 'main', 'release/3.0', 'release-beta/2026-08-26.1', 'v3-release/3.0']) {
+    assert.throws(
+      () => parseInputs({ PROBLEM_ID: '1', BASE_REF: baseRef }),
+      /base_ref must be v3-develop/,
+      `${baseRef} must be rejected before claiming a problem or checking out source`,
+    );
+  }
+});
+
+test('claim rejects the legacy develop branch before resolving Git refs or contacting TestManage', () => {
+  const result = spawnSync(process.execPath, [
+    path.resolve(import.meta.dirname, '../framework-fix.mjs'), 'claim',
+  ], {
+    // No Git executable or API credentials: validation must fail before either is needed.
+    env: { PATH: '', PROBLEM_ID: '1', BASE_REF: 'develop' },
+    encoding: 'utf8',
+    timeout: 5000,
+  });
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /base_ref must be v3-develop/);
 });
 
 test('the TestManage API base follows the configured report endpoint and stays on HTTPS', () => {

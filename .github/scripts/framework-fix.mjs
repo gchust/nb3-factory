@@ -15,7 +15,7 @@ export const VERDICTS = ['confirmed', 'already_fixed', 'not_reproducible', 'not_
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const SHA = /^[0-9a-f]{40}$/;
 const PULL_URL = /^https:\/\/github\.com\/nocobase\/nocobase\/pull\/[1-9]\d*$/;
-const TRUSTED_BASE_REFS = [/^v3-develop$/, /^develop$/, /^main$/, /^release\/[A-Za-z0-9._-]+$/, /^release-beta\/[A-Za-z0-9._-]+$/];
+const TRUSTED_BASE_REFS = new Set(['v3-develop']);
 const SUMMARY_LIMIT = 2000;
 const ANALYSIS_LIMIT = 20000;
 
@@ -29,11 +29,12 @@ export function parseInputs(env = process.env) {
     || baseRef.endsWith('/') || baseRef.endsWith('.lock') || baseRef.includes('//')) {
     throw new Error('base_ref must be a plain branch name.');
   }
-  // The review job runs the checked-out nocobase3 code (install scripts, tests,
-  // builds) beside the Claude credential, so only long-lived branches that
-  // maintainers control may be reviewed. Anyone can push a feature branch.
-  if (!TRUSTED_BASE_REFS.some((pattern) => pattern.test(baseRef))) {
-    throw new Error('base_ref must be v3-develop, develop, main, release/* or release-beta/*.');
+  // The review job runs upstream code beside the Claude credential. Only
+  // explicitly verified, maintainer-controlled v3 branches are allowed:
+  // develop/main in the merged repository belong to the legacy Yarn codebase.
+  // Add release branches individually after verifying their v3 identity.
+  if (!TRUSTED_BASE_REFS.has(baseRef)) {
+    throw new Error('base_ref must be v3-develop (the verified NocoBase 3 branch).');
   }
   return { problemId: Number(problemId), externalRunId: externalRunId || null, baseRef };
 }
