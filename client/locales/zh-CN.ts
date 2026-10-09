@@ -1,6 +1,8 @@
 import type { AppResource } from './en-US.js';
+import aiZhCN from '../extensions/nocobase-ai/locales/zh-CN.js';
 
 const zhCN: AppResource = {
+  ...aiZhCN,
   'auth.welcome': '欢迎回来',
   'auth.loginDescription': '使用用户名或邮箱和密码登录。',
   'auth.registerTitle': '创建账户',
@@ -150,6 +152,74 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  materials: {
+    title: '资料助手',
+    description: '就你有权查看的内部资料向助手提问，也可以打开资料自行核对。',
+    assistant: {
+      title: '向助手提问',
+      description:
+        '助手只根据你有权查看的资料作答，并会说明引用了哪一条资料。它不能新增、修改或删除任何内容。',
+      loading: '正在加载助手…',
+      unavailable: {
+        title: '助手暂时不可用',
+        description: '未能加载 AI 配置，因此没有用任何猜测作答。',
+      },
+      noEmployee: '此账户当前没有可用的 AI 员工。',
+      noModel: {
+        title: '尚未配置 AI 模型',
+        description:
+          '当前没有已启用的 AI 模型，助手暂时无法作答。请管理员配置并启用模型后刷新本页。',
+      },
+      manualFallback: '你仍可在聊天旁的列表中阅读你有权查看的每一条资料。',
+    },
+    list: {
+      title: '资料列表',
+      description: '此处只显示你有权查看的资料。',
+      empty: '目前没有你可以查看的资料。',
+      confidential: '保密',
+    },
+    detail: {
+      title: '资料',
+      confidential: '保密资料',
+    },
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      description: '填写标题和正文。是否保密由系统决定，不在此处设置。',
+      success: '资料已创建。',
+    },
+    edit: {
+      action: '编辑',
+      title: '编辑资料',
+      description: '更新标题和正文。同事下次提问时，助手会按新内容作答。',
+      success: '资料已保存。',
+    },
+    delete: {
+      action: '删除',
+      title: '删除这条资料？',
+      description: '“{{name}}”将对所有人移除，且无法撤销。',
+      success: '“{{name}}”已删除。',
+      alreadyGone: '该资料已被删除。',
+    },
+    form: {
+      title: '标题',
+      titleRequired: '请填写标题。',
+      titleTooLong: '标题最多 200 个字符。',
+      titleHint: '助手会引用此标题，请保持简短明确。',
+      body: '正文',
+      bodyRequired: '请填写资料内容。',
+      bodyTooLong: '正文最多 20000 个字符。',
+      bodyHint: '请写完整的答案，包括数字、名称和电话。',
+    },
+    error: {
+      title: '操作失败',
+      requestFailed: '请求失败，请重试。',
+      forbidden: '你没有执行此操作的权限。',
+      sessionExpired: '登录状态已失效，请重新登录后继续。',
+      notFound: '这条资料不存在，或你无权查看。',
+      notFoundTitle: '资料不可用',
+    },
   },
 };
 

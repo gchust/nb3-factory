@@ -1,6 +1,13 @@
 import type { LocaleResource } from '@nocobase/i18n';
 
+// The AI extension ships its own translation bundle because it can be installed
+// as a standalone registry item. The application owns the source, so its keys
+// join the application locale as well: the application's fallback namespace is
+// what the source coverage check reads, and a string it renders belongs here.
+import aiEnUS from '../extensions/nocobase-ai/locales/en-US.js';
+
 const enUS = {
+  ...aiEnUS,
   'auth.welcome': 'Welcome back',
   'auth.loginDescription': 'Sign in with your username or email and password.',
   'auth.registerTitle': 'Create an account',
@@ -159,6 +166,83 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  materials: {
+    title: 'Materials assistant',
+    description:
+      'Ask the assistant about the internal materials you may read, and open a material to check it yourself.',
+    assistant: {
+      title: 'Ask the assistant',
+      description:
+        'The assistant answers only from the materials you may read and cites the material title. It cannot create, change or delete anything.',
+      loading: 'Loading the assistant…',
+      unavailable: {
+        title: 'The assistant is unavailable',
+        description:
+          'The AI configuration could not be loaded, so nothing was answered from a guess.',
+      },
+      noEmployee: 'No AI employee is available for this account.',
+      noModel: {
+        title: 'No AI model is configured',
+        description:
+          'No enabled AI model is available, so the assistant cannot answer yet. Ask an administrator to configure and enable a model, then reload this page.',
+      },
+      manualFallback:
+        'You can still read every material you are allowed to see in the list beside this chat.',
+    },
+    list: {
+      title: 'Materials',
+      description: 'Only the materials you are allowed to read appear here.',
+      empty: 'No materials are available to you yet.',
+      confidential: 'Confidential',
+    },
+    detail: {
+      title: 'Material',
+      confidential: 'Confidential material',
+    },
+    create: {
+      action: 'New material',
+      title: 'New material',
+      description:
+        'Add a title and a body. Confidentiality is set by the application, not here.',
+      success: 'The material was created.',
+    },
+    edit: {
+      action: 'Edit',
+      title: 'Edit material',
+      description:
+        'Update the title and the body. The assistant reflects the new content on the next question.',
+      success: 'The material was saved.',
+    },
+    delete: {
+      action: 'Delete',
+      title: 'Delete this material?',
+      description:
+        '“{{name}}” will be removed for everyone. This cannot be undone.',
+      success: '“{{name}}” was deleted.',
+      alreadyGone: 'The material had already been deleted.',
+    },
+    form: {
+      title: 'Title',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'The title must be at most 200 characters.',
+      titleHint:
+        'The assistant cites this title, so keep it short and specific.',
+      body: 'Body',
+      bodyRequired: 'Enter the material content.',
+      bodyTooLong: 'The body must be at most 20000 characters.',
+      bodyHint:
+        'Write the complete answer, including numbers, names and phone numbers.',
+    },
+    error: {
+      title: 'Something went wrong',
+      requestFailed: 'The request failed. Please try again.',
+      forbidden: 'You do not have permission to do that.',
+      sessionExpired: 'Your session has ended. Sign in again to continue.',
+      notFound:
+        'This material does not exist or you are not allowed to read it.',
+      notFoundTitle: 'Material not available',
+    },
   },
 };
 
