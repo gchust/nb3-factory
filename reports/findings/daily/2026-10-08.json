@@ -1,0 +1,625 @@
+{
+  "version": 1,
+  "date": "2026-10-08",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "b8aa5c9f2d7729fb310e7bb0",
+      "id": "664:37700959785:1:F1",
+      "issue": 664,
+      "runId": 37700959785,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "public content route 缺少可选的受保护接入点，私有附件必须自行装配认证",
+      "summary": "@nocobase/app-plugin-file 的 content GET 路由固定使用 read/create/update/delete 全 false 的 unwritablePolicy，且实现与注释都声明其为 public、认证/授权归应用所有（routes.js:20-26）。认证插件提供 auth.required()，但 exposure 没有“restricted”开关或内建属主/授权钩子，应用必须自行在 ${accessPath}/* 上注册中间件。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "结论与冻结源码/类型/指引一致：content 字节路由确为 public（unwritablePolicy）且不在 Repository Policy 内，FileRepositoryApiExposure/DefineFileRepositoryApiRoutesOptions 也没有 restricted/属主/鉴权钩子；应用只能按 Skill 自行在 <accessPath>/* 注册认证与属主中间件。本次 App 正是这样补的，因此该条是对框架可选能力的 usability-improvement，而非违约主张。已核对冻结 server/dist 内无 restricted/auth 字段，故支持。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "FileRepositoryApiExposure.policy 的文档注释明确 public byte route 是 deliberate exception、无自身认证、不受 Policy；Skill 声明 content 路由为 public、Policy 不覆盖，并说明无内建 route authentication。二者界定框架边界：不存在内建 content 鉴权入口。",
+            "evidence": [
+              "E1",
+              "E13",
+              "E77",
+              "E78"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "routes.js 的 content GET 以 unwritablePolicy 解析 repository，仅按 UUID+ext 查找并流式/重定向返回，未加认证；应用侧则在挂载 root 贡献前后加 authentication.required() 与 requireFileOwner。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E79"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按 Skill 的 App-owned 方式在 material-files.ts 对 <accessPath>/* 注册认证与属主校验，属正常装配而非误用；该条也不是指应用缺陷，而是框架缺少可选钩子。",
+            "evidence": [
+              "E78",
+              "E79",
+              "E13"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该行为完全由服务端路由代码与插件类型决定（E2、E77），不涉及外部服务、凭据或依赖安装，环境因素不能解释 public 路由的缺失能力。",
+            "evidence": [
+              "E2",
+              "E77"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "Skill 与生成模板已如实记录 content 路由为 public 且要求 App 自行加认证（E13/E78），未见工厂提示或注入配置掩盖该边界；因此不是工厂覆盖造成，缺口在插件 API 设计。",
+            "evidence": [
+              "E13",
+              "E78",
+              "E19"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现状确可满足需求：authentication 插件提供 authentication.required()，route contribution 允许 scoped middleware，App 已用公开入口实现（E79，Skill E78）。但冻结类型中 FileRepositoryApiExposure 无 restricted/owner/auth 字段（E77），说明“可选受保护接入点”确不存在，故该改进主张成立，而非把既有能力说成缺失。",
+            "evidence": [
+              "E77",
+              "E78",
+              "E79"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "文件内容字节路由默认公开且缺少受支持的受保护/主体感知接入点，应用被迫逐路径自挂鉴权或重写字节路由",
+        "issues": 5,
+        "first": "2026-10-02"
+      },
+      "report": "reports/issues/664/runs/37700959785/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "1b24da928a39a91ea0275296",
+      "id": "664:37700959785:1:F2",
+      "issue": 664,
+      "runId": 37700959785,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "默认 Registry 图片预览与缩略图缺少加载失败回退",
+      "summary": "FilePreviewContent 对 OOXML/Office/不支持类型都有失败态或 DownloadFallback，但 image kind 直接渲染 <img>（file-preview-content.tsx:72-79）；file-thumbnail.tsx 也只渲染 <img> 或图标，未监听 onError。损坏或暂不可用的图片只会显示破图，不满足“给出明确失败提示”。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结默认 Registry 源码确无图片失败回退：image 分支渲染无 onError 的 <img>，默认 FileThumbnail 也未监听 onError；PreviewBody 只对 pdf/text/markdown fetch 设置 error，图片不走该路径。应用为修复 B06 在自有副本补了 onError 回退，佐证默认组件确有该 capability gap。该条为默认 UI 健壮性改进，不要求运行时失败。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill 把 raster image 列为 Built-in preview components，只对 OOXML/Office/不支持/不安全内容写明失败或下载回退，并要求验证 failed requests/invalid documents；未把图片解码失败的失败提示写成硬承诺，故本条应视为一致性改进而非违约。",
+            "evidence": [
+              "E13",
+              "E15"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "file-preview-content.tsx 的 image 分支直接返回 <img>（无 onError），PreviewBody 只为 pdf/text/markdown 设置 error；file-thumbnail.tsx 仅渲染 <img> 或类型图标；resolveFilePreviewKind 只按 MIME/扩展名判定，故损坏 PNG 仍走 image 且无回退。",
+            "evidence": [
+              "E15",
+              "E16",
+              "E82"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用未误用 API：它按 Skill 的 materialize/扩展方式在自有 Registry 副本新增 ImagePreview onError→DownloadFallback 与 FileThumbnail onError→图标（E80、E81），说明默认缺失由应用补齐，而非应用装配错误。",
+            "evidence": [
+              "E80",
+              "E81",
+              "E19"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "图片解码失败发生在浏览器端组件，源码路径与外部服务/凭据无关；环境因素不能解释默认组件缺少 onError，E15/E16 的渲染逻辑已足够说明。",
+            "evidence": [
+              "E15",
+              "E16"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "默认 Registry 源是 Skill 指示 materialize 的平台组件（E19），materialize 仅复制源码；未见工厂注入或 QA 脚本覆盖 onError 逻辑，故缺口属于冻结默认组件本身。",
+            "evidence": [
+              "E19",
+              "E16"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "App 可通过 materialize/扩展自有副本加 onError（E80、E81），即存在绕行能力；但默认组件仍未提供该回退，故“默认 Registry 缺少加载失败回退”的改进主张与源码一致，未被现有能力推翻。",
+            "evidence": [
+              "E80",
+              "E81",
+              "E19"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 9,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/664/runs/37700959785/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "b3978e5cd39f6382c96a1191",
+      "id": "665:37700965959:1:F3",
+      "issue": 665,
+      "runId": 37700965959,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "插件 registry 语言字典缺少组件引用的键，非英文语言回落到英文",
+      "summary": "@nocobase/app-plugin-ai-employee 的 registry/nocobase-ai/locales en-US.js/zh-CN.js 均缺少 tool.output 与 tool.businessReport.chartFailed/previewUnavailable/failed，而 business-report-renderer 与 business-report-dialog 仍以这些键调用 useAITranslate；缺失时回落到内联英文。应用侧虽在 client/extensions/nocobase-ai/locales 与 app/client/locales 用 spread 补齐，但插件自带副本仍不完整。",
+      "severity": "minor",
+      "type": "runtime-defect",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-ai-employee"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-ai-employee"
+      ],
+      "featurePoint": "应用搭建/AI 员工",
+      "candidates": [
+        "应用搭建/AI 员工"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "插件 registry 语言字典缺少组件引用的键，非英文语言回落到英文",
+        "issues": 1,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/665/runs/37700965959/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "cd559203e9e0ee3d629e321b",
+      "id": "665:37700965959:1:F4",
+      "issue": 665,
+      "runId": 37700965959,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "布尔字段的算子白名单未在 nocobase-db 指引中说明",
+      "summary": "@nocobase/db 按字段类型校验算子：boolean 只允许 $isTruly/$isFalsy/$empty/$notEmpty，$eq/$ne 会在查询期抛 FIELD_CAPABILITY_NOT_SUPPORTED。nocobase-db SKILL 只讲了 Query 不读元数据与三参 where，未提该白名单；仓库只有 README.zh-CN.md，也未见相关说明。业务实现只能靠源码与注释（app/server/authorization/materials.ts 的 $isFalsy 注释）绕过。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "布尔字段的算子白名单未在 nocobase-db 指引中说明",
+        "issues": 1,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/665/runs/37700965959/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "2075debd1fe87a1076dd1141",
+      "id": "666:37725948781:1:F3",
+      "issue": 666,
+      "runId": 37725948781,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "Scheduler 无公开“立即执行一次”能力，应用只能访问私有 runner 与私有表",
+      "summary": "公开 SchedulerService 仅 registerTarget/defineSchedule，HTTP 仅 list/get/enable/disable/occurrences；operations.md 又明确 store、target registry、schedule executor 对插件私有、应用不得解析。应用 runScheduleNow 因此直接查 schedule_definitions 并访问 executor.runner 私有字段。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "证据链一致：Scheduler 公开服务仅 registerTarget/defineSchedule，HTTP 只有 list/get/occurrences/enable/disable，插件 Skill 明确 store、target registry、schedule executor 私有；应用 runScheduleNow 直接查 schedule_definitions 并访问私有 executor.runner、手工 recordEvent，确无受支持的“按计划立即执行一次”入口。Skill 提供的 JobExecutor 面向不需要 UI 可观测的一过性异步任务，不产生计划的 occurrence，也不能替代“主管触发 UI 可见计划并记录 occurrence”的需求。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E65 公开服务只有 registerTarget 与 defineSchedule 两个扩展点；E66 的管理路由只有 list/get/occurrences/enable/disable；E68 明确 store、target registry、schedule executor 对插件私有、应用不得从容器解析。契约层面没有触发单个计划 firing 的受支持入口。",
+            "evidence": [
+              "E65",
+              "E66",
+              "E68"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E79 显示 runScheduleNow 读 schedule_definitions 取 nextRunAt、按 scheduler.jobs 解析 jobExecutorServiceToken 取得 executor、访问私有 runner 字段并手工 recordEvent(Start/End)，即实际只能绕行；E66 证明公开 HTTP 面无对应端点可调用。",
+            "evidence": [
+              "E79",
+              "E66"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用直读私有计划表并访问私有 runner，确实违反 E68 记录的文档边界；但所需能力在公开面上不存在，绕行是当时唯一可行路径，因此这是插件缺口而非单纯应用误用。候选也如实标注了“当前可用但违反文档边界”。",
+            "evidence": [
+              "E79",
+              "E68"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "没有外部服务、凭据或运行环境因素更能解释现象；E86 显示 Scheduler Skill 对“立即异步执行”的建议是 JobExecutor，但它针对无需 UI 跟踪的任务且不写计划 occurrence，与主管触发已登记计划的需求不等价，故不能据此否定缺口。",
+            "evidence": [
+              "E86",
+              "E79"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "现有指引来自插件自身 Skill(E68)，未见工厂提示、注入配置或模板要求应用直写 schedule_definitions；缺相应工厂材料，故不把成因归于工厂。",
+            "evidence": [
+              "E68"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现成公开入口只有 enable/disable 与 occurrences 查询(E65,E66)，scheduler sync 不触发 firing(E68)，JobExecutor(E86) 不满足 occurrence 语义。没有现有公开入口能满足“立即执行一次并写入 occurrence”，改进空间成立。",
+            "evidence": [
+              "E65",
+              "E66",
+              "E68",
+              "E86"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影或私有 runner/私有表",
+        "issues": 5,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/666/runs/37725948781/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "0d55729e8e6623cc689833bb",
+      "id": "666:37725948781:1:F4",
+      "issue": 666,
+      "runId": 37725948781,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "Workflow 公开契约不含激活/启用，源码托管应用须访问包内方法并直写状态表",
+      "summary": "workflowServiceToken 仅暴露 registerInstruction/trigger；Artifact 物化与 revision 启用不在公开契约中。应用的 Provider 断言 token 为私有运行时接口、调用 discoverArtifacts/ensureArtifactMaterialized，再直接 updateMany/updateOne workflows 表。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "contradicted",
+        "reason": "E69/E70 只证明服务 token 的契约不含激活；但 E72 与官方 reference E85 明确记载受权管理 API，E87 的 POST /workflows/:workflowId/enable 说明按 hash 可物化并置为 current 且 enabled。源码工作流有受支持的公开 HTTP 入口完成“物化→启用”，E72 还明示应用应使用公开 API、不得绕过内部方法与物化表。因此“无法经公开 API 启用、必须触碰内部方法”这一具体结论被反证；应用使用私有方法属违反既有指引，而非插件能力缺口。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E69 的 WorkflowServiceContract 仅含 registerInstruction/trigger；E70 的类上有 discoverArtifacts/ensureArtifactMaterialized 但不在契约。这支持“服务 token 未导出激活方法”这一狭窄事实，但不足以支持“公开面没有启用能力”。",
+            "evidence": [
+              "E69",
+              "E70"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E77 应用把 workflowServiceToken 断言为私有运行时接口，调用 discoverArtifacts/ensureArtifactMaterialized，并 updateMany/updateOne workflows 表置 current/enabled。行为本身属实，但在存在公开管理 API 的情况下只证明应用选择了绕行，不证明公开面缺失。",
+            "evidence": [
+              "E77"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "E72 要求业务/应用使用公开 API 并明确不得绕过插件内部或直接编辑物化表；E85 记录管理方法 enable(idOrArtifactHash) 及“这些不是包根服务导出”。应用绕过受权管理 API 直写 workflows 表，属误用/未满足前提。",
+            "evidence": [
+              "E72",
+              "E85",
+              "E77"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "不存在缺少外部环境材料的问题：受权管理 API 在部署后可调用(E87)，E85 说明 enable 支持物化未同步的 Artifact，无需依赖包内服务导出。环境因素不能解释为缺口。",
+            "evidence": [
+              "E85",
+              "E87"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "未见工厂提示、注入配置或模板要求应用直写 workflow 表；现有边界来自插件 Skill(E72)，不归因工厂。",
+            "evidence": [
+              "E72"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已有公开入口 E87(POST /workflows/:workflowId/enable，按 hash 物化并启用) 与 E85(enable(idOrArtifactHash))，并由 E72 指引用于启用；即“构建→同步→启用”的受支持公开路径已存在。候选所称的公开能力缺失不成立。",
+            "evidence": [
+              "E87",
+              "E85",
+              "E72"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-workflow",
+        "app/.agents/skills/nocobase-app-plugin-workflow"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-workflow",
+        "skill:nocobase-app-plugin-workflow"
+      ],
+      "featurePoint": "应用搭建/工作流",
+      "candidates": [
+        "应用搭建/工作流"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "Workflow 公开契约不含激活/启用，源码托管应用须访问包内方法并直写工作流状态表",
+        "issues": 1,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/666/runs/37725948781/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "263fd2c015735d05569fcc48",
+      "id": "666:37725948781:1:F5",
+      "issue": 666,
+      "runId": 37725948781,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "nocobase-db Skill 未说明 datetime 输入形状与 createdAt/updatedAt 的写入责任",
+      "summary": "Repository 只接受完整 V1 时间值，而浏览器 date/datetime-local 提交部分值；Skill 的迁移示例声明 createdAt 却不说明写入时由谁填充。应用因此自写 normalizeDateTime 与 stamped/touched。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "E73 证明 datetime 只接受完整 V1（含秒）值，date-only 与 datetime-local 的部分值会被拒；E74 的 db Skill 迁移示例只声明 createdAt 为 not null，未说明写入时谁填充，全文最接近的表述仅是 E88“Repository 负责时序编码”，也未给出可接受输入形状或 createdAt/updatedAt 责任。应用因此自写 normalizeDateTime(E80) 与 stamped/touched(E81)。属可依据源码与指引证实的文档改进空间。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E73 的 Repository 契约要求合法 V1 temporal 值（含秒，毫秒以内），部分值直接 INVALID_MUTATION；E74 的示例把 createdAt 声明为 not null 却不给默认值或填充约定。",
+            "evidence": [
+              "E73",
+              "E74"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E80 应用补齐 date 与 datetime-local 的部分值以适配严格校验；E81 手工写 createdAt/updatedAt 并注明框架不自动填充。两者对应契约未说明的两处写入语义。",
+            "evidence": [
+              "E80",
+              "E81"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用自建桥接与时间戳辅助并非错误装配：E80 的注释说明保留 collection 校验为唯一权威，E81 的辅助保证业务写入不漏字段。它们反映的是 Skill 未覆盖该语义。",
+            "evidence": [
+              "E80",
+              "E81"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "无外部服务或运行环境因素更优解释；db 包内未见自动填充 createdAt/updatedAt 的逻辑(E81)，Skill 中唯一相关表述是 E88 的时序编码职责。",
+            "evidence": [
+              "E88",
+              "E81"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "没有工厂提示、注入配置或模板材料涉及该写入语义；现有材料是 db Skill 示例(E74)，故不归因工厂。",
+            "evidence": [
+              "E74"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有 Skill 对 temporal 的最接近覆盖是 E88“Repository 负责时序编码”，并未给出可接受形状或 createdAt/updatedAt 责任；E73 与 E74 共同说明缺口，补充指引的改进空间成立。",
+            "evidence": [
+              "E88",
+              "E74",
+              "E73"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "nocobase-db Skill 未说明 datetime 输入形状与 createdAt/updatedAt 的写入责任",
+        "issues": 1,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/666/runs/37725948781/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "baf500ec4db1c2a878bde150",
+      "id": "666:37725948781:1:F6",
+      "issue": 666,
+      "runId": 37725948781,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-08",
+      "archivedAt": "2026-10-09T00:21:20.326Z",
+      "title": "客户端路由对“分组带 path + 子项以 / 开头”静默双重前缀，无提示",
+      "summary": "plugins.js 将子路由 normalize 后直接拼到父路径；当分组声明 path 且子项用 /service/... 时得到 /service/service/...，最终页面不可达且无明确错误。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "E75 显示父路径与子路径直接拼接：子路径先去前导斜杠再前置 /，随后 parentPath + relative，故分组 path='/service' 加子项 '/service/tickets' 得 '/service/service/tickets'；E76 说明只有不声明 path 的分组内页面才用完整路径；E82 记录应用先出现该重复前缀并改为分组不声明 path。E89 显示仅在路径已注册冲突时抛错，不针对该声明组合告警，属可证实的可用性改进点。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E76 规定无 path 的导航分组内页面使用完整路径、子路由相对父路由声明；E75 是其实现，且不会把以 / 开头的子路径视为应用绝对路径。",
+            "evidence": [
+              "E76",
+              "E75"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E75 的拼接逻辑对分组 path + 绝对子路径产生双重前缀；E82 的应用注释确认该组合曾注册 /service/service/... 并使页面重复/不可达，随后修复。",
+            "evidence": [
+              "E75",
+              "E82"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用最初声明分组 path 并使用 /service/... 子路径，正好触发该组合；改为分组无 path、子项用完整路径后恢复，属应用侧真实触发路径而非环境问题。",
+            "evidence": [
+              "E82"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "无外部服务、凭据或运行时因素参与；路径结果完全由解析规则与声明组合决定(E75)。",
+            "evidence": [
+              "E75"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "未见工厂提示、注入配置或模板要求该声明组合；成因在客户端路由解析规则，不归因工厂。",
+            "evidence": [
+              "E82"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "E89 只在路径已注册冲突时抛错，未对“父有 path + 子绝对路径”给出可读告警；E75 的 normalizeRoutePath 也只校验绝对路径格式。现有能力不含该提示，构建期告警的改进空间成立。",
+            "evidence": [
+              "E89",
+              "E75"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-client",
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-client",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "app-client 的 resolveRouteTree 对以父段开头或以 / 开头的子路由 path 静默拼接父段，不校验也不告警",
+        "issues": 2,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/666/runs/37725948781/attempt-1/index.html#review-finding-F6"
+    }
+  ]
+}
