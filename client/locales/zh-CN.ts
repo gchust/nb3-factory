@@ -57,6 +57,7 @@ const zhCN: AppResource = {
   'status.denied': '无权访问',
   'status.pageFailed': '无法加载页面',
   'status.retry': '重试',
+  'status.sessionExpired': '你的会话已结束，请重新登录后继续。',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
   'routeOverlay.close': '关闭',
@@ -105,8 +106,11 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    create: '创建',
+    saving: '正在保存…',
     cancel: '取消',
     confirm: '确认',
+    signInAgain: '重新登录',
     language: '语言',
   },
   notices: {
@@ -122,6 +126,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    library: '文档库',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -150,6 +155,79 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  library: {
+    title: '文档库',
+    description:
+      '内部文档。已发布且非保密的文档对具备权限的阅读者可见；草稿仅本人可见。',
+    create: {
+      action: '新建文档',
+      title: '新建文档',
+      success: '文档“{{title}}”已创建。',
+    },
+    edit: { title: '编辑文档' },
+    detail: { title: '文档' },
+    update: { success: '文档“{{title}}”已保存。' },
+    delete: {
+      title: '删除“{{title}}”？',
+      description: '此操作将永久删除该文档，且无法撤销。',
+      confirm: '删除',
+      success: '文档“{{title}}”已删除。',
+      notFound: '文档“{{title}}”已被删除。',
+    },
+    fields: {
+      title: '标题',
+      body: '正文',
+      owner: '所有者',
+      visibility: '可见性',
+      published: '已发布',
+      confidential: '保密',
+      updatedAt: '更新时间',
+    },
+    resource: { title: '文档库' },
+    permissionSets: { editor: '资料员', reader: '阅读者' },
+    restriction: {
+      hideConfidential: '资料库：阅读者仅可见非保密资料',
+    },
+    workspace: { section: '文档库', group: '文档' },
+    action: {
+      view: '查看文档',
+      create: '新建文档',
+      edit: '编辑文档',
+      delete: '删除文档',
+    },
+    scope: { documents: '文档' },
+    status: {
+      published: '已发布',
+      draft: '草稿',
+      confidential: '保密',
+    },
+    actions: {
+      label: '操作',
+      more: '{{title}} 的操作',
+      edit: '编辑',
+      delete: '删除',
+    },
+    form: {
+      description:
+        '你拥有的文档。发布后对具备权限的阅读者可见；保密文档永远不会展示给不具备保密权限的阅读者。',
+      titleRequired: '请输入标题。',
+      titleTooLong: '最多 {{max}} 个字符。',
+      bodyTooLong: '最多 {{max}} 个字符。',
+      publishedHint: '已发布的文档对可阅读已发布文档的阅读者可见。',
+      confidentialHint: '保密文档对阅读者始终隐藏，即使已共享给该阅读者。',
+    },
+    empty: {
+      title: '暂无文档',
+      description: '你拥有的或共享给你的文档会显示在这里。',
+      noResults: '没有匹配的文档。',
+    },
+    error: {
+      title: '无法加载文档',
+      forbidden: '你没有执行该操作的权限。',
+      notFound: '该文档已不存在。',
+      requestFailed: '请求失败，请重试。',
+    },
   },
 };
 

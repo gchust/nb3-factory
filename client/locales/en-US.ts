@@ -61,6 +61,7 @@ const enUS = {
   'status.denied': 'Access denied',
   'status.pageFailed': 'Unable to load page',
   'status.retry': 'Retry',
+  'status.sessionExpired': 'Your session ended. Sign in again to continue.',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
   'routeOverlay.close': 'Close',
@@ -112,8 +113,11 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    create: 'Create',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    signInAgain: 'Sign in again',
     language: 'Language',
   },
   notices: {
@@ -131,6 +135,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    library: 'Document library',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -159,6 +164,82 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  library: {
+    title: 'Document library',
+    description:
+      'Internal documents. Published, non-confidential documents are visible to qualified readers; drafts stay with their owner.',
+    create: {
+      action: 'New document',
+      title: 'New document',
+      success: 'Document "{{title}}" was created.',
+    },
+    edit: { title: 'Edit document' },
+    detail: { title: 'Document' },
+    update: { success: 'Document "{{title}}" was saved.' },
+    delete: {
+      title: 'Delete "{{title}}"?',
+      description:
+        'This permanently deletes the document. This action cannot be undone.',
+      confirm: 'Delete',
+      success: 'Document "{{title}}" was deleted.',
+      notFound: 'Document "{{title}}" was already deleted.',
+    },
+    fields: {
+      title: 'Title',
+      body: 'Body',
+      owner: 'Owner',
+      visibility: 'Visibility',
+      published: 'Published',
+      confidential: 'Confidential',
+      updatedAt: 'Updated',
+    },
+    resource: { title: 'Document library' },
+    permissionSets: { editor: 'Librarian', reader: 'Reader' },
+    restriction: {
+      hideConfidential: 'Library: readers only see non-confidential documents',
+    },
+    workspace: { section: 'Document library', group: 'Documents' },
+    action: {
+      view: 'View documents',
+      create: 'Create documents',
+      edit: 'Edit documents',
+      delete: 'Delete documents',
+    },
+    scope: { documents: 'Documents' },
+    status: {
+      published: 'Published',
+      draft: 'Draft',
+      confidential: 'Confidential',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'Actions for {{title}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    form: {
+      description:
+        'A document you own. Publishing makes it visible to qualified readers; a confidential document is never shown to a reader without the confidentiality qualification.',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      bodyTooLong: 'Use at most {{max}} characters.',
+      publishedHint:
+        'Published documents are visible to readers who may read published documents.',
+      confidentialHint:
+        'Confidential documents stay hidden from readers, even when shared with them.',
+    },
+    empty: {
+      title: 'No documents yet',
+      description: 'Documents you own or that are shared with you appear here.',
+      noResults: 'No documents match.',
+    },
+    error: {
+      title: 'Unable to load documents',
+      forbidden: 'You do not have permission to do that.',
+      notFound: 'This document no longer exists.',
+      requestFailed: 'The request failed. Please try again.',
+    },
   },
 };
 

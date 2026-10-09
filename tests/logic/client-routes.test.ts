@@ -52,9 +52,16 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The library page
+    // checks its own page grant; its child overlays inherit the check but declare `authz: 'skip'`, so only the page
+    // itself is a grant somebody has to be given.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'library', authorizedAs: 'library' },
+      { name: 'library-new', authorizedAs: null },
+      { name: 'library-edit', authorizedAs: null },
+      { name: 'library-detail', authorizedAs: null },
+      { name: 'library-detail-edit', authorizedAs: null },
     ]);
   });
 });
