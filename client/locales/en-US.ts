@@ -131,6 +131,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -140,6 +141,60 @@ const enUS = {
     description: 'Go to a page of this application.',
     breadcrumb: 'Breadcrumb',
     back: 'Back',
+  },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Site photos and documents attached to a record. You only ever see the materials you created.',
+    create: 'New material',
+    createTitle: 'New material',
+    createDescription:
+      'Give the material a title, then attach its photos and documents.',
+    emptyTitle: 'No materials yet',
+    emptyDescription:
+      'Create the first material to attach its photos and documents.',
+    loadFailed: 'Unable to load your materials.',
+    updatedAt: 'Updated {{date}}',
+    pagination: {
+      previous: 'Previous',
+      next: 'Next',
+      pageOf: 'Page {{page}} of {{pageCount}}',
+    },
+    form: {
+      title: 'Title',
+      titlePlaceholder: 'For example: 2026 spring site photos',
+      titleRequired: 'A title is required.',
+      titleTooLong: 'The title may be at most {{max}} characters.',
+      description: 'Description',
+      descriptionPlaceholder: 'Optional notes about this material.',
+      descriptionTooLong: 'The description may be at most {{max}} characters.',
+      attachments: 'Attachments',
+      attachmentsHint:
+        'PNG photos and DOCX documents only, up to {{max}} MB each.',
+      uploading: 'Uploading… wait for every file to finish before saving.',
+      uploadFailedState:
+        'A file did not upload. Retry it or remove it before saving.',
+      uploadFailed: 'The file could not be uploaded.',
+      downloadFailed: 'The file could not be downloaded.',
+      save: 'Save',
+      saving: 'Saving…',
+      create: 'Create',
+      created: 'The material was created.',
+      saved: 'Your changes were saved.',
+      saveFailed: 'The material could not be saved. Please try again.',
+      invalid: 'Some fields are invalid. Please review them.',
+      attachmentRejected: 'Only PNG photos and DOCX documents can be attached.',
+      sessionEnded:
+        'Your session has ended. Sign in again to save; your uploaded files are kept.',
+      missing: 'This material no longer exists, or it belongs to another user.',
+    },
+    files: {
+      choose: 'Choose file',
+      preview: 'Preview',
+      download: 'Download',
+      remove: 'Remove',
+      empty: 'No attachments.',
+    },
   },
   dataTable: {
     noResults: 'No results.',

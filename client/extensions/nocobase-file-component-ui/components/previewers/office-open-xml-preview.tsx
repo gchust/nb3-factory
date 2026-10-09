@@ -20,6 +20,20 @@ export interface OfficeOpenXmlPreviewProps {
   readonly onDownload?: () => void;
 }
 
+/**
+ * `load()` is bounded and retried once: an interrupted attempt can leave the returned
+ * promise pending, and the second try usually succeeds.
+ *
+ * The viewer also keeps working after `load()` resolves — with `progressiveLayout` it lays
+ * out the remaining pages in the background — and routes any later failure to `onError`.
+ * Wiring `onError` straight to the dialog's error state replaced a document the reader was
+ * already viewing with "Unable to render this Office Open XML file." on any non-fatal
+ * background error. Each attempt owns its own failure now, so a late `onError` after a
+ * successful load is ignored.
+ */
+const OFFICE_OPEN_XML_LOAD_TIMEOUT_MS = 20_000;
+const OFFICE_OPEN_XML_LOAD_ATTEMPTS = 2;
+
 export function OfficeOpenXmlPreview({
   file,
   format,
@@ -39,35 +53,63 @@ export function OfficeOpenXmlPreview({
     let active = true;
     let viewer: OfficeOpenXmlViewer | undefined;
     const controller = new AbortController();
+    const isActive = (): boolean => active && !controller.signal.aborted;
+    const timeoutMessage = t('files.ooxmlLoadTimeout', {
+      defaultValue:
+        'The document took too long to load, so the preview was stopped. Download the file to read it.',
+    });
+
     const reportViewerError = (cause: unknown): void => {
-      if (!active || isAbortError(cause)) return;
+      if (!isActive() || isAbortError(cause)) return;
+      active = false;
       const failedViewer = viewer;
       viewer = undefined;
       failedViewer?.destroy();
-      setViewerError(
-        cause instanceof OfficeOpenXmlRequestError
-          ? cause.message
-          : t('files.ooxmlLoadFailed', {
-              defaultValue: 'Unable to render this Office Open XML file.',
-            }),
-      );
+      setViewerError(describeViewerError(cause, t));
+    };
+
+    const loadViewer = async (data: ArrayBuffer): Promise<void> => {
+      let lastCause: unknown;
+      for (
+        let attempt = 0;
+        attempt < OFFICE_OPEN_XML_LOAD_ATTEMPTS;
+        attempt += 1
+      ) {
+        const failure = createAttemptFailure();
+        const createdViewer = await createOfficeOpenXmlViewer(
+          format,
+          host,
+          // Only fails the attempt that is still loading; a post-load error is ignored below.
+          (cause) => failure.reject(cause),
+        );
+        if (!isActive()) {
+          createdViewer.destroy();
+          throw createAbortError();
+        }
+        viewer = createdViewer;
+        try {
+          await withLoadTimeout(
+            createdViewer.load(data),
+            failure,
+            controller.signal,
+            timeoutMessage,
+          );
+          return;
+        } catch (cause) {
+          viewer = undefined;
+          createdViewer.destroy();
+          if (!isActive() || isAbortError(cause)) throw cause;
+          lastCause = cause;
+        }
+      }
+      throw toError(lastCause);
     };
 
     void (async () => {
       const data = await fetchOfficeOpenXml(url, controller.signal, t);
-      if (!active) return;
-      const createdViewer = await createOfficeOpenXmlViewer(
-        format,
-        host,
-        reportViewerError,
-      );
-      if (!active) {
-        createdViewer.destroy();
-        return;
-      }
-      viewer = createdViewer;
-      await viewer.load(data);
-      if (active) setLoaded(true);
+      if (!isActive()) return;
+      await loadViewer(data);
+      if (isActive()) setLoaded(true);
     })().catch(reportViewerError);
 
     return () => {
@@ -115,6 +157,92 @@ export function OfficeOpenXmlPreview({
 }
 
 class OfficeOpenXmlRequestError extends Error {}
+
+class OfficeOpenXmlLoadTimeoutError extends Error {}
+
+interface AttemptFailure {
+  readonly promise: Promise<never>;
+  reject(cause: unknown): void;
+}
+
+/** Resolves the first time the viewer reports a failure of its own. */
+function createAttemptFailure(): AttemptFailure {
+  let reject!: (cause: unknown) => void;
+  const promise = new Promise<never>((_resolve, rejectPromise) => {
+    reject = rejectPromise;
+  });
+  return { promise, reject };
+}
+
+/**
+ * Rejects when the viewer fails, the attempt exceeds its deadline, or the effect is
+ * torn down — whichever comes first. Without the deadline a silent worker keeps the
+ * returned promise pending indefinitely.
+ */
+function withLoadTimeout(
+  load: Promise<void>,
+  failure: AttemptFailure,
+  signal: AbortSignal,
+  timeoutMessage: string,
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const onAbort = (): void => finish(() => reject(createAbortError()));
+    const finish = (run: () => void): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal.removeEventListener('abort', onAbort);
+      run();
+    };
+    const timer: ReturnType<typeof setTimeout> = setTimeout(
+      () =>
+        finish(() => reject(new OfficeOpenXmlLoadTimeoutError(timeoutMessage))),
+      OFFICE_OPEN_XML_LOAD_TIMEOUT_MS,
+    );
+    if (signal.aborted) {
+      onAbort();
+      return;
+    }
+    signal.addEventListener('abort', onAbort, { once: true });
+    failure.promise.then(
+      () => undefined,
+      (cause) => finish(() => reject(toError(cause))),
+    );
+    load.then(
+      () => finish(resolve),
+      (cause) => finish(() => reject(toError(cause))),
+    );
+  });
+}
+
+function createAbortError(): Error {
+  const error = new Error('The Office Open XML preview was superseded.');
+  error.name = 'AbortError';
+  return error;
+}
+
+function toError(cause: unknown): Error {
+  if (cause instanceof Error) return cause;
+  return new Error(
+    typeof cause === 'string' ? cause : 'Office Open XML preview failed.',
+  );
+}
+
+function describeViewerError(
+  cause: unknown,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  if (
+    cause instanceof OfficeOpenXmlRequestError ||
+    cause instanceof OfficeOpenXmlLoadTimeoutError
+  ) {
+    return cause.message;
+  }
+  return t('files.ooxmlLoadFailed', {
+    defaultValue: 'Unable to render this Office Open XML file.',
+  });
+}
 
 async function fetchOfficeOpenXml(
   url: string,

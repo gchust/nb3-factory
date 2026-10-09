@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,38 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+
+  // A file whose name ends in `.png` is not necessarily an image. A broken decode must say so, or the reader is left
+  // looking at an empty frame with the filename in it and takes that for a successful preview.
+  const [failed, setFailed] = useState(false);
+  if (!url || failed)
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('files.imageFailed', {
+          defaultValue:
+            'This image could not be displayed. The file may be corrupt or not a real image.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

@@ -52,9 +52,14 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the project-materials pages opted out of page authorization, so they are reachable by
+    // every signed-in user. Per-user isolation is enforced by the server, not by a page grant: the materials API
+    // scopes every read and write to the signed-in owner, so a second employee has no page grant to be given here.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'materials', authorizedAs: null },
+      { name: 'material-create', authorizedAs: null },
+      { name: 'material-detail', authorizedAs: null },
     ]);
   });
 });
