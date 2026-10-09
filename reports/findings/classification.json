@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b634fdba288cfcecbef3be7723507a8a5bf5b1b01a766d714f19855d94ea96b2",
+  "inputHash": "927734c6c26c672331b5d18add5bb2352f1caea39126a5332fb6f79393d07052",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -836,6 +836,46 @@
       "id": "666:37725948781:1:F6",
       "report": "666:37725948781:1",
       "fingerprint": "6d76a0aaa6ec105776d973b10c94c5dd52880f73e14b545fb0d07ef4090bba9e"
+    },
+    {
+      "id": "671:37859673090:1:F4",
+      "report": "671:37859673090:1",
+      "fingerprint": "5dca799ef9f697cf4ce65df32dee7b4ff55956e646abd61932de93594a363ea2"
+    },
+    {
+      "id": "673:37859683993:1:F1",
+      "report": "673:37859683993:1",
+      "fingerprint": "162ca2cd112087aa52cda5687a96d6d375784ed7f0142dfeb248342c255d9ec5"
+    },
+    {
+      "id": "673:37859683993:1:F2",
+      "report": "673:37859683993:1",
+      "fingerprint": "2f6dd74af2a93b099d67aa1209409deca0f6c19bc84826380e42b68d11fbab45"
+    },
+    {
+      "id": "673:37859683993:1:F6",
+      "report": "673:37859683993:1",
+      "fingerprint": "9ad682cc316625afad937be101d44a593cc9dd9b04365ae199d7b8c815b65a25"
+    },
+    {
+      "id": "674:37879768670:1:F3",
+      "report": "674:37879768670:1",
+      "fingerprint": "df3c9b81a83bfdef6dc79da9c5c380fc84d77fe893cb03ed64ae8e2f77de3adf"
+    },
+    {
+      "id": "674:37879768670:1:F4",
+      "report": "674:37879768670:1",
+      "fingerprint": "170527c159201f2d4ed8c4049c708c1f9218710e7af5b3158655326db722e5ea"
+    },
+    {
+      "id": "674:37879768670:1:F5",
+      "report": "674:37879768670:1",
+      "fingerprint": "627af22cd66ee17c1da5a11240f5f9f29c160456bdfa976bd24f137c8184c617"
+    },
+    {
+      "id": "674:37879768670:1:F6",
+      "report": "674:37879768670:1",
+      "fingerprint": "e2b510506f0cfe3717b127e34cbe5ec4a66f85df82779e5bc3840cbf502defd1"
     }
   ],
   "groups": [
@@ -892,25 +932,27 @@
     },
     {
       "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影或私有 runner/私有表",
-      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。 新增 666:F3（E65/E66/E68/E79）：公开 SchedulerService 仅 registerTarget/defineSchedule，HTTP 仅 list/get/occurrences/enable/disable，Skill 明确 store、target registry、schedule executor 对插件私有；应用 runScheduleNow 只能读私有 schedule_definitions、访问私有 executor.runner 并手工 recordEvent。与上述各条同为公开面缺少受控单次执行入口、修复方向一致（提供遵守 enabled、写入同一 occurrence 的受支持触发入口），故合并。",
+      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。 新增 666:F3（E65/E66/E68/E79）：公开 SchedulerService 仅 registerTarget/defineSchedule，HTTP 仅 list/get/occurrences/enable/disable，Skill 明确 store、target registry、schedule executor 对插件私有；应用 runScheduleNow 只能读私有 schedule_definitions、访问私有 executor.runner 并手工 recordEvent。与上述各条同为公开面缺少受控单次执行入口、修复方向一致（提供遵守 enabled、写入同一 occurrence 的受支持触发入口），故合并。 674:F4（E16-E24）在 1.0.0-beta.55 复现同一能力缺口：SchedulerService 只公开 registerTarget/defineSchedule，store、target registry、occurrence history 与 executor 均为私有，operations 指引又明确不能通过容器解析绕过 Routes 授权，应用只能重复私有 SCHEDULER_SCOPE、cast schedulerServiceToken、解析 jobExecutorServiceToken.getScheduleExecutor 取私有 runner.run 并直读 schedule_occurrences；触发条件、期望（公开受控 run-now 入口）与修复位置与既有成员一致。",
       "members": [
         "466:36473812582:1:F3",
         "478:36522310216:1:F3",
         "509:36811890057:1:F1",
         "533:37094050741:1:F4",
-        "666:37725948781:1:F3"
+        "666:37725948781:1:F3",
+        "674:37879768670:1:F4"
       ]
     },
     {
-      "title": "allScopes/idsScope 等数据范围组合子已在包内实现但未从公开入口导出",
-      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。 577:F2（E30/E31/E34/E65）同样确认 scope.js 已实现 allScopes 而 server 入口 index.d.ts 只再导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠；同一导出缺口与同一修复方向。",
+      "title": "allScopes/idsScope/databaseGrant 等组合子已在包内实现但未从 @nocobase/app-plugin-authorization/server 公开导出",
+      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。 577:F2（E30/E31/E34/E65）同样确认 scope.js 已实现 allScopes 而 server 入口 index.d.ts 只再导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠；同一导出缺口与同一修复方向。 674:F5（E8/E9/E10/E14）在 1.0.0-beta.55 复现同一导出面不一致：server/index.d.ts 导出 anyScope/condition/scopeAst/recordAccess，却遗漏实现中存在且语义清晰的 allScopes、idsScope、databaseGrant，应用在 service-authorization.ts 手写 databaseGrant 形状与 allOf，期望与修复方向（从 server 入口补导出）与既有成员一致。",
       "members": [
         "462:36434301919:1:F2",
         "494:36641592184:1:F3",
         "518:36938133650:1:F2",
         "530:37074009060:1:F2",
         "554:37258077945:1:F2",
-        "577:37394452688:1:F2"
+        "577:37394452688:1:F2",
+        "674:37879768670:1:F5"
       ]
     },
     {
@@ -1390,10 +1432,11 @@
       ]
     },
     {
-      "title": "前端 UI 指引体量过大且入口分散，缺少按任务的最小阅读集",
-      "reason": "单条保留。596:F3（E35/E22/E24/E26/E31）显示 app-development 前端 references 合计约 4672 行，列表/表单/子路由/组件获取分别落在 table.md、form.md、child-routes.md、shadcn.md 等，实现轮一次性加载后发生上下文溢出；期望按任务类型给出规模可控的最小阅读路径。其根因是前端文档体量与单轮加载预算（volume），与既有“技能分层深、互相委派、缺统一入口”（541:F5）的导航结构根因、以及“授权 Skill 缺紧凑公开 API 速查”（577:F8）的入口索引缺口均不同，修复方向也不同，故单独保留。",
+      "title": "应用开发/前端指引体量过大且入口分散，缺少按任务的最小阅读集与精简路由",
+      "reason": "单条保留。596:F3（E35/E22/E24/E26/E31）显示 app-development 前端 references 合计约 4672 行，列表/表单/子路由/组件获取分别落在 table.md、form.md、child-routes.md、shadcn.md 等，实现轮一次性加载后发生上下文溢出；期望按任务类型给出规模可控的最小阅读路径。其根因是前端文档体量与单轮加载预算（volume），与既有“技能分层深、互相委派、缺统一入口”（541:F5）的导航结构根因、以及“授权 Skill 缺紧凑公开 API 速查”（577:F8）的入口索引缺口均不同，修复方向也不同，故单独保留。 671:F4（E87/E83/E16）进一步确认同一文档加载边界问题：nocobase-app-development 的 references/ 含 76 个示例文件，授权作用域/scopeKey 语义需跨多页拼接，实现轮多次逐个 wc -l/读取后耗尽上下文；其期望的“按任务最小阅读集/短索引”与 596:F3 完全一致。",
       "members": [
-        "596:37453030096:1:F3"
+        "596:37453030096:1:F3",
+        "671:37859673090:1:F4"
       ]
     },
     {
@@ -1540,9 +1583,10 @@
     },
     {
       "title": "Workflow 公开契约不含激活/启用，源码托管应用须访问包内方法并直写工作流状态表",
-      "reason": "单条保留：666:F4 的证据（E69/E70/E72/E77）显示 @nocobase/app-plugin-workflow 的公开 token 仅暴露 registerInstruction/trigger，公开的 WorkflowServiceContract 不包含 discoverArtifacts/ensureArtifactMaterialized，也没有“激活并启用某工作流”的公开方法；Skill 虽说明 Artifact 的构建、同步、启用、调用是彼此独立的阶段，但应用 Provider 只能把 workflowServiceToken 断言为私有运行时接口、调用包内方法，并直接 updateMany/updateOne workflows 表把 revision 置 current 且 enabled。该“公开契约缺少启用/激活能力”的根因在既有分组中没有对应成员（旧的分流/通知类发现与工作流服务契约无关），无可合并对象，故单独保留。",
+      "reason": "单条保留：666:F4 的证据（E69/E70/E72/E77）显示 @nocobase/app-plugin-workflow 的公开 token 仅暴露 registerInstruction/trigger，公开的 WorkflowServiceContract 不包含 discoverArtifacts/ensureArtifactMaterialized，也没有“激活并启用某工作流”的公开方法；Skill 虽说明 Artifact 的构建、同步、启用、调用是彼此独立的阶段，但应用 Provider 只能把 workflowServiceToken 断言为私有运行时接口、调用包内方法，并直接 updateMany/updateOne workflows 表把 revision 置 current 且 enabled。该“公开契约缺少启用/激活能力”的根因在既有分组中没有对应成员（旧的分流/通知类发现与工作流服务契约无关），无可合并对象，故单独保留。 674:F3（E1/E3/E4/E5/E6）在 1.0.0-beta.55 复现同一公开契约缺口：workflowServiceToken 的 WorkflowServiceContract 只有 registerInstruction/trigger，物化与启用版本的 WorkflowService 由未导出的 internalWorkflowServiceToken 引用，SKILL 又禁止绕过插件内部与直写物化表，应用只能自定义结构 cast 并直接更新 workflows 表标记 current/enabled；触发条件、期望与修复方向一致。",
       "members": [
-        "666:37725948781:1:F4"
+        "666:37725948781:1:F4",
+        "674:37879768670:1:F3"
       ]
     },
     {
@@ -1551,15 +1595,43 @@
       "members": [
         "666:37725948781:1:F5"
       ]
+    },
+    {
+      "title": "defineAIEmployee 无法声明 enabledTools，注册期员工工具边界缺失",
+      "reason": "单条保留：AIEmployeeOptions/toBuiltInEmployee 只有 skills/tools，公开 registerEmployee 不传内部 sourceSettings，enabledTools/enabledSkills 无法在注册声明中表达，运行时的工具外边界却由 skillSettings.enabledTools 决定，未保存选择时会放行全部 GENERAL 内置工具；应用只能注册后 getEmployee 再 upsertEmployee 写 allow-list（E7/E8/E9/E10/E12）。这是能力缺口，与同报告 F2 的文档误导根因不同（同报告发现不得合并），现有分组也无同类能力缺口，故单独保留。",
+      "members": [
+        "673:37859683993:1:F1"
+      ]
+    },
+    {
+      "title": "Employee Skill 完成检查「声明即工具列表」与实际运行时工具边界不一致",
+      "reason": "单条保留：SKILL.md 完成检查与 api-reference 把声明 tools 视为员工的精确工具集（E1/E5），但运行时外边界是 skillSettings.enabledTools，未声明时 isToolSelected 会放行全部 GENERAL 工具（E3/E10），导致开发者漏掉最小权限收紧与负例验证（E12）。这是错误/不完整指引，与同报告 F1 的能力缺口根因不同（同报告不得合并），现有文档类分组均不涉及 AI 员工工具边界，故单独保留。",
+      "members": [
+        "673:37859683993:1:F2"
+      ]
+    },
+    {
+      "title": "类型化 seed 记录与 Repository 的 RepositoryRecord 索引签名约束冲突",
+      "reason": "单条保留：以 interface 声明的业务记录没有隐式 string 索引签名，传给 Repository.createOne 时会因 MutationValuesInput/ScalarCreateValues 约束报 TS2769，改为 type alias 才通过（E33/E35），db SKILL 的 seed 示例只用对象字面量未覆盖该情形。属于 Repository 泛型约束与 TypeScript 索引签名的交互问题，与既有导出面、withPolicy 类型丢失、decimal 类型等分组根因不同，且无其他报告同类证据，故单独保留。",
+      "members": [
+        "673:37859683993:1:F6"
+      ]
+    },
+    {
+      "title": "共享规则 Skill 未说明何时应自建共享表而非使用 defineSharingRule",
+      "reason": "单条保留：sharing-rules Skill 只说明共享规则向已持有该动作的主体追加所选记录、不能全选（E13），未说明主体本无该动作或需要独立共享实体时该自建共享表还是使用 defineSharingRule；应用自建 ticket_shares 并在查询层合并，材料无法判断是能力不匹配还是未发现更合适的接入方式（E11/E14/E15）。属缺说明而非错误说明，与其他共享/授权能力缺口（DatabaseSharingRuleStore.list、文件字节路由默认公开等）根因不同，故单独保留。",
+      "members": [
+        "674:37879768670:1:F6"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37743326639",
+    "runId": "37892854678",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-08T07:29:27.142Z"
+    "completedAt": "2026-10-09T06:20:46.807Z"
   }
 }
