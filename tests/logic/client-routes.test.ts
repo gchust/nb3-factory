@@ -5,6 +5,7 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
+import { matchRouteTree } from '../../client/routing/route-navigation.ts';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -23,6 +24,49 @@ describe('app client routes', () => {
         '/reset-password',
       ]),
     );
+  });
+
+  it('resolves the service pages to the declared application paths', () => {
+    // A navigation group with no `path` of its own lets each child carry the full application path. Declaring a
+    // path on the group as well makes app-client prepend it to every child, registering each page under a doubled
+    // prefix (/service/service/...) and turning the ticket record link into a route that matches nothing. This pins
+    // the resolved paths so a group path added back, or a child switched to a relative path, fails here instead of
+    // in the browser.
+    const resolved = resolveRoutes();
+    const paths = pagePaths(resolved.routes);
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        '/service',
+        '/service/customers',
+        '/service/devices',
+        '/service/tickets',
+        '/service/tickets/:ticketId',
+        '/service/inspections',
+        '/service/knowledge',
+        '/service/manuals',
+        '/service/assistant',
+        '/service/messages',
+        '/service/operations',
+      ]),
+    );
+    expect(paths.filter((path) => path.includes('/service/service'))).toEqual(
+      [],
+    );
+  });
+
+  it('matches the landing page at / and the ticket record under its list', () => {
+    // The pathless navigation group resolves to the root path but declares no component, so it matches only as a
+    // prefix of its children. This checks the group did not swallow the landing page, and that the ticket record
+    // link (relative to the list) resolves to the list page with the record route on top.
+    const routes = resolveRoutes().routes;
+    expect(
+      matchRouteTree(routes, '/')?.map((match) => match.route.name),
+    ).toEqual(['home']);
+    expect(
+      matchRouteTree(routes, '/service/tickets/1')?.map(
+        (match) => match.route.name,
+      ),
+    ).toEqual(['service', 'service-tickets', 'service-ticket-detail']);
   });
 
   it('loads every page component', async () => {
@@ -53,8 +97,22 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The equipment service pages below declare `authz: page(...)`, whose id is stored on the
+    // page grant an administrator gives a job set (see `server/service-authorization.ts`).
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service.dashboard' },
+      { name: 'service-customers', authorizedAs: 'service.customers' },
+      { name: 'service-devices', authorizedAs: 'service.devices' },
+      { name: 'service-tickets', authorizedAs: 'service.tickets' },
+      // The record page declares no `authz` of its own and inherits the list page's.
+      { name: 'service-ticket-detail', authorizedAs: 'service.tickets' },
+      { name: 'service-inspections', authorizedAs: 'service.inspections' },
+      { name: 'service-knowledge', authorizedAs: 'service.knowledge' },
+      { name: 'service-manuals', authorizedAs: 'service.manuals' },
+      { name: 'service-assistant', authorizedAs: 'service.assistant' },
+      { name: 'service-messages', authorizedAs: 'service.messages' },
+      { name: 'service-operations', authorizedAs: 'service.operations' },
     ]);
   });
 });
