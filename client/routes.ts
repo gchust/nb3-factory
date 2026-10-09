@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,42 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    name: 'materials',
+    path: '/materials',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    navigation: { title: 'materials.title', icon: BookOpen },
+    componentLoader: () => import('./pages/materials/index.js'),
+    children: [
+      {
+        name: 'material-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/materials/new.js'),
+      },
+      {
+        name: 'material-edit',
+        path: 'edit/:materialId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/materials/edit.js'),
+      },
+      {
+        name: 'material-detail',
+        path: ':materialId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/materials/detail/index.js'),
+        children: [
+          {
+            name: 'material-detail-edit',
+            path: 'edit',
+            authz: 'skip',
+            componentLoader: () => import('./pages/materials/edit.js'),
+          },
+        ],
+      },
+    ],
   },
   {
     auth: 'guest',

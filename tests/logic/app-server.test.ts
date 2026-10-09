@@ -91,6 +91,7 @@ import {
 } from '@nocobase/app-server/plugins';
 import authenticationServerPlugin from '@nocobase/app-plugin-authentication/server';
 import authorizationServerPlugin from '@nocobase/app-plugin-authorization/server';
+import { aiManagerToken } from '@nocobase/app-plugin-ai-employee/server';
 
 import { createServer as createEmbeddedServer } from '../../server/embedded.ts';
 import { createStandaloneRuntimeScope } from '@nocobase/app-server/node';
@@ -743,6 +744,236 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('serves the materials feature with its seeded accounts and access model', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (
+      username: string,
+      password: string,
+    ): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    // A cookie-authenticated write needs a trusted Origin in this bare test
+    // server, so the write checks below authenticate with an API key instead.
+    // An API key is not an ambient browser credential and needs no origin
+    // proof, which also exercises the key path.
+    const apiKeyOf = async (cookie: string, name: string): Promise<string> => {
+      const created = await requestApp(
+        app,
+        `${baseUrl}/api/auth/api-key/create`,
+        {
+          method: 'POST',
+          headers: { cookie, 'content-type': 'application/json' },
+          body: JSON.stringify({ name }),
+        },
+      );
+      expect(created.status).toBe(200);
+      return ((await created.json()) as { key: string }).key;
+    };
+
+    const repository = async (key: string, action: string, body: unknown) =>
+      requestApp(app, `${baseUrl}/api/materials/${action}`, {
+        method: 'POST',
+        headers: { 'x-api-key': key, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+    // Anonymous reads are refused, and a path this application does not own is
+    // still the framework's 404 rather than a materials-shaped 401.
+    expect((await requestApp(app, `${baseUrl}/api/materials`)).status).toBe(
+      401,
+    );
+    expect((await requestApp(app, `${baseUrl}/api/articles`)).status).toBe(404);
+    // The compatibility aliases are authenticated like the primary route:
+    // anonymous is 401, never a misleading 404.
+    expect(
+      (await requestApp(app, `${baseUrl}/api/materials:list?pageSize=20`))
+        .status,
+    ).toBe(401);
+    expect(
+      (await requestApp(app, `${baseUrl}/api/materials:get?id=1`)).status,
+    ).toBe(401);
+
+    // The app-owned employee and its read-only tool are registered with the AI
+    // manager, which is what the chat surface binds to. The QA that first
+    // failed this task saw only the built-in employee here.
+    const ai = app.application.container.resolve(aiManagerToken);
+    const assistant = await ai.employeeManager.getEmployee(
+      'materials-assistant',
+    );
+    expect(assistant).toBeDefined();
+    // Its own tool is the only one it may call: not form filling, charting,
+    // data queries, web search or the sub-agent orchestration tools.
+    expect(assistant?.skillSettings.enabledTools).toEqual(['search-materials']);
+    expect(await ai.toolsManager.getTools('search-materials')).toBeDefined();
+
+    const supervisor = await apiKeyOf(
+      await signIn('supervisor', 'supervisor123'),
+      'materials-supervisor',
+    );
+    const colleague = await apiKeyOf(
+      await signIn('colleague', 'colleague123'),
+      'materials-colleague',
+    );
+
+    const supervisorFindMany = await repository(supervisor, 'findMany', {});
+    expect(supervisorFindMany.status).toBe(200);
+    const supervisorRows = (await supervisorFindMany.json()) as {
+      data: { id: string | number; title: string; confidential: boolean }[];
+    };
+    expect(supervisorRows.data).toHaveLength(3);
+    const confidential = supervisorRows.data.find((row) => row.confidential);
+    expect(confidential).toBeDefined();
+
+    const colleagueFindMany = await repository(colleague, 'findMany', {});
+    expect(colleagueFindMany.status).toBe(200);
+    const colleagueRows = (await colleagueFindMany.json()) as {
+      data: { title: string; confidential: boolean }[];
+    };
+    expect(colleagueRows.data).toHaveLength(2);
+    expect(colleagueRows.data.some((row) => row.confidential)).toBe(false);
+
+    // The legacy list alias answers the same authorized read, not a 404.
+    const colleagueList = await requestApp(
+      app,
+      `${baseUrl}/api/materials:list?pageSize=20`,
+      { headers: { 'x-api-key': colleague } },
+    );
+    expect(colleagueList.status).toBe(200);
+    await expect(colleagueList.json()).resolves.toMatchObject({
+      meta: { total: 2 },
+    });
+
+    // The primary REST route answers the same authorized read.
+    const colleagueRest = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { 'x-api-key': colleague },
+    });
+    expect(colleagueRest.status).toBe(200);
+    await expect(colleagueRest.json()).resolves.toMatchObject({
+      meta: { total: 2 },
+    });
+
+    // The confidential row is outside a colleague's query, so reading it by id
+    // is a 404 rather than a 403 that would confirm it exists.
+    const colleagueGet = await requestApp(
+      app,
+      `${baseUrl}/api/materials:get?id=${String(confidential?.id)}`,
+      { headers: { 'x-api-key': colleague } },
+    );
+    expect(colleagueGet.status).toBe(404);
+
+    const supervisorGet = await requestApp(
+      app,
+      `${baseUrl}/api/materials:get?id=${String(confidential?.id)}`,
+      { headers: { 'x-api-key': supervisor } },
+    );
+    expect(supervisorGet.status).toBe(200);
+
+    // The client's `useCan` reads this snapshot, so the composite actions the
+    // page gates on have to be listed exactly as the permission sets grant
+    // them: the supervisor may maintain materials, a colleague may only view.
+    const snapshotOf = async (key: string) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/authorization/permissions`,
+        { headers: { 'x-api-key': key } },
+      );
+      expect(response.status).toBe(200);
+      return (await response.json()) as {
+        data: {
+          all: boolean;
+          permissions: {
+            resource: { type: string; id: string };
+            actions: string[];
+          }[];
+        };
+      };
+    };
+    const materialsActions = (snapshot: {
+      data: {
+        permissions: {
+          resource: { type: string; id: string };
+          actions: string[];
+        }[];
+      };
+    }): string[] =>
+      snapshot.data.permissions.find(
+        (permission) =>
+          permission.resource.type === 'composite' &&
+          permission.resource.id === 'app.materials',
+      )?.actions ?? [];
+
+    expect(materialsActions(await snapshotOf(supervisor))).toEqual(
+      expect.arrayContaining(['view', 'create', 'edit', 'delete']),
+    );
+    expect(materialsActions(await snapshotOf(colleague))).toEqual(['view']);
+
+    // The page grant is what the menu and the route guard read; a colleague
+    // has to hold it or the page itself would be hidden.
+    const pageActions = (snapshot: {
+      data: {
+        permissions: {
+          resource: { type: string; id: string };
+          actions: string[];
+        }[];
+      };
+    }): string[] =>
+      snapshot.data.permissions.find(
+        (permission) =>
+          permission.resource.type === 'page' &&
+          permission.resource.id === 'materials',
+      )?.actions ?? [];
+    expect(pageActions(await snapshotOf(colleague))).toContain('access');
+
+    // The detail drawer reads a record through the generic repository
+    // `findOne`, with the numeric id it received from the list.
+    const supervisorFindOne = await repository(supervisor, 'findOne', {
+      filter: { id: confidential?.id },
+    });
+    expect(supervisorFindOne.status).toBe(200);
+    await expect(supervisorFindOne.json()).resolves.toMatchObject({
+      data: { id: confidential?.id },
+    });
+
+    // A row outside the colleague's record scope resolves to null rather than
+    // returning the confidential row.
+    const colleagueFindOne = await repository(colleague, 'findOne', {
+      filter: { id: confidential?.id },
+    });
+    expect(colleagueFindOne.status).toBe(200);
+    await expect(colleagueFindOne.json()).resolves.toMatchObject({
+      data: null,
+    });
+
+    // The supervisor maintains materials; a colleague's create is refused by
+    // the composite `create` grant before the Repository runs.
+    const created = await repository(supervisor, 'createOne', {
+      values: { title: 'Integration test material', body: 'body' },
+    });
+    expect(created.status).toBe(200);
+    const denied = await repository(colleague, 'createOne', {
+      values: { title: 'Colleague material', body: 'body' },
+    });
+    expect(denied.status).toBe(403);
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {
