@@ -89,6 +89,103 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  library: {
+    title: '资料库',
+    description: '浏览已公开的资料，并维护属于自己的草稿。',
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      description: '草稿仅你本人可见，公开后其他有权限的读者才能看到。',
+    },
+    edit: {
+      title: '编辑资料',
+      description: '修改这份资料，保存后立即生效。',
+    },
+    detail: {
+      title: '资料',
+      emptyContent: '暂无内容。',
+    },
+    fields: {
+      title: '标题',
+      content: '内容',
+      owner: '负责人',
+      status: '状态',
+      updatedAt: '更新时间',
+      published: '已公开',
+      publishedHint: '已公开且非保密的资料对所有有权限的读者可见。',
+      confidential: '保密',
+      confidentialHint: '保密资料对读者始终不可见，即使被临时授权也无法查看。',
+    },
+    status: {
+      published: '已公开',
+      draft: '草稿',
+      confidential: '保密',
+    },
+    actions: {
+      label: '操作',
+      more: '“{{name}}”的操作',
+      edit: '编辑',
+      delete: '删除',
+    },
+    delete: {
+      title: '删除“{{name}}”？',
+      description: '删除后无法恢复。',
+      confirm: '删除资料',
+      success: '“{{name}}”已删除。',
+      notFound: '“{{name}}”已被删除。',
+    },
+    form: {
+      titleRequired: '请输入标题。',
+      errorTitle: '资料未保存',
+      forbidden: '你无权修改这份资料。',
+      requestFailed: '请求失败，请重试。',
+    },
+    error: {
+      title: '无法加载资料',
+      notFound: '这份资料不存在，或你已无权访问。',
+      forbidden: '你无权查看这份资料。',
+      requestFailed: '请求失败，请重试。',
+      sessionExpired: '登录状态已过期，请重新登录。',
+    },
+    empty: {
+      title: '暂无资料',
+      description: '创建第一份资料，或等待资料员公开资料。',
+      noResults: '没有符合条件的资料。',
+    },
+    recordAccess: {
+      owned: '自己的资料',
+      visible: '已公开资料和自己的资料',
+      nonConfidential: '非保密资料',
+    },
+    collection: {
+      documents: '资料',
+      'documents.description':
+        '内部资料库中的资料。资料员维护自己的草稿，已公开且非保密的资料对所有读者开放。',
+    },
+    section: {
+      documents: '资料库',
+    },
+    resource: { documents: '资料' },
+    action: {
+      view: '查看',
+      create: '新建',
+      edit: '编辑',
+      delete: '删除',
+    },
+    scope: {
+      view: '查看范围',
+      create: '新建范围',
+      edit: '编辑范围',
+      delete: '删除范围',
+    },
+    permissionSet: {
+      editor: '资料员',
+      reader: '阅读者',
+    },
+    restriction: {
+      nonConfidential: '隐藏保密资料',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -105,6 +202,7 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    saving: '正在保存…',
     cancel: '取消',
     confirm: '确认',
     language: '语言',
@@ -122,6 +220,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    library: '资料库',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
