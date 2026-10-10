@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "6b40999b843addcaee0a6514d437c4399644c0d44d641158f5a7995966752695",
+  "inputHash": "d18819f19442dcf9c5b8e419b12a59c2880d55ab532946c97975be956b339cf6",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -896,6 +896,16 @@
       "id": "681:38001009392:1:F8",
       "report": "681:38001009392:1",
       "fingerprint": "24fa01b8c1276cd90af9febd1ba1976958ad4887f18405a979fad295af83c0b0"
+    },
+    {
+      "id": "690:38089380163:1:F4",
+      "report": "690:38089380163:1",
+      "fingerprint": "b16895a8c363ae1d4ed60d5eceae5a73babd32749c9ac626cdcc6a92c38132c7"
+    },
+    {
+      "id": "690:38089380163:1:F5",
+      "report": "690:38089380163:1",
+      "fingerprint": "e76c6579f32df8870a00507b52a3004e4bfeade0f2234af0ab4605c44fe173b4"
     }
   ],
   "groups": [
@@ -1659,15 +1669,29 @@
       "members": [
         "681:38001009392:1:F7"
       ]
+    },
+    {
+      "title": "@nocobase/authorization 未从 exports 导出 ./package.json，按包名解析包元数据失败",
+      "reason": "单条保留：690:F4（E22 包 exports 片段、E45 实现日志）显示 @nocobase/authorization 的 exports 只列出 ./、./core 与插件子路径，缺少 \"./package.json\"，按包名解析包元数据时抛 ERR_PACKAGE_PATH_NOT_EXPORTED，而同仓库的 @nocobase/app-plugin-ai-employee 导出了 ./package.json，行为不一致。触发条件为按包名解析元数据、期望遵循 Node 约定可读取、修复落在 package.json 增加导出项；该缺口与“文档未说明公开入口与 dist 布局”（461:F4 等）、“server 入口只重导出部分 core 类型”（646:F6）等指引/类型导出缺口的根因与修复位置不同，且本条的定向复核为 insufficient、置信为 suspected，证据不足以确认与其他条目同一缺口，故单独保留。",
+      "members": [
+        "690:38089380163:1:F4"
+      ]
+    },
+    {
+      "title": "聊天 UI 仅有 registry 文件拷贝式安装，生成应用缺一等/本地安装命令",
+      "reason": "单条保留：690:F5（E12 registry item、E13 chat-surfaces.md 安装章节、E60 实现日志）显示 nocobase-ai 以 registry 文件拷贝交付，生成应用唯一可用的是 Option 1 的多行 node 脚本；agent 先按 components.json 的 @nocobase → ui.nocobase.com 尝试 `shadcn add @nocobase/nocobase-ai`，因线上 registry 返回 SPA HTML 报 Unexpected token \"<\" 后才改走离线 Option 1。根因是缺少可直接执行的一等/本地安装命令（交付与安装体验缺口），触发条件、期望与修复方向均与 533:F5“SKILL.md 未内联安装步骤导致漏装”不同（虽同处 chat-surfaces.md），也不同与 630:F5 的 shadcn lockfile 同步缺口，故单独保留。",
+      "members": [
+        "690:38089380163:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38012294852",
+    "runId": "38094750356",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-10T01:14:52.045Z"
+    "completedAt": "2026-10-10T23:23:12.281Z"
   }
 }
