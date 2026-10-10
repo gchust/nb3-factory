@@ -55,6 +55,13 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      // The materials list and its create/detail/edit child routes inherit the
+      // same `skip`: the feature needs only sign-in, and per-record ownership is
+      // enforced by the server instead of a page grant.
+      { name: 'materials', authorizedAs: null },
+      { name: 'material-new', authorizedAs: null },
+      { name: 'material-detail', authorizedAs: null },
+      { name: 'material-detail-edit', authorizedAs: null },
     ]);
   });
 });

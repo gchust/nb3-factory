@@ -89,6 +89,60 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '项目资料',
+    description: '把每份资料与附带的现场照片、Word 文档放在一起。',
+    new: '新建资料',
+    emptyTitle: '暂无资料',
+    emptyDescription: '创建第一份资料并附上照片或文档。',
+    attachmentCount_one: '{{count}} 个附件',
+    attachmentCount_other: '{{count}} 个附件',
+    updatedAt: '更新于 {{date}}',
+    loadFailed: '资料加载失败。',
+    attachmentsEmpty: '暂无附件。',
+    chooseFiles: '选择文件',
+    download: '下载',
+    preview: '预览',
+    remove: '移除',
+    uploading: '正在上传…',
+    uploadFailed: '文件上传失败。',
+    detail: {
+      title: '资料详情',
+      edit: '编辑',
+    },
+    create: {
+      title: '新建资料',
+      success: '已创建“{{title}}”。',
+    },
+    edit: {
+      title: '编辑资料',
+      success: '已保存“{{title}}”。',
+    },
+    delete: {
+      action: '删除',
+      title: '确定删除这份资料？',
+      confirm: '删除',
+      success: '资料已删除。',
+      failed: '资料删除失败。',
+    },
+    fields: {
+      title: '标题',
+      attachments: '附件',
+    },
+    form: {
+      description: '填写标题并添加附件。',
+      titleRequired: '请填写标题。',
+      titleTooLong: '最多 {{max}} 个字符。',
+      attachmentsHint: '可添加 PNG 照片和 DOCX 文档，每个不超过 5 MB。',
+      filesInvalid: '部分附件无法保存，请检查后重试。',
+    },
+    error: {
+      forbidden: '你没有访问该资料的权限。',
+      requestFailed: '操作失败，请重试。',
+      sessionExpired: '登录状态已失效，请重新登录。',
+      notFound: '该资料不存在，或你没有访问权限。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -105,6 +159,8 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    create: '创建',
+    saving: '正在保存…',
     cancel: '取消',
     confirm: '确认',
     language: '语言',
@@ -122,6 +178,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

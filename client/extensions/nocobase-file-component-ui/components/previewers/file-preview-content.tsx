@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,41 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url } = inputProps;
+  // A file can carry an image MIME type and still be damaged. The browser's
+  // `onError` is the only signal available, so the failure is shown here rather
+  // than leaving a broken image that looks like a successful preview.
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div role='alert' className='flex flex-col items-center gap-3 py-8'>
+        <div className='h-24 w-24'>
+          <FileThumbnail file={file} />
+        </div>
+        <p>
+          {t('files.imageFailed', {
+            defaultValue:
+              'This image is damaged or cannot be displayed in the browser.',
+          })}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {
