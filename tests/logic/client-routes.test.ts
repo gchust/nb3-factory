@@ -52,9 +52,12 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The two knowledge
+    // pages declare their own page ids, which permission sets grant by that id.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'knowledge-documents', authorizedAs: 'knowledgeDocuments' },
+      { name: 'knowledge-assistant', authorizedAs: 'knowledgeAssistant' },
     ]);
   });
 });

@@ -96,6 +96,57 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  knowledge: {
+    documents: {
+      title: 'Internal documents',
+      description:
+        'The documents the assistant answers from. Open any document it cites here to check the answer.',
+      emptyTitle: 'No documents yet',
+      empty:
+        'No document is available to you. Ask a supervisor to grant you access.',
+      updatedAt: 'Last updated {{date}}',
+      edit: {
+        action: 'Edit',
+        title: 'Edit document',
+        description:
+          'Change the title or the body. What the assistant answers next follows this text.',
+        saving: 'Saving…',
+      },
+      field: {
+        title: 'Title',
+        body: 'Body',
+      },
+      visibility: {
+        public: 'Everyone',
+        restricted: 'Supervisor only',
+      },
+      errors: {
+        title: 'Unable to load documents',
+        loadFailed:
+          'The documents could not be loaded. Check your connection and try again.',
+        forbidden: 'You do not have permission to read these documents.',
+        saveFailed: 'The document could not be saved. Please try again.',
+        notFound: 'This document no longer exists. Reload the list.',
+        empty: 'The title and the body cannot be empty.',
+      },
+    },
+    assistant: {
+      title: 'Document assistant',
+      description:
+        'Ask about the internal documents you can read. The assistant answers only from them and names the document it used.',
+      loading: 'Loading the assistant…',
+      openDocuments: 'Open the documents',
+      unavailable: {
+        title: 'The assistant is unavailable',
+        configuration:
+          'The AI service could not be reached. Please try again later.',
+        employee: 'The document assistant is not available for your account.',
+        models:
+          'No AI model is enabled, so the assistant cannot answer right now.',
+        hint: 'You can still read the documents yourself.',
+      },
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -140,6 +191,9 @@ const enUS = {
     description: 'Go to a page of this application.',
     breadcrumb: 'Breadcrumb',
     back: 'Back',
+    knowledge: 'Internal knowledge',
+    knowledgeDocuments: 'Documents',
+    knowledgeAssistant: 'Document assistant',
   },
   dataTable: {
     noResults: 'No results.',

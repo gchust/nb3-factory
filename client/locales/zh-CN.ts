@@ -89,6 +89,52 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  knowledge: {
+    documents: {
+      title: '内部资料',
+      description:
+        '资料助手回答所依据的文档。它引用哪一份，就可以在这里打开核对。',
+      emptyTitle: '暂无资料',
+      empty: '目前没有你可以查看的资料。请联系主管为你开通权限。',
+      updatedAt: '最后更新于 {{date}}',
+      edit: {
+        action: '编辑',
+        title: '编辑资料',
+        description: '修改标题或正文。助手之后给出的回答会依据这段文字。',
+        saving: '保存中…',
+      },
+      field: {
+        title: '标题',
+        body: '正文',
+      },
+      visibility: {
+        public: '所有人',
+        restricted: '仅主管',
+      },
+      errors: {
+        title: '无法加载资料',
+        loadFailed: '资料加载失败，请检查网络后重试。',
+        forbidden: '你没有查看这些资料的权限。',
+        saveFailed: '资料保存失败，请重试。',
+        notFound: '该资料已不存在，请重新加载列表。',
+        empty: '标题和正文不能为空。',
+      },
+    },
+    assistant: {
+      title: '资料助手',
+      description:
+        '针对你能够查看的内部资料提问。助手只依据这些资料回答，并指明所使用的文档。',
+      loading: '正在加载资料助手…',
+      openDocuments: '打开内部资料',
+      unavailable: {
+        title: '资料助手暂不可用',
+        configuration: '无法连接 AI 服务，请稍后再试。',
+        employee: '你的账户暂时无法使用资料助手。',
+        models: '当前没有启用任何 AI 模型，资料助手暂时无法回答。',
+        hint: '你仍然可以自行阅读内部资料。',
+      },
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -131,6 +177,9 @@ const zhCN: AppResource = {
     description: '前往本应用的页面。',
     breadcrumb: '面包屑',
     back: '返回',
+    knowledge: '内部资料',
+    knowledgeDocuments: '资料库',
+    knowledgeAssistant: '资料助手',
   },
   dataTable: {
     noResults: '暂无数据。',
