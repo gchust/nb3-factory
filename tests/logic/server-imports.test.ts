@@ -1,6 +1,13 @@
 // @vitest-environment node
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdtemp,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +24,61 @@ async function compile(config: string): Promise<void> {
   }
 }
 const appRoot = fileURLToPath(new URL('../../', import.meta.url));
+
+/** Every `.ts` file under `directory`, recursively. */
+async function listTypeScriptFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listTypeScriptFiles(target)));
+    } else if (entry.isFile() && entry.name.endsWith('.ts')) {
+      files.push(target);
+    }
+  }
+  return files;
+}
+
+/**
+ * A server build that imports into `workflows/` only fails once the built app
+ * runs: `tsc` emits `dist/workflows/**`, then the workflow artifact build
+ * replaces the plain tree with digest-addressed artifacts. A source-level test
+ * cannot reproduce that deletion, so this guard forbids the import outright,
+ * in both directions (a run handler must not reach into `server/` either).
+ */
+it('keeps server and workflow code from importing across the artifact boundary', async () => {
+  const serverRoot = path.join(appRoot, 'server');
+  const workflowRoot = path.join(appRoot, 'workflows');
+  const specifier =
+    /(?:from\s+|import\s*\(|import\s+|require\s*\(\s*)['"]([^'"]+)['"]/g;
+
+  const violations: string[] = [];
+  const check = async (file: string, forbidden: string): Promise<void> => {
+    const text = await readFile(file, 'utf8');
+    for (const match of text.matchAll(specifier)) {
+      const target = match[1];
+      if (!target.startsWith('.')) {
+        continue;
+      }
+      const resolved = path.resolve(path.dirname(file), target);
+      if (resolved.startsWith(`${forbidden}${path.sep}`)) {
+        violations.push(`${path.relative(appRoot, file)} -> ${target}`);
+      }
+    }
+  };
+
+  for (const file of await listTypeScriptFiles(serverRoot)) {
+    await check(file, workflowRoot);
+  }
+  for (const file of await listTypeScriptFiles(workflowRoot)) {
+    if (file.includes(`${path.sep}server${path.sep}`)) {
+      await check(file, serverRoot);
+    }
+  }
+
+  expect(violations).toEqual([]);
+});
 
 it('runs compiled extensionless server imports without source files or a loader', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'app-esm-imports-'));

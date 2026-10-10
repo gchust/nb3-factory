@@ -1,0 +1,239 @@
+import type { ApiKeyService } from '@nocobase/app-plugin-api-keys/server';
+
+import type { RequestServiceContext } from './context.js';
+import { denied, invalid, notFound } from './errors.js';
+
+/**
+ * Administration of the external platform's machine-account API keys.
+ *
+ * The keys belong to the user holding the `service.integrator` permission set,
+ * which is a machine account with no pages of its own. Issuing and revoking its
+ * keys is therefore a supervisor capability, guarded by the same
+ * `page:service.integrationKeys` grant that shows the settings page. The owner
+ * is resolved from the permission-set assignment, never from a configured or
+ * hardcoded account name, and the machine account cannot manage its own keys.
+ */
+
+export interface IntegrationKeySummary {
+  readonly id: string;
+  readonly name: string | null;
+  readonly enabled: boolean;
+  readonly expiresAt: string | null;
+  readonly createdAt: string;
+  readonly lastRequest: string | null;
+}
+
+interface AssignmentRow {
+  subjectType: string;
+  subjectId: string;
+  permissionSetKey: string;
+}
+
+interface ApiKeyRow {
+  [key: string]: unknown;
+  id: string;
+  name: string | null;
+  enabled: boolean | number | null;
+  expires_at: string | null;
+  created_at: string | null;
+  last_request: string | null;
+  reference_id: string | null;
+}
+
+const API_KEY_TABLE = 'apikey';
+const DEFAULT_CONFIG_ID = 'default';
+
+/**
+ * Requires the caller to hold the API-key administration page capability.
+ *
+ * This is the same `page:service.integrationKeys` grant the settings route
+ * declares, enforced here so the endpoint is protected independently of the
+ * browser navigation that shows the page. It is not a business data check: no
+ * business collection is read or written through a composite grant.
+ */
+async function requireKeyManagement(
+  context: RequestServiceContext,
+): Promise<void> {
+  const allowed = await context.authz.can({
+    resource: { type: 'page', id: 'service.integrationKeys' },
+    action: 'access',
+  });
+  if (!allowed) {
+    throw denied(
+      'AUTHORIZATION_DENIED',
+      'The integration API key surface is not permitted.',
+    );
+  }
+}
+
+/**
+ * The ids of the users assigned the `service.integrator` permission set.
+ *
+ * The list is read from persisted assignments, so changing the integration
+ * account is a management action and never a code change. It is returned in a
+ * stable order so a key created for one of several integrators is predictable.
+ */
+async function integratorUserIds(
+  context: RequestServiceContext,
+): Promise<string[]> {
+  const assignments = context.database.repository<AssignmentRow>(
+    'authorizationPermissionSetAssignments',
+  );
+  const rows = await assignments.findMany({
+    filter: (filter) =>
+      filter.and([
+        filter.string('subjectType').eq('user'),
+        filter.string('permissionSetKey').eq('service.integrator'),
+      ]),
+  });
+  return [...new Set(rows.map((row) => row.subjectId))].sort();
+}
+
+async function requireIntegratorUserId(
+  context: RequestServiceContext,
+): Promise<string> {
+  const ids = await integratorUserIds(context);
+  if (ids.length === 0) {
+    throw notFound(
+      'INTEGRATION_USER_NOT_FOUND',
+      'No user is assigned the service.integrator permission set.',
+    );
+  }
+  return ids[0];
+}
+
+function toSummary(row: ApiKeyRow): IntegrationKeySummary {
+  return {
+    id: row.id,
+    name: row.name ?? null,
+    enabled: row.enabled === true || row.enabled === 1,
+    expiresAt: row.expires_at ?? null,
+    createdAt: row.created_at ?? '',
+    lastRequest: row.last_request ?? null,
+  };
+}
+
+/**
+ * Lists the integration account's keys.
+ *
+ * Better Auth exposes only per-id operations, so the list is read directly from
+ * the `apikey` table. Only the non-secret columns are selected; the `key`
+ * column holds a hash and is never read here.
+ */
+export async function listIntegrationKeys(
+  context: RequestServiceContext,
+): Promise<IntegrationKeySummary[]> {
+  await requireKeyManagement(context);
+  const ownerIds = await integratorUserIds(context);
+  if (ownerIds.length === 0) {
+    return [];
+  }
+  const rows = await context.database
+    .query()
+    .selectFrom<ApiKeyRow>(API_KEY_TABLE)
+    .select([
+      'id',
+      'name',
+      'enabled',
+      'expires_at',
+      'created_at',
+      'last_request',
+      'reference_id',
+    ])
+    .where('config_id', '=', DEFAULT_CONFIG_ID)
+    .where('reference_id', 'in', ownerIds)
+    .orderBy('created_at', 'desc')
+    .execute<ApiKeyRow>();
+  return rows.map(toSummary);
+}
+
+export interface CreateIntegrationKeyInput {
+  readonly name: string;
+  /** Lifetime in days; omitted or null issues a key that does not expire. */
+  readonly expiresInDays?: number | null;
+}
+
+export interface CreatedIntegrationKey {
+  readonly key: IntegrationKeySummary;
+  /** Shown to the caller once; only a hash is stored. */
+  readonly secret: string;
+}
+
+/**
+ * Issues a key for the integration account and returns its secret once.
+ *
+ * The secret is generated by the API Keys plugin's trusted server operation, so
+ * it is stored exactly as that plugin hashes it. A caller that loses the secret
+ * must revoke the key and issue another.
+ */
+export async function createIntegrationKey(
+  context: RequestServiceContext,
+  apiKeys: ApiKeyService,
+  input: CreateIntegrationKeyInput,
+): Promise<CreatedIntegrationKey> {
+  await requireKeyManagement(context);
+  const userId = await requireIntegratorUserId(context);
+  if (
+    input.expiresInDays !== undefined &&
+    input.expiresInDays !== null &&
+    (!Number.isInteger(input.expiresInDays) || input.expiresInDays <= 0)
+  ) {
+    throw invalid(
+      'INTEGRATION_KEY_EXPIRY_INVALID',
+      'The key lifetime must be a positive whole number of days.',
+    );
+  }
+  const created = await apiKeys.create({
+    userId,
+    name: input.name,
+    expiresIn:
+      input.expiresInDays === undefined || input.expiresInDays === null
+        ? null
+        : input.expiresInDays * 24 * 60 * 60,
+  });
+  return {
+    key: toSummary({
+      id: created.key.id,
+      name: created.key.name ?? null,
+      enabled: created.key.enabled ?? true,
+      expires_at: created.key.expiresAt
+        ? new Date(created.key.expiresAt).toISOString()
+        : null,
+      created_at: new Date(created.key.createdAt).toISOString(),
+      last_request: null,
+      reference_id: userId,
+    }),
+    secret: created.secret,
+  };
+}
+
+/**
+ * Revokes one of the integration account's keys.
+ *
+ * The key is first read back and checked to belong to an integration user, so a
+ * supervisor cannot use this surface to revoke somebody else's key. A key that
+ * does not exist or belongs to another account answers `404`, which does not
+ * disclose whether the id exists.
+ */
+export async function revokeIntegrationKey(
+  context: RequestServiceContext,
+  apiKeys: ApiKeyService,
+  keyId: string,
+): Promise<void> {
+  await requireKeyManagement(context);
+  const ownerIds = await integratorUserIds(context);
+  const row = await context.database
+    .query()
+    .selectFrom<ApiKeyRow>(API_KEY_TABLE)
+    .select(['id', 'reference_id'])
+    .where('config_id', '=', DEFAULT_CONFIG_ID)
+    .where('id', '=', keyId)
+    .executeTakeFirst<ApiKeyRow>();
+  if (!row || !ownerIds.includes(row.reference_id ?? '')) {
+    throw notFound(
+      'INTEGRATION_KEY_NOT_FOUND',
+      `API key ${keyId} was not found for the integration account.`,
+    );
+  }
+  await apiKeys.remove(keyId);
+}

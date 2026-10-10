@@ -52,9 +52,36 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The after-sales
+    // service pages each pin the page id their grant uses; the nested page omits `authz` and inherits the parent's,
+    // and the assistant page opted out because it only reports registration state and grants no business action.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'messages', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service.dashboard' },
+      { name: 'service-dashboard-order', authorizedAs: 'service.dashboard' },
+      { name: 'service-orders', authorizedAs: 'service.orders' },
+      { name: 'service-order-new', authorizedAs: 'service.orders' },
+      { name: 'service-order-detail', authorizedAs: 'service.orders' },
+      { name: 'service-customers', authorizedAs: 'service.customers' },
+      { name: 'service-customer-new', authorizedAs: 'service.customers' },
+      { name: 'service-customer-edit', authorizedAs: 'service.customers' },
+      { name: 'service-devices', authorizedAs: 'service.devices' },
+      { name: 'service-device-new', authorizedAs: 'service.devices' },
+      { name: 'service-device-edit', authorizedAs: 'service.devices' },
+      { name: 'service-knowledge', authorizedAs: 'service.knowledge' },
+      { name: 'service-knowledge-new', authorizedAs: 'service.knowledge' },
+      { name: 'service-knowledge-detail', authorizedAs: 'service.knowledge' },
+      { name: 'service-knowledge-edit', authorizedAs: 'service.knowledge' },
+      { name: 'service-inspections', authorizedAs: 'service.inspections' },
+      { name: 'service-inspection-new', authorizedAs: 'service.inspections' },
+      {
+        name: 'service-inspection-complete',
+        authorizedAs: 'service.inspections',
+      },
+      { name: 'service-manuals', authorizedAs: 'service.manuals' },
+      { name: 'service-manual-new', authorizedAs: 'service.manuals' },
+      { name: 'service-assistant', authorizedAs: null },
     ]);
   });
 });
