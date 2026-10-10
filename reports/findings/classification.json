@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "927734c6c26c672331b5d18add5bb2352f1caea39126a5332fb6f79393d07052",
+  "inputHash": "6b40999b843addcaee0a6514d437c4399644c0d44d641158f5a7995966752695",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -876,6 +876,26 @@
       "id": "674:37879768670:1:F6",
       "report": "674:37879768670:1",
       "fingerprint": "e2b510506f0cfe3717b127e34cbe5ec4a66f85df82779e5bc3840cbf502defd1"
+    },
+    {
+      "id": "681:38001009392:1:F5",
+      "report": "681:38001009392:1",
+      "fingerprint": "297f68279091a64d77fedd652cd7d43edb79126f036344d364d9b479afd0b3b1"
+    },
+    {
+      "id": "681:38001009392:1:F6",
+      "report": "681:38001009392:1",
+      "fingerprint": "fa466489980045657bcaf529d514201ce72f68cca78cb69c394e9ed9f90cacb2"
+    },
+    {
+      "id": "681:38001009392:1:F7",
+      "report": "681:38001009392:1",
+      "fingerprint": "ec0d3013feae0a81fc5b543770974e129bf33c1d36bc14ebdf53967ff0864106"
+    },
+    {
+      "id": "681:38001009392:1:F8",
+      "report": "681:38001009392:1",
+      "fingerprint": "24fa01b8c1276cd90af9febd1ba1976958ad4887f18405a979fad295af83c0b0"
     }
   ],
   "groups": [
@@ -893,7 +913,7 @@
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。",
+      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 681:F5（E4/E5/E32）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 case 'image' 直接渲染裸 <img>、无 onError/失败回退，而同文件 OfficePreview 具备 DownloadFallback/officeFailed 失败路径，应用只能 fork 组件补 ImagePreview.onError，触发条件、公开缺口与修复方向与既有成员一致。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
@@ -903,7 +923,8 @@
         "543:37156754926:1:F3",
         "555:37238852759:1:F2",
         "578:37394457519:1:F2",
-        "664:37700959785:1:F2"
+        "664:37700959785:1:F2",
+        "681:38001009392:1:F5"
       ]
     },
     {
@@ -1294,13 +1315,14 @@
     },
     {
       "title": "文件内容字节路由默认公开且缺少受支持的受保护/主体感知接入点，应用被迫逐路径自挂鉴权或重写字节路由",
-      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）、543:F2（E3/E4/E16/E22）、649:F5（E54/E55/E56/E57）均记录 app-plugin-file 的 content 字节路由固定绑定公开的 unwritablePolicy、刻意绕过 exposure Policy，框架没有一等的主体感知/逐记录鉴权或内容读取入口；应用只能在贡献前自挂顺序敏感守卫，或重写整套字节路由（重复 UUID 校验、ownerId 过滤、安全头与流式逻辑）。545:F4（E28/E30/E32）与 664:F1（E1/E2/E13）在同一 routes.js 注释与类型上复现：内容路由默认 public、认证授权归应用所有，FileRepositoryApiExposure/DefineFileRepositoryApiRoutesOptions 没有 restricted/属主/鉴权钩子，应用必须逐 accessPath 补挂 authentication.required()+授权，遗漏即按 UUID 公开可读。五条的触发条件（用内容路由提供受业务规则约束的/私有附件）、受影响 API（defineFileRepositoryApiRoutes、ServerFileRepository、FileRepositoryApiExposure）与修复方向（提供可选的受限/主体感知内容鉴权入口，默认仍 public 以兼容）一致，故合并；文档未给出可执行机制（531:F3）属另一缺口，单列。",
+      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）、543:F2（E3/E4/E16/E22）、649:F5（E54/E55/E56/E57）均记录 app-plugin-file 的 content 字节路由固定绑定公开的 unwritablePolicy、刻意绕过 exposure Policy，框架没有一等的主体感知/逐记录鉴权或内容读取入口；应用只能在贡献前自挂顺序敏感守卫，或重写整套字节路由（重复 UUID 校验、ownerId 过滤、安全头与流式逻辑）。545:F4（E28/E30/E32）与 664:F1（E1/E2/E13）在同一 routes.js 注释与类型上复现：内容路由默认 public、认证授权归应用所有，FileRepositoryApiExposure/DefineFileRepositoryApiRoutesOptions 没有 restricted/属主/鉴权钩子，应用必须逐 accessPath 补挂 authentication.required()+授权，遗漏即按 UUID 公开可读。五条的触发条件（用内容路由提供受业务规则约束的/私有附件）、受影响 API（defineFileRepositoryApiRoutes、ServerFileRepository、FileRepositoryApiExposure）与修复方向（提供可选的受限/主体感知内容鉴权入口，默认仍 public 以兼容）一致，故合并；文档未给出可执行机制（531:F3）属另一缺口，单列。 本次新增 681:F8（E1/E2/E3/E30/E31）在 1.0.0-beta.55 复现同一缺口：defineFileRepositoryApiRoutes 注释明确 accessPath 下的 content 字节路由为 public、认证授权由应用负责，应用须在 <accessPath>/* 自行安装 auth.required()，重复手工包裹是常见易漏点，与既有成员同一公开缺口与修复方向（提供声明式/可复用的受保护接入点）。",
       "members": [
         "519:36938138067:1:F4",
         "543:37156754926:1:F2",
         "649:37621548882:1:F5",
         "545:37172547326:1:F4",
-        "664:37700959785:1:F1"
+        "664:37700959785:1:F1",
+        "681:38001009392:1:F8"
       ]
     },
     {
@@ -1623,15 +1645,29 @@
       "members": [
         "674:37879768670:1:F6"
       ]
+    },
+    {
+      "title": "QueryAdapter.select() 将返回类型收窄为 Row，单列查询需显式泛型",
+      "reason": "单条保留：681:F6 的 E15/E16/E33 显示 @nocobase/db 的 QueryAdapter.select() 签名把泛型 TResult 覆盖为 Row，select('id').executeTakeFirst() 被推导为 unknown，种子代码只能补 executeTakeFirst<{ id: string }> 才通过类型检查。这是查询构建器返回类型推导缺口，与 QueryAdapter 条件方法不可变语义（541:F1）、seed 记录索引签名冲突（673:F6）等根因不同，证据不足以并入任何既有组，故单独保留。",
+      "members": [
+        "681:38001009392:1:F6"
+      ]
+    },
+    {
+      "title": "server-routes 指引未说明贡献 router 的 onError 在 api.route('/') 合并后被丢弃",
+      "reason": "单条保留：681:F7 的 E9/E13/E36 显示应用在 api.route('/', router) 之前安装应用级 api.onError，贡献 router 自己的 onError 在合并挂载后被丢弃，错误翻译只能前移到 handler/应用层，而 server-routes.md 的“抽取 router 再挂载”示例只讲依赖注入、未说明 onError 的生效层级。该缺口与 651:F2（根路由不继承 /api 的 api.onError）虽同处 server-routes.md 且都涉及 onError，但触发条件（api 贡献 router 合并 vs 根路由）、受影响段落（205–234 vs 179–201）与修复方向（说明合并会丢弃 router.onError vs 提醒根路由需自带 onError）不同，属同一文件中的不同根因，单独保留。",
+      "members": [
+        "681:38001009392:1:F7"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37892854678",
+    "runId": "38012294852",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-09T06:20:46.807Z"
+    "completedAt": "2026-10-10T01:14:52.045Z"
   }
 }
