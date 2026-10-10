@@ -90,6 +90,79 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  materials: {
+    navigation: '资料库',
+    title: '资料库',
+    description:
+      '内部资料。你会看到自己负责的资料、已发布且不保密的资料，以及管理员单独开放给你的那一份资料。',
+    create: '新建资料',
+    createTitle: '新建资料',
+    editTitle: '编辑资料',
+    formDescription: '资料包含标题、正文，以及是否发布和是否保密。',
+    edit: '编辑',
+    delete: '删除',
+    saving: '保存中…',
+    saved: '资料已保存',
+    created: '资料已创建',
+    saveFailed: '保存资料失败，请重试。',
+    deleting: '删除中…',
+    deleteTitle: '删除资料',
+    deleteConfirm:
+      '确定删除《{{title}}》？该操作无法撤销，相关的临时开放也会一并移除。',
+    back: '返回资料库',
+    owner: '负责人：{{name}}',
+    updatedAt: '最后更新 {{date}}',
+    noContent: '这份资料还没有正文。',
+    sharedBadge: '已临时开放',
+    column: {
+      title: '标题',
+      owner: '负责人',
+      status: '状态',
+      updatedAt: '最后更新',
+    },
+    status: {
+      published: '已发布',
+      draft: '草稿',
+      open: '不保密',
+    },
+    field: {
+      title: '标题',
+      content: '正文',
+      published: '发布',
+      publishedHint: '已发布且不保密的资料，对所有有阅读资格的同事开放。',
+      confidential: '保密',
+      confidentialHint:
+        '保密资料只有负责人和管理员可以查看，即使被临时开放也不能被阅读。',
+    },
+    empty: '暂无资料',
+    emptyDescription: '你负责的资料，或已向阅读者发布的资料，会显示在这里。',
+    error: {
+      title: '无法加载资料库',
+      description: '请求失败，请检查网络后重试。',
+    },
+    unavailable: {
+      title: '无法查看该资料',
+      description:
+        '该资料不存在，或你没有查看权限。它可能是一份未发布的草稿，或临时开放已被撤销。',
+    },
+    share: {
+      title: '临时开放',
+      description:
+        '把这一份资料临时开放给某位同事，仅对该同事生效，撤销后立即失效。保密资料无法通过这种方式被阅读。',
+      empty: '尚未向任何人开放。',
+      user: '同事',
+      selectPlaceholder: '选择同事',
+      add: '开放',
+      revoke: '撤销',
+      revoked: '已撤销开放',
+      granted: '已开放给 {{name}}',
+      failed: '操作失败，请重试。',
+      loadFailed: '无法加载同事列表。',
+      since: '开放于 {{date}}',
+      noUsers: '没有其他可选择的已启用同事。',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
