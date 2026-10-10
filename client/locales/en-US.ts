@@ -97,6 +97,82 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  materials: {
+    navigation: 'Document library',
+    title: 'Document library',
+    description:
+      'Internal documents. You see the ones you own, published non-confidential documents, and any single document an administrator has opened to you.',
+    create: 'New document',
+    createTitle: 'New document',
+    editTitle: 'Edit document',
+    formDescription:
+      'A document has a title, a body, and whether it is published and confidential.',
+    edit: 'Edit',
+    delete: 'Delete',
+    saving: 'Saving…',
+    saved: 'Document saved',
+    created: 'Document created',
+    saveFailed: 'Unable to save the document. Please try again.',
+    deleting: 'Deleting…',
+    deleteTitle: 'Delete document',
+    deleteConfirm:
+      'Delete “{{title}}”? This cannot be undone, and any temporary access to it is removed as well.',
+    back: 'Back to the document library',
+    owner: 'Owner: {{name}}',
+    updatedAt: 'Last updated {{date}}',
+    noContent: 'This document has no body yet.',
+    sharedBadge: 'Opened temporarily',
+    column: {
+      title: 'Title',
+      owner: 'Owner',
+      status: 'State',
+      updatedAt: 'Last updated',
+    },
+    status: {
+      published: 'Published',
+      draft: 'Draft',
+      open: 'Not confidential',
+    },
+    field: {
+      title: 'Title',
+      content: 'Body',
+      published: 'Published',
+      publishedHint:
+        'A published document that is not confidential is readable by colleagues with a reading role.',
+      confidential: 'Confidential',
+      confidentialHint:
+        'A confidential document stays readable only by its owner and administrators, even when it is opened temporarily.',
+    },
+    empty: 'No documents yet',
+    emptyDescription:
+      'A document you own, or one published to a reading role, appears here.',
+    error: {
+      title: 'Unable to load the document library',
+      description: 'The request failed. Check your connection and try again.',
+    },
+    unavailable: {
+      title: 'This document is not available',
+      description:
+        'It does not exist, or you are not allowed to read it. It may be an unpublished draft, or a temporary opening that was revoked.',
+    },
+    share: {
+      title: 'Temporary access',
+      description:
+        'Open this single document to one colleague. It applies to that person only and stops the moment you revoke it. A confidential document cannot be read this way.',
+      empty: 'This document is not open to anyone.',
+      user: 'Colleague',
+      selectPlaceholder: 'Select a colleague',
+      add: 'Open',
+      revoke: 'Revoke',
+      revoked: 'Access revoked',
+      granted: 'Opened to {{name}}',
+      failed: 'Unable to complete the action. Please try again.',
+      loadFailed: 'Unable to load colleagues.',
+      since: 'Opened {{date}}',
+      noUsers: 'There is no other enabled colleague to open this document to.',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
