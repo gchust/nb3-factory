@@ -207,9 +207,13 @@ describe('application shell', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'collapsed',
+    // The preference is shared through an external store, so the new state reaches the DOM when React flushes
+    // that store's update. Wait for it instead of reading the attribute in the same tick as the click.
+    await waitFor(() =>
+      expect(sidebar.closest('[data-state]')).toHaveAttribute(
+        'data-state',
+        'collapsed',
+      ),
     );
     expect(
       screen.getByRole('button', { name: 'Expand navigation' }),
@@ -229,9 +233,11 @@ describe('application shell', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Expand or collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'expanded',
+    await waitFor(() =>
+      expect(sidebar.closest('[data-state]')).toHaveAttribute(
+        'data-state',
+        'expanded',
+      ),
     );
     expect(
       screen.queryByRole('img', { name: /Default Template/ }),

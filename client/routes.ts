@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home, MessageSquareText } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,27 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The materials the signed-in reader may open. The page id is the grant the
+    // materials permission sets carry, so only a reader or a supervisor sees it.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: BookOpen },
+    path: '/materials',
+  },
+  {
+    // The read-only question surface. It answers from the same page's materials,
+    // authorized under the same identity, so it can never reveal more than the
+    // reader can open here.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'assistant' }, action: 'access' },
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: MessageSquareText },
+    path: '/assistant',
   },
   {
     auth: 'guest',

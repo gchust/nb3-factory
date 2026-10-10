@@ -1,6 +1,8 @@
 import type { AppResource } from './en-US.js';
+import { nocobaseAILocales } from '../extensions/nocobase-ai/locales/index.js';
 
 const zhCN: AppResource = {
+  ...nocobaseAILocales['zh-CN'],
   'auth.welcome': '欢迎回来',
   'auth.loginDescription': '使用用户名或邮箱和密码登录。',
   'auth.registerTitle': '创建账户',
@@ -131,6 +133,8 @@ const zhCN: AppResource = {
     description: '前往本应用的页面。',
     breadcrumb: '面包屑',
     back: '返回',
+    materials: '资料',
+    assistant: '资料助手',
   },
   dataTable: {
     noResults: '暂无数据。',
@@ -150,6 +154,40 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  materials: {
+    title: '内部资料',
+    description: '助手可据以回答的参考资料。',
+    loading: '正在加载资料…',
+    loadFailed: '无法加载资料。',
+    retry: '重试',
+    empty: '目前没有你可查看的资料。',
+    confidential: '保密',
+    updatedAt: '更新于 {{date}}',
+    edit: '编辑',
+    editTitle: '编辑资料',
+    editDescription: '修改标题和正文。同事在下次提问时会看到新内容。',
+    titleLabel: '标题',
+    bodyLabel: '正文',
+    save: '保存',
+    saving: '正在保存…',
+    saved: '资料已更新。',
+    saveFailed: '无法保存资料。',
+    notFound: '该资料已不可见。',
+  },
+  assistant: {
+    title: '资料助手',
+    description: '可就你可查看的资料提问，每条回答都会注明所依据的资料。',
+    readOnlyNotice: '该助手只读取资料，不能编辑资料。',
+    loadingConfig: '正在加载助手…',
+    configFailed: '无法加载助手配置。',
+    configHint: '请检查网络和 AI 设置后重新加载本页。',
+    noEmployees: '当前没有你可用的助手。',
+    modelFailed: '无法加载助手使用的模型。',
+    noModel: '未配置或启用任何 AI 模型。',
+    noModelHint:
+      '需要管理员配置并启用模型后，助手才能回答。你仍可自行查阅资料。',
+    openMaterials: '打开资料',
   },
 };
 
