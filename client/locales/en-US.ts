@@ -1,6 +1,12 @@
 import type { LocaleResource } from '@nocobase/i18n';
 
+// The AI Employee UI extension installed at `client/extensions/nocobase-ai` is application-owned source, but it keeps
+// its own locale maps for the components it ships. Spread them into this application's locale so every string the
+// client renders lives in one namespace, without copying its keys by hand and letting the two drift.
+import { nocobaseAILocales } from '../extensions/nocobase-ai/locales/index.js';
+
 const enUS = {
+  ...nocobaseAILocales['en-US'],
   'auth.welcome': 'Welcome back',
   'auth.loginDescription': 'Sign in with your username or email and password.',
   'auth.registerTitle': 'Create an account',
@@ -140,6 +146,8 @@ const enUS = {
     description: 'Go to a page of this application.',
     breadcrumb: 'Breadcrumb',
     back: 'Back',
+    materials: 'Materials',
+    assistant: 'Materials assistant',
   },
   dataTable: {
     noResults: 'No results.',
@@ -159,6 +167,42 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  materials: {
+    title: 'Internal materials',
+    description: 'The reference materials the assistant may answer from.',
+    loading: 'Loading materials…',
+    loadFailed: 'Unable to load materials.',
+    retry: 'Retry',
+    empty: 'No material is available to you yet.',
+    confidential: 'Confidential',
+    updatedAt: 'Updated {{date}}',
+    edit: 'Edit',
+    editTitle: 'Edit material',
+    editDescription:
+      'Change the title and body. Colleagues see the new text on their next question.',
+    titleLabel: 'Title',
+    bodyLabel: 'Body',
+    save: 'Save',
+    saving: 'Saving…',
+    saved: 'Material updated.',
+    saveFailed: 'Unable to save the material.',
+    notFound: 'This material is no longer available to you.',
+  },
+  assistant: {
+    title: 'Materials assistant',
+    description:
+      'Ask about the materials you may read. Every answer cites the material it used.',
+    readOnlyNotice: 'This assistant only reads materials. It cannot edit them.',
+    loadingConfig: 'Loading the assistant…',
+    configFailed: 'Unable to load the assistant configuration.',
+    configHint: 'Check your connection and AI settings, then reload this page.',
+    noEmployees: 'No assistant is available to you.',
+    modelFailed: 'The assistant model could not be loaded.',
+    noModel: 'No AI model is configured or enabled.',
+    noModelHint:
+      'An administrator must configure and enable a model before the assistant can answer. You can still read the materials yourself.',
+    openMaterials: 'Open materials',
   },
 };
 
