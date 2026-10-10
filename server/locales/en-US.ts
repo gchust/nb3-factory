@@ -1,9 +1,28 @@
 import type { LocaleResource } from '@nocobase/i18n';
 
-// The application's own server-side wording. It is empty because every string the server produces today belongs to a
-// plugin's namespace; add keys here as the application starts producing its own, and use `overrides` to reword a
-// plugin's.
-const enUS = {};
+/**
+ * The application's own server-side wording: the titles the authorization
+ * workspace shows for the document resources, data scopes and permission sets
+ * the migrations and seeds register.
+ */
+const enUS = {
+  knowledge: {
+    section: 'Internal knowledge',
+    collection: { documents: 'Documents' },
+    resource: { documents: 'Documents' },
+    action: {
+      documents: { read: 'Read', manage: 'Edit' },
+    },
+    data: {
+      documents: { read: 'Read documents', manage: 'Edit documents' },
+    },
+    recordAccess: { publicDocuments: 'Documents anyone may read' },
+    permissionSet: {
+      supervisor: 'Document supervisor',
+      colleague: 'Document reader',
+    },
+  },
+};
 
 export type AppServerResource = LocaleResource<typeof enUS>;
 

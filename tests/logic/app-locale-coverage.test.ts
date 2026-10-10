@@ -25,7 +25,30 @@ function translationKeys(
   });
 }
 
+/**
+ * An installed Registry item that ships its own `locales/` directory translates
+ * from that dictionary, not from the application's `client/locales/`. The AI
+ * extension is one: its components read `useAITranslate`, which resolves keys
+ * against `extensions/nocobase-ai/locales`, so its `t('...')` calls are not
+ * application keys and must not be checked against them.
+ */
+function selfTranslatedItems(): string[] {
+  const extensionsDirectory = path.join(clientDirectory, 'extensions');
+  if (!fs.existsSync(extensionsDirectory)) return [];
+  return fs
+    .readdirSync(extensionsDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(extensionsDirectory, entry.name))
+    .filter((item) => fs.existsSync(path.join(item, 'locales', 'index.ts')));
+}
+
+const selfTranslated = selfTranslatedItems();
+
 function sourceFiles(directory: string): string[] {
+  const owned = selfTranslated.some(
+    (item) => directory === item || directory.startsWith(item + path.sep),
+  );
+  if (owned) return [];
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = path.join(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(entryPath);

@@ -1,4 +1,9 @@
-import { Home } from 'lucide-react';
+import {
+  BookOpenText,
+  Home,
+  LibraryBig,
+  MessageCircleQuestion,
+} from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +20,41 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The internal knowledge section. Only the group carries the section icon; the pages it holds name their own.
+    name: 'knowledge',
+    navigation: { title: 'navigation.knowledge', icon: LibraryBig },
+    children: [
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'knowledgeDocuments' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/knowledge-documents/index.js'),
+        name: 'knowledge-documents',
+        navigation: {
+          title: 'navigation.knowledgeDocuments',
+          icon: BookOpenText,
+        },
+        path: '/knowledge/documents',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'knowledgeAssistant' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/knowledge-assistant/index.js'),
+        name: 'knowledge-assistant',
+        navigation: {
+          title: 'navigation.knowledgeAssistant',
+          icon: MessageCircleQuestion,
+        },
+        path: '/knowledge/assistant',
+      },
+    ],
   },
   {
     auth: 'guest',
