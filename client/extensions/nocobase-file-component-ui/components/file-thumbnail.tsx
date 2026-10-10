@@ -6,7 +6,7 @@ import {
   FileText,
   FileVideo,
 } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { isSafeImagePreview } from '../lib/file-preview';
 import type { FileThumbnailProps } from '../types';
@@ -45,15 +45,19 @@ export function FileThumbnail({
   url,
   alt = file.filename,
 }: FileThumbnailProps): ReactElement {
+  // A damaged image still has an image MIME type; fall back to the type icon so
+  // a broken thumbnail is not mistaken for a rendered preview.
+  const [failed, setFailed] = useState(false);
   const imageUrl = resolveSafeFileUrl(
     url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),
   );
-  return imageUrl ? (
+  return imageUrl && !failed ? (
     <img
       data-slot='file-thumbnail'
       src={imageUrl}
       alt={alt}
       className='h-full w-full object-cover'
+      onError={() => setFailed(true)}
     />
   ) : (
     <span

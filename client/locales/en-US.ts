@@ -96,6 +96,63 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep each material together with the photos and Word documents attached to it.',
+    new: 'New material',
+    emptyTitle: 'No materials yet',
+    emptyDescription:
+      'Create the first material to attach its photos and documents.',
+    attachmentCount_one: '{{count}} attachment',
+    attachmentCount_other: '{{count}} attachments',
+    updatedAt: 'Updated {{date}}',
+    loadFailed: 'Materials could not be loaded.',
+    attachmentsEmpty: 'No attachments yet.',
+    chooseFiles: 'Choose files',
+    download: 'Download',
+    preview: 'Preview',
+    remove: 'Remove',
+    uploading: 'Uploading…',
+    uploadFailed: 'The file could not be uploaded.',
+    detail: {
+      title: 'Material details',
+      edit: 'Edit',
+    },
+    create: {
+      title: 'Create material',
+      success: 'Created “{{title}}”.',
+    },
+    edit: {
+      title: 'Edit material',
+      success: 'Saved “{{title}}”.',
+    },
+    delete: {
+      action: 'Delete',
+      title: 'Delete this material?',
+      confirm: 'Delete',
+      success: 'Material deleted.',
+      failed: 'The material could not be deleted.',
+    },
+    fields: {
+      title: 'Title',
+      attachments: 'Attachments',
+    },
+    form: {
+      description: 'Give the material a title and attach its files.',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      attachmentsHint: 'Attach PNG photos and DOCX documents, up to 5 MB each.',
+      filesInvalid:
+        'Some attachments could not be saved. Check them and try again.',
+    },
+    error: {
+      forbidden: 'You do not have access to this material.',
+      requestFailed: 'Something went wrong. Please try again.',
+      sessionExpired: 'Your session has ended. Sign in again.',
+      notFound: 'This material does not exist or you do not have access to it.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -112,6 +169,8 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    create: 'Create',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -131,6 +190,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
