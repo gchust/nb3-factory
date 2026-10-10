@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "date": "2026-10-10",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "efa4b207ec317571f88fa044",
+      "id": "681:38001009392:1:F5",
+      "issue": 681,
+      "runId": 38001009392,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-10",
+      "archivedAt": "2026-10-10T23:31:51.793Z",
+      "title": "注册表图片预览器对损坏图片没有失败路径，应用只能 fork 组件补 onError",
+      "summary": "E4 的 `case 'image'` 直接渲染 `<img src={url}>`，没有 onError 或回退；E5 显示同一文件的 OfficePreview 会用 DownloadFallback 与 officeFailed 文案处理失败，说明失败反馈在组件集内并不一致。应用因此 fork file-preview-content.tsx 增加图片失败提示（E32）。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 10,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/681/runs/38001009392/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "1c9ed1e52bb5e25ce4cbb3c8",
+      "id": "681:38001009392:1:F6",
+      "issue": 681,
+      "runId": 38001009392,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-10",
+      "archivedAt": "2026-10-10T23:31:51.793Z",
+      "title": "QueryAdapter.select() 把 TResult 收窄为 Row，select('id') 的种子代码回退为 unknown",
+      "summary": "E15 的 QueryAdapter.select() 签名把返回的 TResult 覆盖为 Row；因此 `.select('id').executeTakeFirst()` 得到 unknown，而不是 { id: string }。E33 显示应用在种子里据此补了 `<{ id: string }>` 才通过类型检查。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "QueryAdapter.select() 将返回类型收窄为 Row，单列查询需显式泛型",
+        "issues": 1,
+        "first": "2026-10-10"
+      },
+      "report": "reports/issues/681/runs/38001009392/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "7a00a30b45ea68c96ca32a0f",
+      "id": "681:38001009392:1:F7",
+      "issue": 681,
+      "runId": 38001009392,
+      "attempt": 1,
+      "findingId": "F7",
+      "runDay": "2026-10-10",
+      "archivedAt": "2026-10-10T23:31:51.793Z",
+      "title": "贡献路由自带的 onError 不会随 api.route('/') 生效，server-routes 指引未提示",
+      "summary": "E9 的应用层 api 路由在 `api.route('/', router)` 之前注册了全局 onError；E13 的 server-routes.md 建议把 router 抽出来再挂载，但未说明贡献 router 自己的 onError 在挂载后不再生效、需由应用层统一处理。E36 的注释显示应用注意到了这一点。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "server-routes 指引未说明贡献 router 的 onError 在 api.route('/') 合并后被丢弃",
+        "issues": 1,
+        "first": "2026-10-10"
+      },
+      "report": "reports/issues/681/runs/38001009392/attempt-1/index.html#review-finding-F7"
+    },
+    {
+      "key": "3ef9a84b8dad5a82488b1906",
+      "id": "681:38001009392:1:F8",
+      "issue": 681,
+      "runId": 38001009392,
+      "attempt": 1,
+      "findingId": "F8",
+      "runDay": "2026-10-10",
+      "archivedAt": "2026-10-10T23:31:51.793Z",
+      "title": "文件内容路由默认公开，每个私有文件应用都要自行包裹一次认证",
+      "summary": "E1/E2 显示内容字节路由默认公开，E3 的 Skill 要求应用在 <accessPath>/* 上自行安装 auth.required()。这虽为文档化的既定契约，但对以私有文件为主的场景，重复的手工包裹是常见易漏点（漏一次即为未授权访问）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "文件内容字节路由默认公开且缺少受支持的受保护/主体感知接入点，应用被迫逐路径自挂鉴权或重写字节路由",
+        "issues": 6,
+        "first": "2026-10-02"
+      },
+      "report": "reports/issues/681/runs/38001009392/attempt-1/index.html#review-finding-F8"
+    }
+  ]
+}
