@@ -1,8 +1,9 @@
-import { Home } from 'lucide-react';
+import { Home, Library } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
   type AppClientRouteContribution,
+  type AppClientRouteDefinition,
 } from '@nocobase/app-client/plugins';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
@@ -44,6 +45,51 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'reset-password',
     path: '/reset-password',
   },
+  {
+    // The document library. The page grant uses the same resource id as the collection's composite resource; the
+    // permission sets seeded by `database/main/seeds/` grant both.
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    auth: 'required',
+    name: 'library',
+    navigation: { title: 'navigation.library', icon: Library },
+    path: '/library',
+    componentLoader: () => import('./pages/library/index.js'),
+    children: [
+      {
+        // /library/new: create dialog, over the list
+        name: 'library-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/library/new.js'),
+      },
+      {
+        // /library/edit/:documentId: edit dialog opened from a row's menu, alone over the list
+        name: 'library-edit',
+        path: 'edit/:documentId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/library/edit.js'),
+      },
+      {
+        // /library/:documentId: the detail drawer, over the list
+        name: 'library-detail',
+        path: ':documentId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/library/detail/index.js'),
+        children: [
+          {
+            // /library/:documentId/edit: edit dialog, stacked on the drawer
+            name: 'library-detail-edit',
+            path: 'edit',
+            authz: 'skip',
+            componentLoader: () => import('./pages/library/detail/edit.js'),
+          },
+        ],
+      },
+    ],
+  } satisfies AppClientRouteDefinition,
 ]);
 
 const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([]);

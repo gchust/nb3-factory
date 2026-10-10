@@ -96,6 +96,108 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  library: {
+    title: 'Document library',
+    description: 'Browse published documents, and maintain the drafts you own.',
+    create: {
+      action: 'New document',
+      title: 'New document',
+      description: 'Drafts are visible only to you until you publish them.',
+    },
+    edit: {
+      title: 'Edit document',
+      description: 'Update this document. Saving publishes the change at once.',
+    },
+    detail: {
+      title: 'Document',
+      emptyContent: 'No content.',
+    },
+    fields: {
+      title: 'Title',
+      content: 'Content',
+      owner: 'Owner',
+      status: 'Status',
+      updatedAt: 'Updated at',
+      published: 'Published',
+      publishedHint:
+        'Published, non-confidential documents are open to every reader.',
+      confidential: 'Confidential',
+      confidentialHint:
+        'Confidential documents stay closed to readers, even when someone shares one.',
+    },
+    status: {
+      published: 'Published',
+      draft: 'Draft',
+      confidential: 'Confidential',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'Actions for {{name}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    delete: {
+      title: 'Delete “{{name}}”?',
+      description:
+        'This permanently deletes the document. It cannot be undone.',
+      confirm: 'Delete document',
+      success: '“{{name}}” was deleted.',
+      notFound: '“{{name}}” was already deleted.',
+    },
+    form: {
+      titleRequired: 'Enter a title.',
+      errorTitle: 'The document was not saved',
+      forbidden: 'You cannot change this document.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    error: {
+      title: 'Unable to load documents',
+      notFound:
+        'This document does not exist or is no longer available to you.',
+      forbidden: 'You do not have permission to view this document.',
+      requestFailed: 'The request failed. Please try again.',
+      sessionExpired: 'Your session has ended. Sign in again.',
+    },
+    empty: {
+      title: 'No documents yet',
+      description:
+        'Create the first document, or wait for an editor to publish one.',
+      noResults: 'No documents match.',
+    },
+    recordAccess: {
+      owned: 'Own documents',
+      visible: 'Published documents and own documents',
+      nonConfidential: 'Non-confidential documents',
+    },
+    collection: {
+      documents: 'Document',
+      'documents.description':
+        'Documents in the internal library. Editors keep their own drafts; published, non-confidential documents are open to every reader.',
+    },
+    section: {
+      documents: 'Document library',
+    },
+    resource: { documents: 'Document' },
+    action: {
+      view: 'View',
+      create: 'Create',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    scope: {
+      view: 'View scope',
+      create: 'Create scope',
+      edit: 'Edit scope',
+      delete: 'Delete scope',
+    },
+    permissionSet: {
+      editor: 'Document editor',
+      reader: 'Document reader',
+    },
+    restriction: {
+      nonConfidential: 'Hide confidential documents',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -112,6 +214,7 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -131,6 +234,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    library: 'Document library',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
