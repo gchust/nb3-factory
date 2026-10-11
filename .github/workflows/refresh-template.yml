@@ -27,7 +27,7 @@ on:
       # overlay-factory.mjs reads these from the control checkout. It also
       # copies docs/ into the generated application, whose verify.sh then
       # format-checks it.
-      - '.npmrc'
+      - '.github/template.npmrc'
       - 'README.MD'
       - 'package.json'
       - 'docs/**'
@@ -147,13 +147,16 @@ jobs:
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
         if: steps.supersede.outputs.superseded != 'true'
-        run: cat control/.npmrc >> ~/.npmrc
+        run: |
+          cat control/.github/template.npmrc >> ~/.npmrc
+          mkdir -p "$RUNNER_TEMP/template-generation"
+          cp control/.github/template.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
 
       - name: Pin the actual published application generator
         if: steps.supersede.outputs.superseded != 'true'
-        run: node control/.github/scripts/template-creator.mjs pin control
+        run: node control/.github/scripts/template-creator.mjs pin "$RUNNER_TEMP/template-generation"
 
-      - name: Create a fresh application from the latest published template
+      - name: Create a fresh application from the published beta template
         if: steps.supersede.outputs.superseded != 'true'
         # Takes seconds (--no-install); a hung registry fetch must not hold the
         # global refresh queue until the 120-minute job limit.
@@ -162,12 +165,11 @@ jobs:
           CI: true
         run: |
           mkdir -p "$RUNNER_TEMP/template-generation" "$RUNNER_TEMP/template-diagnostics"
-          cp control/.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
           cd "$RUNNER_TEMP/template-generation"
           # Current create-app uses the template's database defaults; verification
           # supplies an isolated SQLite connection via create-runtime-config.mjs.
           pnpm create "@nocobase/app@$FACTORY_CREATOR_VERSION" nb3-factory \
-            --no-install --template=default --template-tag=latest
+            --no-install --template=default --template-tag=beta
 
       - name: Restore factory controls without changing template guidance
         if: steps.supersede.outputs.superseded != 'true'
@@ -228,26 +230,21 @@ jobs:
           fi
           pnpm install --no-frozen-lockfile
 
-      - name: Install, register, and inspect the required Pro plugin baseline
+      - name: Sync Skills and record the template plugin inventory
         timeout-minutes: 15
         if: steps.supersede.outputs.superseded != 'true'
         env:
           CI: true
         run: |
-          # One deadline for every pnpm call in this step, a minute inside its
-          # 15-minute limit, so template-plugins.mjs stops a hung call itself.
-          export FACTORY_PLUGIN_STEP_DEADLINE=$(( $(date +%s) + 14 * 60 ))
           APP_ROOT="$RUNNER_TEMP/template-generation/nb3-factory"
-          node control/.github/scripts/template-plugins.mjs install \
-            "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
-          node control/.github/scripts/template-mail-config.mjs "$APP_ROOT"
-          # Re-registration can be a no-op; always sync before inspecting Skills.
+          # The beta template owns plugin versions, registration and config.
+          # Do not reinstall the former AI Employee/Knowledge Base/Pro baseline.
           pnpm --dir "$APP_ROOT" exec nocobase skills sync
-          node control/.github/scripts/template-plugins.mjs inspect \
+          node control/.github/scripts/template-plugins.mjs record \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
 
-      # Saved after the plugin install so the store holds the Pro plugins too,
-      # and before verification builds anything into it.
+      # Save the template's installed dependencies before verification builds
+      # anything into the store.
       - name: Drop store entries the generated lockfile no longer uses
         if: github.event_name == 'workflow_dispatch' && steps.pnpm-cache.outputs.cache-hit != 'true'
         continue-on-error: true
@@ -266,7 +263,10 @@ jobs:
         if: steps.supersede.outputs.superseded != 'true'
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
+          format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts tests/logic vitest.config.ts)
+          if [[ -f server/config/mail.ts ]]; then
+            format_paths+=(server/config/mail.ts)
+          fi
           # New templates create config.yml through config init, not create-app.
           # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
           if [[ -f config.yml ]]; then

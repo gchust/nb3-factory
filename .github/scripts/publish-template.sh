@@ -27,7 +27,10 @@ if [[ "$(git rev-list --count "$candidate")" != "1" ]]; then
   exit 1
 fi
 for protected_path in .github .npmrc; do
-  if [[ "$(git rev-parse "${expected_sha}:${protected_path}")" != "$(git rev-parse "${candidate}:${protected_path}")" ]]; then
+  trusted_path="$protected_path"
+  # The registry changes atomically with the new template and its lockfile.
+  [[ "$protected_path" != .npmrc ]] || trusted_path=.github/template.npmrc
+  if [[ "$(git rev-parse "${expected_sha}:${trusted_path}")" != "$(git rev-parse "${candidate}:${protected_path}")" ]]; then
     echo "The refreshed template changed ${protected_path}; refusing to publish." >&2
     exit 1
   fi

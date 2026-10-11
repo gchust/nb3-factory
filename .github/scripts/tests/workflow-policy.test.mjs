@@ -488,7 +488,7 @@ test('network installs in long jobs are bounded by a step timeout', () => {
     ],
     'refresh-template.yml': [
       ['Install and lock the new application dependencies', 1],
-      ['Install, register, and inspect the required Pro plugin baseline', 1],
+      ['Sync Skills and record the template plugin inventory', 1],
     ],
   };
   for (const [name, expected] of Object.entries(steps)) {
@@ -641,11 +641,11 @@ function scriptsRunBy(name) {
 }
 
 // Files overlay-factory.mjs reads from the control checkout besides scripts:
-// the .npmrc it copies, the README.MD factory section, package.json's
+// the template.npmrc it copies, the README.MD factory section, package.json's
 // factory scripts and devDependencies, and the docs/ tree it copies (one
 // nested path stands for it).
 const OVERLAY_CONTROL_INPUTS = [
-  '.npmrc',
+  '.github/template.npmrc',
   'README.MD',
   'package.json',
   'docs/guides/example.md',
@@ -679,7 +679,7 @@ test('the template refresh check runs whenever a script or overlay input it uses
     path.resolve(import.meta.dirname, '../overlay-factory.mjs'),
     'utf8',
   );
-  assert.match(overlay, /path\.join\(control, '\.npmrc'\)/);
+  assert.match(overlay, /path\.join\(control, '\.github\/template\.npmrc'\)/);
   assert.match(overlay, /section\('README\.MD', 'readme'\)/);
   assert.match(overlay, /read\(control, 'package\.json'\)/);
   assert.match(overlay, /cpSync\(path\.join\(control, 'docs'\)/);
@@ -777,7 +777,7 @@ test('a skipped task run starts no report, sweep or preview from its completion 
     const source = readFileSync(path.join(directory, name), 'utf8');
     // Every workflow_run listener, whichever workflow it follows: a reassessment
     // skipped by its own guards raises the same event.
-    if (!/^  workflow_run:\n    workflows: \[/m.test(source)) continue;
+    if (!/^ {2}workflow_run:\n {4}workflows: \[/m.test(source)) continue;
     listeners++;
     const jobs = [...source.split(/^jobs:\n/m)[1].matchAll(/^ {2}([a-z][a-z-]*):\n((?: {4}.*\n|\s*\n)*)/gm)];
     const [, first, body] = jobs[0];

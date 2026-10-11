@@ -78,7 +78,11 @@ if (existsSync(path.join(control, 'docs')))
   cpSync(path.join(control, 'docs'), path.join(workspace, 'docs'), {
     recursive: true,
   });
-cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
+// Switch the registry together with the generated dependencies and lockfile.
+cpSync(
+  path.join(control, '.github/template.npmrc'),
+  path.join(workspace, '.npmrc'),
+);
 writeFileSync(path.join(workspace, 'README.MD'), readme);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
 // Keep the generated AGENTS.md, CLAUDE.md and .agents tree untouched. Factory
@@ -111,7 +115,7 @@ writeFileSync(
     {
       template: '@nocobase/app-template-default',
       templateVersion: app.nocobase.defaultTemplateVersion,
-      creator: '@nocobase/create-app@latest',
+      creator: '@nocobase/create-app@beta',
       controlSha,
       tooling: '@nocobase/app-cli',
       generatedAt: new Date().toISOString(),

@@ -5,7 +5,7 @@ const args = parseArgs(process.argv.slice(2));
 const requireFromWorkspace = createRequire(
   path.resolve(args.workspace, 'package.json'),
 );
-const { chromium } = requireFromWorkspace('@playwright/test');
+const { chromium, expect } = requireFromWorkspace('@playwright/test');
 
 const requestedChannel = process.env.FACTORY_BROWSER_CHANNEL || 'chrome';
 const browser = await chromium.launch({
@@ -27,22 +27,17 @@ try {
     );
   }
 
-  await page.waitForFunction(
-    () => Boolean(globalThis.document.body?.innerText.trim()),
-    undefined,
-    { timeout: 30_000 },
-  );
-  const body = (await page.locator('body').innerText()).trim();
-  if (!body) throw new Error('Application rendered an empty body.');
-  if (/Internal Server Error|Application error/i.test(body)) {
-    throw new Error('Application rendered a server error page.');
-  }
-
+  // The bootstrap text may disappear while the router redirects to login.
+  // Wait for the actual login/application surface before inspecting its body.
   await ensureAuthenticated(page);
+  await expect(page.locator('main')).toContainText(/\S/u, { timeout: 30_000 });
 
   const authenticatedBody = (await page.locator('body').innerText()).trim();
   if (!authenticatedBody) {
     throw new Error('Authenticated application rendered an empty body.');
+  }
+  if (/Internal Server Error|Application error/i.test(authenticatedBody)) {
+    throw new Error('Application rendered a server error page.');
   }
   if (/Welcome back|Create an account/i.test(authenticatedBody)) {
     throw new Error(

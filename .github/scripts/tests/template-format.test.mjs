@@ -32,7 +32,6 @@ const requiredTargets = [
   'server/plugins.ts',
   'cli/plugins.ts',
   'server/config/index.ts',
-  'server/config/mail.ts',
   'tests/logic',
   'vitest.config.ts',
 ];
@@ -43,7 +42,7 @@ function fixture(t, { config = false, missing, exitCode = 0 } = {}) {
   const app = path.join(root, 'template-generation/nb3-factory');
   const bin = path.join(root, 'bin');
   mkdirSync(bin, { recursive: true });
-  for (const target of requiredTargets) {
+  for (const target of [...requiredTargets, 'server/config/mail.ts']) {
     if (target === missing) continue;
     const file = path.join(app, target);
     if (target === 'tests/logic') mkdirSync(file, { recursive: true });
@@ -104,7 +103,10 @@ test('refresh formats a new template without config.yml or creating runtime secr
   const f = fixture(t);
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(f.arguments(), { cwd: f.app, targets: requiredTargets });
+  assert.deepEqual(f.arguments(), {
+    cwd: f.app,
+    targets: [...requiredTargets, 'server/config/mail.ts'],
+  });
   assert.equal(existsSync(path.join(f.app, 'config.yml')), false);
   assert.equal(
     readFileSync(f.externalConfig, 'utf8'),
@@ -123,8 +125,15 @@ test('refresh still formats a an existing config.yml without creating one', (t) 
   assert.equal(f.arguments().cwd, f.app);
   assert.deepEqual(
     f.arguments().targets.toSorted(),
-    [...requiredTargets, 'config.yml'].toSorted(),
+    [...requiredTargets, 'server/config/mail.ts', 'config.yml'].toSorted(),
   );
+});
+
+test('refresh supports a template without an optional Mail config', (t) => {
+  const f = fixture(t, { missing: 'server/config/mail.ts' });
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(f.arguments().targets, requiredTargets);
 });
 
 for (const missing of requiredTargets) {
