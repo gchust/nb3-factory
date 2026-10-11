@@ -31,7 +31,7 @@ function main() {
     writeFileSync(path.join(app, 'factory-source.json'), `${JSON.stringify(descriptor, null, 2)}\n`);
     const template = JSON.parse(readFileSync(path.join(app, 'factory-template.json')));
     template.creator = `@nocobase/create-app@${process.env.FACTORY_CREATOR_VERSION}`;
-    template.source = { repository: 'nocobase/nocobase3', sha: descriptor.sourceSha };
+    template.source = { repository: 'nocobase/nocobase', sha: descriptor.sourceSha };
     writeFileSync(path.join(app, 'factory-template.json'), `${JSON.stringify(template, null, 2)}\n`);
     return;
   }

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -32,14 +33,36 @@ const usage = {
 };
 
 test('inputs accept a problem, an optional TestManage run and a plain base branch', () => {
-  assert.deepEqual(parseInputs({ PROBLEM_ID: '42', EXTERNAL_RUN_ID: RUN.toUpperCase(), BASE_REF: '' }), { problemId: 42, externalRunId: RUN, baseRef: 'develop' });
-  assert.deepEqual(parseInputs({ PROBLEM_ID: '1', EXTERNAL_RUN_ID: '', BASE_REF: 'release/3.0' }), { problemId: 1, externalRunId: null, baseRef: 'release/3.0' });
-  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'main' }).baseRef, 'main');
-  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'release-beta/2026-08-26.1' }).baseRef, 'release-beta/2026-08-26.1');
+  assert.deepEqual(parseInputs({ PROBLEM_ID: '42', EXTERNAL_RUN_ID: RUN.toUpperCase(), BASE_REF: '' }), { problemId: 42, externalRunId: RUN, baseRef: 'v3-develop' });
+  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'v3-develop' }).baseRef, 'v3-develop');
   for (const bad of [{ PROBLEM_ID: '0' }, { PROBLEM_ID: '1;rm' }, { PROBLEM_ID: '1', EXTERNAL_RUN_ID: 'x' }, { PROBLEM_ID: '1', BASE_REF: '../main' }, { PROBLEM_ID: '1', BASE_REF: 'a..b' }, { PROBLEM_ID: '1', BASE_REF: '-x' }, { PROBLEM_ID: '1', BASE_REF: 'feat-cli' }, { PROBLEM_ID: '1', BASE_REF: 'codex/fix-dev-route-loading' }, { PROBLEM_ID: '1', BASE_REF: 'release/3.0/evil' }]) {
     assert.throws(() => parseInputs(bad));
   }
   assert.equal(workBranch(42, RUN), 'fix/testmanage-problem-42-0f8b3c2e');
+});
+
+test('framework fixes reject legacy and unverified release branches after the upstream migration', () => {
+  for (const baseRef of ['develop', 'main', 'release/3.0', 'release-beta/2026-08-26.1', 'v3-release/3.0']) {
+    assert.throws(
+      () => parseInputs({ PROBLEM_ID: '1', BASE_REF: baseRef }),
+      /base_ref must be v3-develop/,
+      `${baseRef} must be rejected before claiming a problem or checking out source`,
+    );
+  }
+});
+
+test('claim rejects the legacy develop branch before resolving Git refs or contacting TestManage', () => {
+  const result = spawnSync(process.execPath, [
+    path.resolve(import.meta.dirname, '../framework-fix.mjs'), 'claim',
+  ], {
+    // No Git executable or API credentials: validation must fail before either is needed.
+    env: { PATH: '', PROBLEM_ID: '1', BASE_REF: 'develop' },
+    encoding: 'utf8',
+    timeout: 5000,
+  });
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /base_ref must be v3-develop/);
 });
 
 test('the TestManage API base follows the configured report endpoint and stays on HTTPS', () => {
@@ -78,14 +101,14 @@ test('a definite claim rejection is final and a mismatched claim is refused', as
 });
 
 test('the prompt fences problem text as data and names the only accepted verdict file', () => {
-  const prompt = buildPrompt({ snapshot: snapshot(), runId: RUN, baseRef: 'develop', baseSha: SHA, verdictPath: '/tmp/out/verdict.json', dependencies: 'success' });
+  const prompt = buildPrompt({ snapshot: snapshot(), runId: RUN, baseRef: 'v3-develop', baseSha: SHA, verdictPath: '/tmp/out/verdict.json', dependencies: 'success' });
   assert.match(prompt, /\/tmp\/out\/verdict\.json/);
   assert.match(prompt, new RegExp(SHA));
   assert.match(prompt, /````text\nSteps\n```\nboom\n```\n````/, 'a longer fence keeps embedded backticks inside the block');
   assert.match(prompt, /Still happens on beta\.47/);
   assert.match(prompt, /不要\*\* commit、push/);
   assert.match(prompt, /gchust\.github\.io/);
-  assert.match(buildPrompt({ snapshot: { ...snapshot(), commentsOmitted: 3 }, runId: RUN, baseRef: 'develop', baseSha: SHA, verdictPath: '/v', dependencies: 'success' }), /另有 3 条较早的评论/);
+  assert.match(buildPrompt({ snapshot: { ...snapshot(), commentsOmitted: 3 }, runId: RUN, baseRef: 'v3-develop', baseSha: SHA, verdictPath: '/v', dependencies: 'success' }), /另有 3 条较早的评论/);
 });
 
 test('only a confirmed, declared fix with a real diff is published', () => {
@@ -128,7 +151,7 @@ test('reported results are bounded, redacted and explain a failed publication', 
   assert.doesNotMatch(payload.analysis, /sk-ant-oat01/);
   assert.match(payload.summary, /自动创建 PR 失败/);
   assert.throws(() => resultPayload({ decision, runId: '123', runUrl: 'u', pullRequestUrl: 'https://github.com/evil/repo/pull/1', branch: 'b', baseSha: SHA }));
-  const published = resultPayload({ decision, runId: '123', runUrl: 'u', pullRequestUrl: 'https://github.com/nocobase/nocobase3/pull/9', branch: 'b', baseSha: SHA });
+  const published = resultPayload({ decision, runId: '123', runUrl: 'u', pullRequestUrl: 'https://github.com/nocobase/nocobase/pull/9', branch: 'b', baseSha: SHA });
   assert.equal(published.branch, 'b');
   assert.match(published.analysis, /已执行的检查\*\*\n\n- pnpm --filter @nocobase\/x test: passed$/);
 });
@@ -151,10 +174,11 @@ test('the PR is an attributed English draft that links its evidence', async () =
   assert.equal(redact('ghp_' + 'a'.repeat(36)), '[REDACTED]');
 
   const requests = [];
-  const url = await openPullRequest({ token: 't', branch: 'fix/b', base: 'develop', title: 'T', body: 'B',
-    fetchImpl: async (u, o) => { requests.push({ u, o }); return requests.length === 1 ? response(422, { message: 'exists' }) : response(200, [{ html_url: 'https://github.com/nocobase/nocobase3/pull/5' }]); } });
-  assert.equal(url, 'https://github.com/nocobase/nocobase3/pull/5');
-  assert.deepEqual(JSON.parse(requests[0].o.body), { title: 'T', head: 'fix/b', base: 'develop', body: 'B', draft: true, maintainer_can_modify: true });
+  const url = await openPullRequest({ token: 't', branch: 'fix/b', base: 'v3-develop', title: 'T', body: 'B',
+    fetchImpl: async (u, o) => { requests.push({ u, o }); return requests.length === 1 ? response(422, { message: 'exists' }) : response(200, [{ html_url: 'https://github.com/nocobase/nocobase/pull/5' }]); } });
+  assert.equal(url, 'https://github.com/nocobase/nocobase/pull/5');
+  assert.equal(requests[0].u, 'https://api.github.com/repos/nocobase/nocobase/pulls');
+  assert.deepEqual(JSON.parse(requests[0].o.body), { title: 'T', head: 'fix/b', base: 'v3-develop', body: 'B', draft: true, maintainer_can_modify: true });
   assert.match(requests[1].u, /head=nocobase%3Afix%2Fb/);
 });
 

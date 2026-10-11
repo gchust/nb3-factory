@@ -2,7 +2,7 @@
 
 普通任务使用默认分支中已验证的新版 NocoBase 3 模板。源码评测单独固定提交，以便复现；它不随上游分支持续漂移。
 
-当前 PR/手动入口的默认源码提交为 `28c7522b3ddb384b05745715e94f7f985d09a67e`，对应官方 `@nocobase/app-template-default@1.0.0-beta.47` 发布标签。该值只定义在 `.github/scripts/source-baseline-ref.mjs` 的 `SOURCE_BASELINE_DEFAULT`：PR 检查的回退步骤直接导入它，`source-baseline.yml` 的 `workflow_dispatch` 输入默认值无法读取文件而重复一份，由 `source-baseline-selection.test.mjs` 校验两者一致。更换默认基线时同时修改这两处。已移除 beta.43 默认基线。自选源码也必须使用当前 CLI 契约，旧模板在工厂 overlay 阶段直接拒绝。
+当前 PR/手动入口的默认源码提交为 `ebcef43801270a1f72e2578ff9045bbe73c7d223`，来自 `nocobase/nocobase` 的 `v3-develop` 分支（2026-10-10 固定）。该值只定义在 `.github/scripts/source-baseline-ref.mjs` 的 `SOURCE_BASELINE_DEFAULT`：PR 检查的回退步骤直接导入它，`source-baseline.yml` 的 `workflow_dispatch` 输入默认值无法读取文件而重复一份，由 `source-baseline-selection.test.mjs` 校验两者一致。更换默认基线时同时修改这两处，并同步本文的提交与来源说明。自选源码也必须使用当前 CLI 契约，旧模板在工厂 overlay 阶段直接拒绝。
 
 源码构建与冒烟统一使用上游 `unreleased:prepare / unreleased:smoke / unreleased:clean`；导出器读取当前 `nocobase-unreleased-*` 会话，不回退到旧 registry 状态。
 

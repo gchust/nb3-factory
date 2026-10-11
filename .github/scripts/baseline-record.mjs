@@ -64,7 +64,7 @@ export function captureBaseline(workspace, { controlSha = null, sourceSha = null
   try { const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); if (isSha(sha)) workspaceSha = sha; } catch { /* Generated projects need not be Git repositories. */ }
   const facts = { version: 1, kind: sourceSha ? 'source-snapshot' : 'installed-packages',
     controlSha: isSha(controlSha) ? controlSha : null, workspaceSha,
-    source: sourceSha ? { repository: 'nocobase/nocobase3', sha: sourceSha } : null,
+    source: sourceSha ? { repository: template?.source?.repository ?? 'nocobase/nocobase', sha: sourceSha } : null,
     ...(sourceSnapshot ? { sourceSnapshot } : {}),
     template: typeof template?.template === 'string' ? template.template : null,
     creatorVersion, templateVersion: template?.templateVersion ?? pkg?.nocobase?.defaultTemplateVersion ?? null,

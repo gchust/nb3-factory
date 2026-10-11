@@ -37,11 +37,11 @@ on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: Exact nocobase/nocobase3 source SHA (not a moving branch)
+        description: Exact nocobase/nocobase v3-develop source SHA (not a moving branch)
         required: true
         # SOURCE_BASELINE_DEFAULT in .github/scripts/source-baseline-ref.mjs;
         # an input default cannot read it, so a test keeps the two equal.
-        default: 28c7522b3ddb384b05745715e94f7f985d09a67e
+        default: ebcef43801270a1f72e2578ff9045bbe73c7d223
         type: string
       publish:
         description: Publish an isolated source baseline branch after both runners pass
@@ -247,7 +247,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         id: source
         with:
-          repository: nocobase/nocobase3
+          repository: nocobase/nocobase
           ref: ${{ steps.pin.outputs.source_sha }}
           path: source
           persist-credentials: false
@@ -338,7 +338,7 @@ jobs:
           RESULT: ${{ job.status }}
         run: |
           mkdir -p "$RUNNER_TEMP/source-evidence"
-          node -e 'require("node:fs").writeFileSync(process.argv[1], JSON.stringify({version:1, source:{repository:"nocobase/nocobase3",sha:process.env.SOURCE_SHA}, controlSha:process.env.FACTORY_CONTROL_SHA,runId:process.env.GITHUB_RUN_ID,attempt:process.env.GITHUB_RUN_ATTEMPT,status:process.env.RESULT,scope:"source registry, create, dev, production archive and first configuration; not business Agent or Hub deployment"},null,2))' "$RUNNER_TEMP/source-evidence/source-run.json"
+          node -e 'require("node:fs").writeFileSync(process.argv[1], JSON.stringify({version:1, source:{repository:"nocobase/nocobase",sha:process.env.SOURCE_SHA}, controlSha:process.env.FACTORY_CONTROL_SHA,runId:process.env.GITHUB_RUN_ID,attempt:process.env.GITHUB_RUN_ATTEMPT,status:process.env.RESULT,scope:"source registry, create, dev, production archive and first configuration; not business Agent or Hub deployment"},null,2))' "$RUNNER_TEMP/source-evidence/source-run.json"
       - name: Preserve safe evidence, not configuration or registry credentials
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -60,7 +60,12 @@ export function verifyIntegrity(bytes, dist) {
 }
 export function validateSnapshot(value) {
   assert.equal(value.version, 1);
-  assert.equal(value.source?.repository, 'nocobase/nocobase3');
+  // Archived baselines keep their original repository identity.
+  assert.ok(
+    ['nocobase/nocobase', 'nocobase/nocobase3'].includes(
+      value.source?.repository,
+    ),
+  );
   assert.ok(
     sha(value.source.sha) &&
       Array.isArray(value.packages) &&
@@ -132,7 +137,7 @@ export async function exportSnapshot(
   assert.equal(new URL(state.registry).origin, ORIGIN);
   const result = {
     version: 1,
-    source: { repository: 'nocobase/nocobase3', sha: sourceSha },
+    source: { repository: 'nocobase/nocobase', sha: sourceSha },
     packages: [],
   };
   mkdirSync(path.join(output, 'packages'), { recursive: true });

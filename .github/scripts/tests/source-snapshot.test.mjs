@@ -83,3 +83,11 @@ test('portable publishing requires two verified jobs and keeps application execu
   assert.match(script, /FACTORY_CONTROL_SHA:\.github/);
   assert.doesNotMatch(script, /--clobber|refs\/heads\/develop/);
 });
+
+test('source snapshot repository allowlist accepts current and archived upstream only', t => {
+  const { snapshot } = fixture(t);
+  for (const repository of ['nocobase/nocobase', 'nocobase/nocobase3']) {
+    assert.doesNotThrow(() => validateSnapshot({ ...snapshot, source: { ...snapshot.source, repository } }));
+  }
+  assert.throws(() => validateSnapshot({ ...snapshot, source: { ...snapshot.source, repository: 'other/nocobase' } }));
+});

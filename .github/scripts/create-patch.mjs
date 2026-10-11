@@ -20,7 +20,7 @@ const protectedPaths = [
 // AGENTS.md and CLAUDE.md belong to @nocobase/app-template-default. A refresh
 // replaces them and template-guidance.test.mjs requires them byte-identical, so
 // a build's edit is reset here rather than merged and then broken. Other callers
-// (framework-fix on nocobase/nocobase3, whose root AGENTS.md is its own
+// (framework-fix on nocobase/nocobase, whose root AGENTS.md is its own
 // repository rules) keep every edit. Only the root files: client/AGENTS.md and
 // other nested guidance stay the application's.
 //
