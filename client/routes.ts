@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,29 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The scaffold the scheduled "检查过期待办" task acts on: three seeded rows and an `expired` column only the
+    // schedule writes. Read-mostly, so it carries no create flow.
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    auth: 'required',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+  },
+  {
+    // The application's own view of the Scheduler plugin's schedules, since the plugin contributes no page. Guarded
+    // by the same page grant the plugin's routes require, so enabling a schedule here matches what the API allows.
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    auth: 'required',
+    componentLoader: () => import('./pages/schedules/index.js'),
+    name: 'schedules',
+    navigation: { title: 'navigation.schedules', icon: CalendarClock },
+    path: '/schedules',
   },
   {
     auth: 'guest',
