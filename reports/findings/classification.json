@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0ef37a69a587f00da895f9a6fba86a5e9deabd22c2395cc2f54abba94177cc8e",
+  "inputHash": "c1b0bb4dd0e0fa63f8363541fc2167be82f9be0d28689afb3dd7e187789cdc99",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -936,6 +936,16 @@
       "id": "700:38106774507:1:F3",
       "report": "700:38106774507:1",
       "fingerprint": "5ce1cf59777f30bd7f87f1ad2da9652995dae7944b3776853a401a523f66b19f"
+    },
+    {
+      "id": "701:38106776639:1:F3",
+      "report": "701:38106776639:1",
+      "fingerprint": "adc896098bc9f55d6b61b02415be85b7d58c67f7947096d3f7aefb951dbedb54"
+    },
+    {
+      "id": "701:38106776639:1:F4",
+      "report": "701:38106776639:1",
+      "fingerprint": "84497fe36dc58e2ea9deb3d24bdbf5dfa7a06bbfbbbef1072bf09e1690a226f7"
     }
   ],
   "groups": [
@@ -1725,15 +1735,29 @@
       "members": [
         "689:38089377827:1:F5"
       ]
+    },
+    {
+      "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。",
+      "members": [
+        "701:38106776639:1:F3"
+      ]
+    },
+    {
+      "title": "语言偏好写入固定单键 localStorage，同一浏览器 profile 内不同账号共享，且指引未说明该作用域限制",
+      "reason": "单条保留。E5 显示 app-client 的 LOCALE_STORAGE_KEY 固定为单键 'nocobase.locale'，readStoredLocale/writeStoredLocale 无用户维度；E6 切换语言时先写该键再 notifyServerLocale，服务端语言保存在请求会话（E8/E11/E12），E21 的 Skill 也按 localStorage + 会话描述。根因是持久化作用域未按用户/登录态隔离，且指引未明确该限制与按用户隔离的接入方式。该可用性改进与其他语言相关发现（如 665:F3 语言字典缺键）根因不同，故单独保留。",
+      "members": [
+        "701:38106776639:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38109416379",
+    "runId": "38110570987",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-11T03:47:59.402Z"
+    "completedAt": "2026-10-11T04:08:43.215Z"
   }
 }
