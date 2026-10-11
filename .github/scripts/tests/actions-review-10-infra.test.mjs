@@ -683,6 +683,7 @@ test('template refresh publishes nothing when only the generation time and contr
   git(remote, 'init', '--bare');
   write(control, '.github/workflows/x.yml', 'control\n');
   write(control, '.npmrc', 'registry\n');
+  write(control, '.github/template.npmrc', 'registry\n');
   write(control, 'app.txt', 'baseline\n');
   write(control, 'factory-template.json', metadata());
   init(control, 'develop');
