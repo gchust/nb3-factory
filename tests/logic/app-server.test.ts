@@ -49,7 +49,10 @@ import {
   type RealtimeServerMessage,
 } from '@nocobase/app-server/realtime';
 import {
+  apiDocsToken,
   defineApiRoutes,
+  findApiDocumentSchemaProblems,
+  findUndeclaredApiRoutes,
   healthCheckApiRoutes,
 } from '@nocobase/app-server/router';
 import {
@@ -91,6 +94,7 @@ import {
 } from '@nocobase/app-server/plugins';
 import authenticationServerPlugin from '@nocobase/app-plugin-authentication/server';
 import authorizationServerPlugin from '@nocobase/app-plugin-authorization/server';
+import { userManagementServiceToken } from '@nocobase/app-plugin-users/server';
 
 import { createServer as createEmbeddedServer } from '../../server/embedded.ts';
 import { createStandaloneRuntimeScope } from '@nocobase/app-server/node';
@@ -140,6 +144,33 @@ function requestApp(
   const request =
     input instanceof Request ? input : new Request(input, requestInit);
   return app.fetch(request);
+}
+
+/** Sign in over the real authentication API and return the session cookies as a header value. */
+async function signIn(
+  app: FetchableResource,
+  baseUrl: string,
+  username: string,
+  password: string,
+): Promise<string> {
+  const response = await requestApp(
+    app,
+    `${baseUrl}/api/auth/sign-in/username`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Sign-in for ${username} failed with ${response.status}: ${await response.text()}`,
+    );
+  }
+  return response.headers
+    .getSetCookie()
+    .map((header) => header.split(';')[0])
+    .join('; ');
 }
 
 afterEach(async () => {
@@ -1016,6 +1047,346 @@ describe('app server', () => {
       error: 'Not found',
     });
   });
+});
+
+describe('IT tickets API', () => {
+  it('scopes tickets to their reporter and assignee and closes them once confirmed', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // The browser's Origin must be trusted for a cookie-authenticated write; the deployment names it here.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const origin = new URL(baseUrl).origin;
+    /** Cookie-authenticated writes carry the trusted Origin the CSRF check wants. */
+    const write = (
+      cookie: string,
+      method: 'POST' | 'PUT',
+      body: unknown,
+    ): RequestInit => ({
+      method,
+      headers: { cookie, origin, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    // The new routes are declared, and the documented schemas agree with the handlers.
+    const document = await app.application.container
+      .resolve(apiDocsToken)
+      .getDocument();
+    expect(findUndeclaredApiRoutes(app.application)).toEqual([]);
+    expect(findApiDocumentSchemaProblems(document)).toEqual([]);
+
+    // Without a session the API answers 401, never the ticket.
+    const anonymous = await requestApp(app, `${baseUrl}/api/itTickets`);
+    expect(anonymous.status).toBe(401);
+
+    // The first administrator holds the root Permission Set, which the service desk counts as its own.
+    const admin = await signIn(app, baseUrl, 'nocobase', 'admin123');
+    await expect(
+      (
+        await requestApp(app, `${baseUrl}/api/itMe`, {
+          headers: { cookie: admin },
+        })
+      ).json(),
+    ).resolves.toMatchObject({
+      data: { isRoot: true, isServiceDesk: true, role: null },
+    });
+
+    // Two ordinary users: the engineer work is assigned to, and the reporter.
+    const users = app.application.container.resolve(userManagementServiceToken);
+    const engineer = await users.create({
+      name: 'Engineer One',
+      username: 'engineer.one',
+      email: 'engineer.one@example.com',
+      password: 'Password123',
+    });
+    const reporter = await users.create({
+      name: 'Reporter One',
+      username: 'reporter.one',
+      email: 'reporter.one@example.com',
+      password: 'Password123',
+    });
+
+    const reporterSession = await signIn(
+      app,
+      baseUrl,
+      'reporter.one',
+      'Password123',
+    );
+    const engineerSession = await signIn(
+      app,
+      baseUrl,
+      'engineer.one',
+      'Password123',
+    );
+
+    // Only root sets team roles; a normal user may not change the team.
+    const forbiddenRole = await requestApp(
+      app,
+      `${baseUrl}/api/itTeamMembers/${engineer.id}`,
+      write(reporterSession, 'PUT', { role: 'engineer' }),
+    );
+    expect(forbiddenRole.status).toBe(403);
+
+    const assignedRole = await requestApp(
+      app,
+      `${baseUrl}/api/itTeamMembers/${engineer.id}`,
+      write(admin, 'PUT', { role: 'engineer' }),
+    );
+    expect(assignedRole.status).toBe(200);
+
+    // The reporter files a ticket, which starts pending and unassigned.
+    const created = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets`,
+      write(reporterSession, 'POST', {
+        title: 'Printer will not print',
+        description:
+          'The office printer reports a paper jam that is not there.',
+        urgency: 'high',
+      }),
+    );
+    expect(created.status).toBe(200);
+    const createdTicket = (await created.json()) as {
+      data: { id: number; status: string; reporterId: string };
+    };
+    const ticketId = createdTicket.data.id;
+    expect(createdTicket.data).toMatchObject({
+      status: 'pending',
+      reporterId: reporter.id,
+    });
+
+    // The engineer cannot see a ticket they are not assigned; the desk can.
+    const hiddenFromEngineer = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}`,
+      { headers: { cookie: engineerSession } },
+    );
+    expect(hiddenFromEngineer.status).toBe(403);
+    const visibleToDesk = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}`,
+      { headers: { cookie: admin } },
+    );
+    expect(visibleToDesk.status).toBe(200);
+
+    // The desk assigns it, moving it into processing and notifying the engineer.
+    const assigned = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/assign`,
+      write(admin, 'POST', { assigneeId: engineer.id }),
+    );
+    expect(assigned.status).toBe(200);
+    await expect(assigned.json()).resolves.toMatchObject({
+      data: { status: 'processing', assigneeId: engineer.id },
+    });
+
+    // The engineer's inbox carries the notification, and it links to the ticket.
+    const inbox = await requestApp(
+      app,
+      `${baseUrl}/api/notificationInApp/messages`,
+      { headers: { cookie: engineerSession } },
+    );
+    expect(inbox.status).toBe(200);
+    const inboxBody = (await inbox.json()) as {
+      data: {
+        title?: string;
+        body: string;
+        target?: { type: string; path: string };
+      }[];
+    };
+    expect(inboxBody.data[0]?.target).toEqual({
+      type: 'route',
+      path: `/tickets/${ticketId}`,
+    });
+    expect(inboxBody.data[0]?.title).toContain(`#${ticketId}`);
+    expect(inboxBody.data[0]?.body).toContain('Printer will not print');
+
+    // The engineer records progress and resolves; the reporter returns it for another round.
+    const processed = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/process`,
+      write(engineerSession, 'POST', {
+        content: 'Cleared the jam and cleaned the feed rollers.',
+      }),
+    );
+    expect(processed.status).toBe(200);
+    await expect(processed.json()).resolves.toMatchObject({
+      data: { status: 'processing' },
+    });
+
+    const resolved = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/resolve`,
+      write(engineerSession, 'POST', { resolution: 'Cleared the jam.' }),
+    );
+    expect(resolved.status).toBe(200);
+    await expect(resolved.json()).resolves.toMatchObject({
+      data: { status: 'resolved', resolution: 'Cleared the jam.' },
+    });
+
+    const returned = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/return`,
+      write(reporterSession, 'POST', {
+        reason: 'It jams again after a few pages.',
+      }),
+    );
+    expect(returned.status).toBe(200);
+    await expect(returned.json()).resolves.toMatchObject({
+      data: { status: 'processing', resolution: null },
+    });
+
+    // A second resolution is confirmed by the reporter and closed.
+    await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/process`,
+      write(engineerSession, 'POST', {
+        content: 'Replaced the feed assembly.',
+      }),
+    );
+    await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/resolve`,
+      write(engineerSession, 'POST', {
+        resolution: 'Replaced the feed assembly.',
+      }),
+    );
+    const closed = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/close`,
+      write(reporterSession, 'POST', { comment: 'Working now, thanks.' }),
+    );
+    expect(closed.status).toBe(200);
+    await expect(closed.json()).resolves.toMatchObject({
+      data: { status: 'closed', closedById: reporter.id },
+    });
+
+    // A closed ticket accepts no further work; the state conflict is a 400 (`FAILED_PRECONDITION`).
+    const afterClose = await requestApp(
+      app,
+      `${baseUrl}/api/itTickets/${ticketId}/process`,
+      write(engineerSession, 'POST', { content: 'Trying again.' }),
+    );
+    expect(afterClose.status).toBe(400);
+
+    // The dashboard counts the work the desk can see.
+    const dashboard = await requestApp(app, `${baseUrl}/api/itDashboard`, {
+      headers: { cookie: admin },
+    });
+    await expect(dashboard.json()).resolves.toMatchObject({
+      data: { pending: 0, processing: 0, resolved: 0, closed: 1, overdue: 0 },
+    });
+  }, 120_000);
+
+  it('accepts a real screenshot and refuses content that is not an image', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const origin = new URL(baseUrl).origin;
+    const admin = await signIn(app, baseUrl, 'nocobase', 'admin123');
+
+    const upload = (
+      name: string,
+      type: string,
+      bytes: Uint8Array,
+    ): Response | Promise<Response> => {
+      const form = new FormData();
+      form.append('file', new File([bytes], name, { type }));
+      return requestApp(app, `${baseUrl}/api/itTicketFiles/uploadOne`, {
+        method: 'POST',
+        headers: { cookie: admin, origin },
+        body: form,
+      });
+    };
+
+    // A one-pixel PNG is a screenshot; its bytes reach storage and a record comes back.
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      'base64',
+    );
+    const accepted = await upload('sample.png', 'image/png', png);
+    expect(accepted.status).toBe(201);
+
+    // A file declared `image/png` whose bytes are not is refused before it is stored.
+    const corrupt = await upload(
+      'corrupt.png',
+      'image/png',
+      new TextEncoder().encode('this is not a png'),
+    );
+    expect(corrupt.status).toBe(400);
+    await expect(corrupt.json()).resolves.toMatchObject({
+      error: { reason: 'TICKET_UNSUPPORTED_ATTACHMENT' },
+    });
+
+    // A non-image type is refused whether or not it reaches the picker.
+    const executable = await upload(
+      'unsupported.exe',
+      'application/octet-stream',
+      new TextEncoder().encode('MZ this is not an image'),
+    );
+    expect(executable.status).toBe(400);
+    await expect(executable.json()).resolves.toMatchObject({
+      error: { reason: 'TICKET_UNSUPPORTED_ATTACHMENT' },
+    });
+  }, 120_000);
+
+  it('loads the example ticket data when the database was installed for it', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: {
+          APP_PUBLIC_ORIGIN: 'http://localhost',
+          APP_SAMPLE_DATA: 'true',
+        },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    // A demo service-desk account signs in with its username.
+    const desk = await signIn(app, baseUrl, 'zhao.liu', 'Demo123456');
+    await expect(
+      (
+        await requestApp(app, `${baseUrl}/api/itMe`, {
+          headers: { cookie: desk },
+        })
+      ).json(),
+    ).resolves.toMatchObject({
+      data: { isRoot: false, isServiceDesk: true, role: 'serviceDesk' },
+    });
+
+    // One ticket in each state, and the pending one is already past its day.
+    await expect(
+      (
+        await requestApp(app, `${baseUrl}/api/itDashboard`, {
+          headers: { cookie: desk },
+        })
+      ).json(),
+    ).resolves.toMatchObject({
+      data: {
+        pending: 1,
+        processing: 1,
+        resolved: 1,
+        closed: 1,
+        overdue: 1,
+      },
+    });
+
+    // The reporter sees the three tickets they filed, and not the colleague's.
+    const reporter = await signIn(app, baseUrl, 'zhang.san', 'Demo123456');
+    const listed = (await (
+      await requestApp(app, `${baseUrl}/api/itTickets`, {
+        headers: { cookie: reporter },
+      })
+    ).json()) as { meta: { total: number } };
+    expect(listed.meta.total).toBe(3);
+  }, 120_000);
 });
 
 async function startStandaloneTestServer(

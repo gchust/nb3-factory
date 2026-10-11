@@ -1,190 +1,396 @@
-import { useTranslation } from '@nocobase/i18n/client';
+import { ApiClientError, useApiClient } from '@nocobase/app-client';
+import { useLocale, useTranslation } from '@nocobase/i18n/client';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  CopyIcon,
-  MessageSquareTextIcon,
-  SparklesIcon,
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  ClockIcon,
+  InboxIcon,
+  LoaderIcon,
+  PlusIcon,
+  UserIcon,
+  XCircleIcon,
 } from 'lucide-react';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 
+import { DataTable } from '#components/data-table';
 import { PageContainer } from '#components/page-container';
-import { Button } from '#components/ui/button';
+import { PageHeader } from '#components/page-header';
+import { SessionExpiredAlert } from '#components/session-expired-alert';
 import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '#components/ui/card';
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from '#components/ui/alert';
+import { Button } from '#components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '#components/ui/card';
+import { Skeleton } from '#components/ui/skeleton';
 
-import { CAPABILITIES, type Capability } from './capabilities.js';
-import { PromptDialog } from './prompt-dialog.js';
-import { useCopy } from './use-copy.js';
+import { TicketUrgencyBadge } from '../tickets/status-badge.js';
+import type {
+  EngineerWorkload,
+  ItDashboard,
+  TicketList,
+  Ticket,
+} from '../tickets/types.js';
 
-const STEPS = ['describe', 'build', 'review'] as const;
+const SHORT_LIST_SIZE = 5;
 
-export default function HomePage(): ReactElement {
+export default function DashboardPage(): ReactElement {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Capability>();
-  const [open, setOpen] = useState(false);
-  // Changes on every opening, so the dialog remounts and drops the edits of the previous one.
-  const [openCount, setOpenCount] = useState(0);
+  const { locale } = useLocale();
+  const api = useApiClient();
+  const [reloadCount, setReloadCount] = useState(0);
+  const [result, setResult] = useState<{
+    readonly key: string;
+    readonly dashboard?: ItDashboard;
+    readonly open?: Ticket[];
+    readonly error?: unknown;
+  }>();
+  const requestKey = String(reloadCount);
 
-  const openCapability = (capability: Capability): void => {
-    setSelected(capability);
-    setOpenCount((count) => count + 1);
-    setOpen(true);
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    const key = String(reloadCount);
+    Promise.all([
+      api.request<{ data: ItDashboard }>({
+        path: 'itDashboard',
+        signal: controller.signal,
+      }),
+      api.request<TicketList>({
+        path: 'itTickets',
+        query: { status: 'open', pageSize: 100 },
+        signal: controller.signal,
+      }),
+    ]).then(
+      ([dashboardResponse, ticketsResponse]) => {
+        if (!controller.signal.aborted) {
+          setResult({
+            key,
+            dashboard: dashboardResponse.data,
+            open: [...ticketsResponse.data],
+          });
+        }
+      },
+      (error: unknown) => {
+        if (!controller.signal.aborted) {
+          setResult((previous) => ({ ...previous, key, error }));
+        }
+      },
+    );
+    return () => controller.abort();
+  }, [api, reloadCount]);
+
+  const loading = result?.key !== requestKey;
+  const error = loading ? undefined : result?.error;
+  const dashboard = result?.dashboard;
+  const open = result?.open;
+
+  const dateFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  );
+
+  const pending = useMemo(
+    () => (open ?? []).filter((ticket) => ticket.status === 'pending'),
+    [open],
+  );
+  const overdue = useMemo(
+    () => (open ?? []).filter((ticket) => ticket.overdue),
+    [open],
+  );
+
+  const ticketColumns = useMemo<ColumnDef<Ticket>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: t('tickets.fields.number'),
+        cell: ({ row }) => (
+          <Link
+            to={`/tickets/${row.original.id}`}
+            className='font-medium whitespace-nowrap hover:underline'
+          >
+            #{row.original.id}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: 'title',
+        header: t('tickets.fields.title'),
+        cell: ({ row }) => (
+          <Link
+            to={`/tickets/${row.original.id}`}
+            className='font-medium hover:underline'
+          >
+            {row.original.title}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: 'urgency',
+        header: t('tickets.fields.urgency'),
+        cell: ({ row }) => (
+          <TicketUrgencyBadge urgency={row.original.urgency} />
+        ),
+      },
+      {
+        id: 'assignee',
+        accessorFn: (row) => row.assigneeName ?? '',
+        header: t('tickets.fields.assignee'),
+        cell: ({ row }) =>
+          row.original.assigneeName ?? (
+            <span className='text-muted-foreground'>—</span>
+          ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: t('tickets.fields.updatedAt'),
+        cell: ({ row }) => (
+          <span className='whitespace-nowrap text-muted-foreground'>
+            {dateFormat.format(new Date(row.original.updatedAt))}
+          </span>
+        ),
+      },
+    ],
+    [dateFormat, t],
+  );
+
+  const workloadColumns = useMemo<ColumnDef<EngineerWorkload>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('dashboard.workload.engineer'),
+        cell: ({ row }) => (
+          <span className='font-medium'>{row.original.name}</span>
+        ),
+      },
+      {
+        id: 'role',
+        accessorFn: (row) => row.role ?? '',
+        header: t('dashboard.workload.role'),
+        cell: ({ row }) => (
+          <span className='text-muted-foreground'>
+            {row.original.role ? t(`tickets.roles.${row.original.role}`) : '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'open',
+        header: t('dashboard.workload.open'),
+        cell: ({ row }) => (
+          <span className='tabular-nums'>{row.original.open}</span>
+        ),
+      },
+      {
+        accessorKey: 'total',
+        header: t('dashboard.workload.total'),
+        cell: ({ row }) => (
+          <span className='tabular-nums'>{row.original.total}</span>
+        ),
+      },
+    ],
+    [t],
+  );
+
+  let content: ReactElement;
+  if (error instanceof ApiClientError && error.status === 401) {
+    content = <SessionExpiredAlert />;
+  } else if (error) {
+    content = (
+      <Alert variant='destructive'>
+        <AlertCircleIcon />
+        <AlertTitle>{t('dashboard.error.title')}</AlertTitle>
+        <AlertDescription>
+          {t('dashboard.error.requestFailed')}
+        </AlertDescription>
+        <AlertAction>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setReloadCount((count) => count + 1)}
+          >
+            {t('status.retry')}
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
+  } else if (!dashboard || !open) {
+    content = <DashboardSkeleton label={t('status.loading')} />;
+  } else {
+    content = (
+      <>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'>
+          <MetricCard
+            label={t('dashboard.metrics.pending')}
+            value={dashboard.pending}
+            icon={<InboxIcon />}
+          />
+          <MetricCard
+            label={t('dashboard.metrics.processing')}
+            value={dashboard.processing}
+            icon={<LoaderIcon />}
+          />
+          <MetricCard
+            label={t('dashboard.metrics.resolved')}
+            value={dashboard.resolved}
+            icon={<CheckCircle2Icon />}
+          />
+          <MetricCard
+            label={t('dashboard.metrics.overdue')}
+            value={dashboard.overdue}
+            icon={<ClockIcon />}
+            tone='warning'
+          />
+          <MetricCard
+            label={t('dashboard.metrics.mine')}
+            value={dashboard.mine}
+            icon={<UserIcon />}
+          />
+          <MetricCard
+            label={t('dashboard.metrics.closed')}
+            value={dashboard.closed}
+            icon={<XCircleIcon />}
+          />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('dashboard.pending.title')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pending.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>
+                {t('dashboard.pending.empty')}
+              </p>
+            ) : (
+              <DataTable
+                columns={ticketColumns}
+                data={pending}
+                getRowId={(ticket) => String(ticket.id)}
+                pagination={false}
+                showSelectedCount={false}
+                pageSize={SHORT_LIST_SIZE}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('dashboard.overdue.title')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {overdue.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>
+                {t('dashboard.overdue.empty')}
+              </p>
+            ) : (
+              <DataTable
+                columns={ticketColumns}
+                data={overdue}
+                getRowId={(ticket) => String(ticket.id)}
+                pagination={false}
+                showSelectedCount={false}
+                pageSize={SHORT_LIST_SIZE}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('dashboard.workload.title')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dashboard.engineers.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>
+                {t('dashboard.workload.empty')}
+              </p>
+            ) : (
+              <DataTable
+                columns={workloadColumns}
+                data={[...dashboard.engineers]}
+                getRowId={(workload) => workload.userId}
+                pagination={false}
+                showSelectedCount={false}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
 
   return (
-    <PageContainer className='mx-auto max-w-6xl'>
-      <AgentIntro />
-      <section
-        aria-labelledby='home-capabilities'
-        className='flex flex-col gap-4'
-      >
-        <div className='flex flex-col gap-1'>
-          <h2 id='home-capabilities' className='text-base font-medium'>
-            {t('home.capabilitiesTitle')}
-          </h2>
-          <p className='text-sm text-muted-foreground'>
-            {t('home.capabilitiesDescription')}
-          </p>
-        </div>
-        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {CAPABILITIES.map((capability) => (
-            <li key={capability.id} className='flex'>
-              <CapabilityCard
-                capability={capability}
-                onOpen={() => openCapability(capability)}
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected ? (
-        <PromptDialog
-          key={openCount}
-          capability={selected}
-          open={open}
-          onOpenChange={setOpen}
-        />
-      ) : null}
+    <PageContainer>
+      <PageHeader
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
+        actions={
+          <Button render={<Link to='/tickets/new' />} nativeButton={false}>
+            <PlusIcon data-icon='inline-start' />
+            {t('tickets.create.action')}
+          </Button>
+        }
+      />
+      {content}
     </PageContainer>
   );
 }
 
-/** The first part of the page: development here happens by asking a coding agent, which the steps and sample show. */
-function AgentIntro(): ReactElement {
-  const { t } = useTranslation();
-  const { copied, copy } = useCopy();
-  const example = t('home.example.text');
-
+function MetricCard({
+  label,
+  value,
+  icon,
+  tone = 'default',
+}: {
+  readonly label: string;
+  readonly value: number;
+  readonly icon: ReactElement;
+  readonly tone?: 'default' | 'warning';
+}): ReactElement {
   return (
-    <section className='grid gap-8 rounded-2xl border border-border bg-linear-to-br from-primary/5 via-card to-card p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center'>
-      <div className='flex flex-col gap-6'>
-        <div className='flex flex-col gap-4'>
-          <p className='flex items-center gap-2 text-sm font-medium text-primary'>
-            <SparklesIcon className='size-4' aria-hidden />
-            {t('home.platform')}
-          </p>
-          <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em] text-balance md:text-4xl'>
-            {t('home.title')}
-          </h1>
-          <p className='text-base leading-7 text-muted-foreground'>
-            {t('home.description')}
-          </p>
+    <Card>
+      <CardContent className='flex items-center justify-between gap-3 pt-6'>
+        <div className='space-y-1'>
+          <p className='text-sm text-muted-foreground'>{label}</p>
+          <p className='text-2xl font-semibold tabular-nums'>{value}</p>
         </div>
-        <ol className='flex flex-col gap-3'>
-          {STEPS.map((step, index) => (
-            <li key={step} className='flex gap-3'>
-              <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>
-                {index + 1}
-              </span>
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-sm font-medium'>
-                  {t(`home.steps.${step}.title`)}
-                </span>
-                <span className='text-sm text-muted-foreground'>
-                  {t(`home.steps.${step}.description`)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <figure className='flex flex-col overflow-hidden rounded-xl border border-primary/10 bg-card shadow-sm'>
-        <figcaption className='flex items-center justify-between gap-2 border-b border-primary/10 px-4 py-2.5'>
-          <span className='flex items-center gap-2 text-sm font-medium'>
-            <MessageSquareTextIcon
-              className='size-4 text-primary'
-              aria-hidden
-            />
-            {t('home.example.title')}
-          </span>
-          <Button variant='ghost' size='sm' onClick={() => void copy(example)}>
-            {copied ? (
-              <CheckIcon data-icon='inline-start' />
-            ) : (
-              <CopyIcon data-icon='inline-start' />
-            )}
-            {copied ? t('home.prompt.copiedShort') : t('home.prompt.copy')}
-          </Button>
-        </figcaption>
-        <p className='bg-primary/5 px-4 py-4 text-sm leading-7 whitespace-pre-line'>
-          {example}
-        </p>
-        <p className='border-t border-primary/10 px-4 py-2.5 text-xs text-muted-foreground'>
-          {t('home.example.hint')}
-        </p>
-      </figure>
-    </section>
+        <span
+          aria-hidden='true'
+          className={
+            tone === 'warning'
+              ? 'text-(--status-warning) [&_svg]:size-5'
+              : 'text-muted-foreground [&_svg]:size-5'
+          }
+        >
+          {icon}
+        </span>
+      </CardContent>
+    </Card>
   );
 }
 
-function CapabilityCard({
-  capability,
-  onOpen,
+function DashboardSkeleton({
+  label,
 }: {
-  readonly capability: Capability;
-  readonly onOpen: () => void;
+  readonly label: string;
 }): ReactElement {
-  const { t } = useTranslation();
-  const prefix = `home.capabilities.${capability.id}`;
-  const Icon = capability.icon;
-
   return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='group flex w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-    >
-      <Card className='w-full transition-[translate,box-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-foreground/20 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0'>
-        <CardHeader className='gap-3'>
-          {/* The chip only deepens its tint on hover rather than inverting: swapping a light background and a dark icon
-              passes both through the same color halfway, where the icon vanishes for a moment and reads as a flicker. */}
-          <span className='flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 ease-out group-hover:bg-primary/10 group-hover:ring-primary/20 motion-reduce:transition-none'>
-            <Icon
-              className='size-4 transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none'
-              aria-hidden
-            />
-          </span>
-          <div className='flex flex-col gap-1'>
-            <CardTitle>{t(`${prefix}.title`)}</CardTitle>
-            <CardDescription className='leading-6'>
-              {t(`${prefix}.description`)}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardFooter className='mt-auto justify-between text-sm text-muted-foreground transition-colors duration-200 ease-out group-hover:text-foreground'>
-          {t('home.viewPrompts', { count: capability.prompts.length })}
-          <ArrowRightIcon
-            className='size-4 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none'
-            aria-hidden
-          />
-        </CardFooter>
-      </Card>
-    </button>
+    <div role='status' aria-label={label} className='space-y-4'>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'>
+        {Array.from({ length: 6 }, (_, index) => (
+          <Skeleton key={index} className='h-24' />
+        ))}
+      </div>
+      <Skeleton className='h-56' />
+      <Skeleton className='h-56' />
+    </div>
   );
 }
