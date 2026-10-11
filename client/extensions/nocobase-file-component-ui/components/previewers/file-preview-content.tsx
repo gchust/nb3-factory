@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,45 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+/**
+ * An image preview that reports a file the browser cannot decode instead of leaving a broken image behind.
+ *
+ * A truncated or corrupt PNG still reaches this branch — its type says `image/png` — so the only honest answer is an
+ * explicit failure with the download still offered, never a silent blank or a claim that the preview succeeded.
+ */
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  if (!url || failed) {
+    return (
+      <div role='alert'>
+        <DownloadFallback
+          file={file}
+          message={t('files.imageFailed', {
+            defaultValue:
+              'This image could not be displayed. The file may be corrupt or in a format the browser cannot show.',
+          })}
+          onDownload={onDownload}
+        />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

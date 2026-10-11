@@ -61,6 +61,16 @@ export default function LoginPage(): ReactElement {
           },
         ]}
       />
+      {/* The application's internal demo accounts. There is no other channel that hands out credentials, so the
+          sign-in page states them. Remove this block once the accounts are no longer wanted. */}
+      <div className='mt-6 rounded-lg border border-border bg-muted/40 p-4 text-sm'>
+        <p className='font-medium'>{t('auth.demoAccounts')}</p>
+        <ul className='mt-2 space-y-1 text-muted-foreground'>
+          <li>{t('auth.demoOwner')}</li>
+          <li>{t('auth.demoColleague')}</li>
+        </ul>
+        <p className='mt-2 text-muted-foreground'>{t('auth.demoPassword')}</p>
+      </div>
     </AuthPage>
   );
 }

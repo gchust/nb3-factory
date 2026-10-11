@@ -7,6 +7,7 @@ import {
   FileVideo,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useState } from 'react';
 
 import { isSafeImagePreview } from '../lib/file-preview';
 import type { FileThumbnailProps } from '../types';
@@ -45,15 +46,19 @@ export function FileThumbnail({
   url,
   alt = file.filename,
 }: FileThumbnailProps): ReactElement {
+  // A thumbnail for a corrupt image fails to decode; falling back to the type icon keeps the list honest instead of
+  // leaving a broken image in its place.
+  const [failed, setFailed] = useState(false);
   const imageUrl = resolveSafeFileUrl(
     url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),
   );
-  return imageUrl ? (
+  return imageUrl && !failed ? (
     <img
       data-slot='file-thumbnail'
       src={imageUrl}
       alt={alt}
       className='h-full w-full object-cover'
+      onError={() => setFailed(true)}
     />
   ) : (
     <span

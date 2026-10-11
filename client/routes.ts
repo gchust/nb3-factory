@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderLock, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,32 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Materials and their private attachments. Every signed-in user reaches the page; which rows and files they can
+    // see is decided by the data itself, not by page authorization, so the page opts out of it.
+    auth: 'required',
+    authz: 'skip',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/materials/new.js'),
+        name: 'materials-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/materials/detail.js'),
+        name: 'materials-detail',
+        path: ':materialId',
+      },
+    ],
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FolderLock },
+    path: '/materials',
   },
   {
     auth: 'guest',
