@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,27 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The todo list. The API requires a session, so any signed-in user may read it and toggle completion; the
+    // page itself adds no permission of its own.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+  },
+  {
+    // The application's own Scheduler management page, because the Scheduler plugin ships no page. Its API checks the
+    // `page:scheduler.schedules/access` grant, so the page is guarded by that API, not by a client-side rule: a user
+    // without the grant still reaches the route and the page shows the 403 it answers with.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/schedules/index.js'),
+    name: 'schedules',
+    navigation: { title: 'navigation.schedules', icon: CalendarClock },
+    path: '/schedules',
   },
   {
     auth: 'guest',
