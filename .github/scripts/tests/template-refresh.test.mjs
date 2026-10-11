@@ -94,7 +94,8 @@ function overlayFixture(root) {
     '.github/workflows/refresh-template.yml',
     'factory-workflow\n',
   );
-  write(control, '.npmrc', '@nocobase:registry=https://registry.npmjs.org/\n');
+  write(control, '.npmrc', '@nocobase:registry=https://npm.nocobase.ai/\n');
+  write(control, '.github/template.npmrc', '@nocobase:registry=https://registry.npmjs.org/\n');
   write(control, '.agents/skills/custom/SKILL.md', 'custom guidance');
   write(control, 'client/old-business.ts', 'must not survive refresh');
   write(control, 'docs/factory-guide.md', '# Factory guide\n');
@@ -172,6 +173,10 @@ test('refresh preserves controls and the generated guide without inheriting old 
     assert.equal(
       existsSync(path.join(fresh, '.github/workflows/upstream.yml')),
       false,
+    );
+    assert.equal(
+      readFileSync(path.join(fresh, '.npmrc'), 'utf8'),
+      readFileSync(path.join(control, '.github/template.npmrc'), 'utf8'),
     );
     assert.equal(existsSync(path.join(fresh, 'client/old-business.ts')), false);
     assert.equal(
@@ -388,7 +393,8 @@ function publishFixture(root) {
   mkdirSync(remote);
   git(remote, 'init', '--bare');
   write(control, '.github/workflows/refresh-template.yml', 'trusted control\n');
-  write(control, '.npmrc', 'trusted registry\n');
+  write(control, '.npmrc', 'previous registry\n');
+  write(control, '.github/template.npmrc', 'trusted registry\n');
   write(control, 'app.txt', 'old baseline\n');
   init(control, 'develop');
   const base = commit(control);
@@ -398,7 +404,7 @@ function publishFixture(root) {
   cpSync(path.join(control, '.github'), path.join(candidate, '.github'), {
     recursive: true,
   });
-  cpSync(path.join(control, '.npmrc'), path.join(candidate, '.npmrc'));
+  cpSync(path.join(control, '.github/template.npmrc'), path.join(candidate, '.npmrc'));
   write(candidate, 'app.txt', 'latest template\n');
   init(candidate, 'template');
   const next = commit(candidate);
@@ -483,36 +489,38 @@ test('publish refuses a develop commit that changed after generation began', () 
   }
 });
 
-test('publish rejects a candidate that replaces trusted workflows', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-controls-'));
-  try {
-    const f = publishFixture(root);
-    write(
-      f.candidate,
-      '.github/workflows/refresh-template.yml',
-      'modified controls\n',
-    );
-    git(f.candidate, 'add', '.');
-    git(f.candidate, 'commit', '--amend', '--no-edit');
-    git(f.candidate, 'bundle', 'create', f.bundle, 'refs/heads/template');
-    const result = spawnSync(
-      'bash',
-      [
-        path.join(scripts, 'publish-template.sh'),
-        f.control,
-        f.bundle,
-        f.base,
-        'factory-backup/develop-123-1',
-      ],
-      { encoding: 'utf8' },
-    );
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /changed .github/);
-    assert.equal(git(f.remote, 'rev-parse', 'develop'), f.base);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+for (const protectedPath of ['.github/workflows/refresh-template.yml', '.npmrc']) {
+  test(`publish rejects a candidate that replaces trusted ${protectedPath}`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-controls-'));
+    try {
+      const f = publishFixture(root);
+      write(
+        f.candidate,
+        protectedPath,
+        'modified controls\n',
+      );
+      git(f.candidate, 'add', '.');
+      git(f.candidate, 'commit', '--amend', '--no-edit');
+      git(f.candidate, 'bundle', 'create', f.bundle, 'refs/heads/template');
+      const result = spawnSync(
+        'bash',
+        [
+          path.join(scripts, 'publish-template.sh'),
+          f.control,
+          f.bundle,
+          f.base,
+          'factory-backup/develop-123-1',
+        ],
+        { encoding: 'utf8' },
+      );
+      assert.notEqual(result.status, 0);
+      assert.ok(result.stderr.includes(`changed ${protectedPath === '.npmrc' ? '.npmrc' : '.github'}`), result.stderr);
+      assert.equal(git(f.remote, 'rev-parse', 'develop'), f.base);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
 
 test('packaging allows GitHub issue settings but rejects staged runtime files', () => {
   const workflow = readFileSync(
@@ -585,7 +593,7 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(workflow, /\(github\.event_name == 'workflow_dispatch' && github\.actor == github\.repository_owner\) \|\|/);
   const publisher = workflow.split('\n  publish:')[1];
   assert.match(workflow.split('\n  publish:')[0], /contents: read/);
-  assert.match(workflow, /template-creator.mjs pin control/);
+  assert.match(workflow, /template-creator.mjs pin "\$RUNNER_TEMP\/template-generation"/);
   assert.match(
     workflow,
     /pnpm create "@nocobase\/app@\$FACTORY_CREATOR_VERSION" nb3-factory/,
@@ -730,7 +738,7 @@ test('every building job exposes the factory registry to nested dist installs', 
     const expose =
       name === 'task verify-final'
         ? job.indexOf('uses: ./factory-actions/.github/actions/restore-task-toolchain')
-        : job.indexOf('cat control/.npmrc >> ~/.npmrc');
+        : job.indexOf(name === 'refresh generate' ? 'cat control/.github/template.npmrc >> ~/.npmrc' : 'cat control/.npmrc >> ~/.npmrc');
     assert.ok(expose > 0, name);
     assert.ok(expose < job.search(/pnpm (create|install)/), name);
   }

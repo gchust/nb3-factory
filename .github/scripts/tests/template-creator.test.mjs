@@ -69,7 +69,7 @@ console.log(JSON.stringify('0.1.0-beta.30'));
 
 test('factory npm configuration uses public npm for both default and scoped packages', () => {
   const config = readFileSync(
-    new URL('../../../.npmrc', import.meta.url),
+    new URL('../../template.npmrc', import.meta.url),
     'utf8',
   );
   assert.match(config, /^registry=https:\/\/registry\.npmjs\.org\/$/m);

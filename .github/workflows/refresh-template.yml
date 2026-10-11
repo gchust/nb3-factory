@@ -27,7 +27,7 @@ on:
       # overlay-factory.mjs reads these from the control checkout. It also
       # copies docs/ into the generated application, whose verify.sh then
       # format-checks it.
-      - '.npmrc'
+      - '.github/template.npmrc'
       - 'README.MD'
       - 'package.json'
       - 'docs/**'
@@ -147,11 +147,14 @@ jobs:
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
         if: steps.supersede.outputs.superseded != 'true'
-        run: cat control/.npmrc >> ~/.npmrc
+        run: |
+          cat control/.github/template.npmrc >> ~/.npmrc
+          mkdir -p "$RUNNER_TEMP/template-generation"
+          cp control/.github/template.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
 
       - name: Pin the actual published application generator
         if: steps.supersede.outputs.superseded != 'true'
-        run: node control/.github/scripts/template-creator.mjs pin control
+        run: node control/.github/scripts/template-creator.mjs pin "$RUNNER_TEMP/template-generation"
 
       - name: Create a fresh application from the published beta template
         if: steps.supersede.outputs.superseded != 'true'
@@ -162,7 +165,6 @@ jobs:
           CI: true
         run: |
           mkdir -p "$RUNNER_TEMP/template-generation" "$RUNNER_TEMP/template-diagnostics"
-          cp control/.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
           cd "$RUNNER_TEMP/template-generation"
           # Current create-app uses the template's database defaults; verification
           # supplies an isolated SQLite connection via create-runtime-config.mjs.

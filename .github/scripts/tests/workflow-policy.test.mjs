@@ -641,11 +641,11 @@ function scriptsRunBy(name) {
 }
 
 // Files overlay-factory.mjs reads from the control checkout besides scripts:
-// the .npmrc it copies, the README.MD factory section, package.json's
+// the template.npmrc it copies, the README.MD factory section, package.json's
 // factory scripts and devDependencies, and the docs/ tree it copies (one
 // nested path stands for it).
 const OVERLAY_CONTROL_INPUTS = [
-  '.npmrc',
+  '.github/template.npmrc',
   'README.MD',
   'package.json',
   'docs/guides/example.md',
@@ -679,7 +679,7 @@ test('the template refresh check runs whenever a script or overlay input it uses
     path.resolve(import.meta.dirname, '../overlay-factory.mjs'),
     'utf8',
   );
-  assert.match(overlay, /path\.join\(control, '\.npmrc'\)/);
+  assert.match(overlay, /path\.join\(control, '\.github\/template\.npmrc'\)/);
   assert.match(overlay, /section\('README\.MD', 'readme'\)/);
   assert.match(overlay, /read\(control, 'package\.json'\)/);
   assert.match(overlay, /cpSync\(path\.join\(control, 'docs'\)/);
