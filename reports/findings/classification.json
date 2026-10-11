@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "c1b0bb4dd0e0fa63f8363541fc2167be82f9be0d28689afb3dd7e187789cdc99",
+  "inputHash": "f9739854592b7b3bb458c55b5391cde0bc474087a6b390d766be417436365916",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -933,6 +933,21 @@
       "fingerprint": "e76c6579f32df8870a00507b52a3004e4bfeade0f2234af0ab4605c44fe173b4"
     },
     {
+      "id": "699:38106772246:1:F1",
+      "report": "699:38106772246:1",
+      "fingerprint": "5564dc8a7b76700a81cd50d36b2f0fede9235083783916794873a92b08d9d83d"
+    },
+    {
+      "id": "699:38106772246:1:F2",
+      "report": "699:38106772246:1",
+      "fingerprint": "ec701fc0d57275744a2ec786abffa3054dbee344822c19d2683140cf523e3cd7"
+    },
+    {
+      "id": "699:38106772246:1:F6",
+      "report": "699:38106772246:1",
+      "fingerprint": "0c741f70118228ee0cb28bdad15bde8cc5f0555c7f0b9895e4738c22caaf53d4"
+    },
+    {
       "id": "700:38106774507:1:F3",
       "report": "700:38106774507:1",
       "fingerprint": "5ce1cf59777f30bd7f87f1ad2da9652995dae7944b3776853a401a523f66b19f"
@@ -980,7 +995,7 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
-      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。 646:F1（E29/E30/E40/E2/E3/E42）再次确认同一 code-and-seeds.md 第 40/69 行示例在 .ts 种子中以 .js 相对说明符导入 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js，而同页第 97 行文字却称导入 .ts，自相矛盾；task-loader 用 pathToFileURL().href 交给原生 import，__rewriteRelativeImportExtension 只对 ^\\.\\.?/ 字面量生效、不作用于 file URL，应用把说明符改成 .ts 后测试才通过。与既有成员同一错误指引、同一修复方向（示例改 .ts 或加载器回退解析），故并入。 688:F1（E29/E30/E24/E25/E31/E76）在 1.0.0-beta.55 复现同一错误指引：code-and-seeds.md 第 36/69/97 行把“共享 seed-data 模块 + .js 说明符导入”作为标准做法，实际应用启动即 Database seeds failed，Caused by ERR_MODULE_NOT_FOUND: .../database/seed-data/library-accounts.js imported from .../database/main/seeds/*.ts；task-loader 只用原生 import 并按字面路径解析、仅改写任务文件自身扩展名，对种子内部的传递导入无效，最终只能内联常量保持自包含，与既有成员同一错误指引与同一修复方向，故并入。",
+      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。 646:F1（E29/E30/E40/E2/E3/E42）再次确认同一 code-and-seeds.md 第 40/69 行示例在 .ts 种子中以 .js 相对说明符导入 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js，而同页第 97 行文字却称导入 .ts，自相矛盾；task-loader 用 pathToFileURL().href 交给原生 import，__rewriteRelativeImportExtension 只对 ^\\.\\.?/ 字面量生效、不作用于 file URL，应用把说明符改成 .ts 后测试才通过。与既有成员同一错误指引、同一修复方向（示例改 .ts 或加载器回退解析），故并入。 688:F1（E29/E30/E24/E25/E31/E76）在 1.0.0-beta.55 复现同一错误指引：code-and-seeds.md 第 36/69/97 行把“共享 seed-data 模块 + .js 说明符导入”作为标准做法，实际应用启动即 Database seeds failed，Caused by ERR_MODULE_NOT_FOUND: .../database/seed-data/library-accounts.js imported from .../database/main/seeds/*.ts；task-loader 只用原生 import 并按字面路径解析、仅改写任务文件自身扩展名，对种子内部的传递导入无效，最终只能内联常量保持自包含，与既有成员同一错误指引与同一修复方向，故并入。 699:F1（E18/E19/E36/E37）在 1.0.0-beta.61 再确认同一错误指引：code-and-seeds.md 第 40/69 行示例以 ../../server/sales-resources.js、../../seed-data/permission-sets.js 相对导入，而同页说明实际文件是 .ts；importTaskDefinition 只重写任务文件自身的 .ts 说明符，嵌套 .js 不解析到 .ts，verify-2 报 ERR_MODULE_NOT_FOUND，改为 .ts 后通过，与既有成员同一错误指引与同一修复方向。",
       "members": [
         "474:36498921009:1:F1",
         "475:36498925234:1:F2",
@@ -988,7 +1003,8 @@
         "544:37156757587:1:F1",
         "649:37621548882:1:F1",
         "646:37621545718:1:F1",
-        "688:38089375339:1:F1"
+        "688:38089375339:1:F1",
+        "699:38106772246:1:F1"
       ]
     },
     {
@@ -1088,12 +1104,13 @@
     },
     {
       "title": "写动作（create/update 及自定义 handler）回读需在同一权限声明 read，授权指引未说明",
-      "reason": "跨报告合并。493:F1（E14/E29/E4/E33）与 496:F3（E10/E14）都显示 composeDatabasePolicies 默认 read:false，而 Repository.createOne 插入后以读策略校验并回读，仅授予 create 会抛 READ_FORBIDDEN/500；repository-routes.md/fluent-registration.md/runtime-api.md 只在快捷路由示例中隐式出现 read+update，未把该约束写成规则，同一根因与同一修复方向（指引要求写动作同时授予 read 字段）。597:F2（E21/E22）同样指向该缺口：runtime-api.md 只要求自定义 handler 绑定返回的 conditions.database 策略，repository-routes.md 的 projectData.update([...]) 示例隐式演示 read 与 update 同权限，却未说明写后读回在 read:false 时会抛 READ_FORBIDDEN，应用因此对 start/complete 只声明 update 并被迫以 ticketWritePolicy 手工合并 view 的 read 与动作的 write，与前述成员同属“写后读回需要 read 声明”的指引缺口与同一修复方向。 646:F3（E7/E8/E9/E10/E11/E31/E32）同样证明 composeDatabasePolicies 以 read:false 起底、createOne/updateOne 在写校验后仍需经 rootReadContext 解析读上下文，read===false 时 resolveReadNode 抛 READ_FORBIDDEN，而授权指引的 quoteData 示例都是 read+update 同授、未点明写读耦合，应用补 .read('*') 后才通过；同一根因、同一期望（指引显式要求写动作同时声明 read）与同一修复方向，故并入。",
+      "reason": "跨报告合并。493:F1（E14/E29/E4/E33）与 496:F3（E10/E14）都显示 composeDatabasePolicies 默认 read:false，而 Repository.createOne 插入后以读策略校验并回读，仅授予 create 会抛 READ_FORBIDDEN/500；repository-routes.md/fluent-registration.md/runtime-api.md 只在快捷路由示例中隐式出现 read+update，未把该约束写成规则，同一根因与同一修复方向（指引要求写动作同时授予 read 字段）。597:F2（E21/E22）同样指向该缺口：runtime-api.md 只要求自定义 handler 绑定返回的 conditions.database 策略，repository-routes.md 的 projectData.update([...]) 示例隐式演示 read 与 update 同权限，却未说明写后读回在 read:false 时会抛 READ_FORBIDDEN，应用因此对 start/complete 只声明 update 并被迫以 ticketWritePolicy 手工合并 view 的 read 与动作的 write，与前述成员同属“写后读回需要 read 声明”的指引缺口与同一修复方向。 646:F3（E7/E8/E9/E10/E11/E31/E32）同样证明 composeDatabasePolicies 以 read:false 起底、createOne/updateOne 在写校验后仍需经 rootReadContext 解析读上下文，read===false 时 resolveReadNode 抛 READ_FORBIDDEN，而授权指引的 quoteData 示例都是 read+update 同授、未点明写读耦合，应用补 .read('*') 后才通过；同一根因、同一期望（指引显式要求写动作同时声明 read）与同一修复方向，故并入。 699:F2（E8/E27/E34）在 1.0.0-beta.61 再确认同一缺口：createOne 写入后经 validateSelect/readContext 回读新行，策略 read:false 时 resolveReadNode 抛 READ_FORBIDDEN；repository-routes.md 示例只给 view/edit、未说明 create 需同时授予 read，应用只能在 create 策略追加 .read('*')，与既有成员同一根因（写动作回读依赖 read）与同一修复方向。",
       "members": [
         "493:36641586376:1:F1",
         "496:36641602107:1:F3",
         "597:37453035816:1:F2",
-        "646:37621545718:1:F3"
+        "646:37621545718:1:F3",
+        "699:38106772246:1:F2"
       ]
     },
     {
@@ -1749,15 +1766,22 @@
       "members": [
         "701:38106776639:1:F4"
       ]
+    },
+    {
+      "title": "FilterOperator 缺少 $in，idsScope 无法用单个成员判断表达 id 集合，只能展开为逐 id $eq",
+      "reason": "单条保留。699:F6 的证据 E4 显示 packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js 的 idsScope 因 FilterOperator 没有集合成员操作符（$includes 仅子串匹配）而把 id 集合展开为多个 $eq，语义正确但大集合过滤条件冗长。这是过滤操作符集合的可用性缺口，与既有“allScopes/idsScope 未公开导出”（组5）、布尔字段算子白名单/condition 运算符收窄等根因不同，证据不足以并入其他问题，故单独保留。",
+      "members": [
+        "699:38106772246:1:F6"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38110570987",
+    "runId": "38116283002",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-11T04:08:43.215Z"
+    "completedAt": "2026-10-11T05:55:51.828Z"
   }
 }
