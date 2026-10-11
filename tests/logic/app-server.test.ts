@@ -169,6 +169,10 @@ afterEach(async () => {
 });
 
 describe('app server', () => {
+  it('encrypts stored OAuth tokens', () => {
+    expect(authConfig({} as never).account?.encryptOAuthTokens).toBe(true);
+  });
+
   it('represents the NocoBase application separately from its Hono router', () => {
     const app = createTestApp({
       publicBasePath: '/app-template-default',
@@ -270,14 +274,6 @@ describe('app server', () => {
       start.mockRestore();
       ready.mockRestore();
     }
-  });
-
-  it('starts without optional plugins or workflow routes', async () => {
-    const app = createTestApp();
-
-    expect(
-      app.router.routes.some((route) => route.path.includes('/workflows')),
-    ).toBe(false);
   });
 
   it('creates embedded apps from a scope', async () => {
@@ -1226,12 +1222,6 @@ function createTestApp(options: CreateTestAppOptions = {}): TestApp {
     logging: createSilentLoggingConfig(),
     queue: options.queue ?? createTestQueueConfig(),
     session: createNullSessionConfig(),
-    workflow: {
-      sourceRoot: path.resolve(process.cwd(), 'workflows'),
-      distRoot: path.resolve(process.cwd(), 'dist/workflows'),
-      artifactDisk: 'local',
-      production: false,
-    },
     snowflake: {
       workerId: 0,
     },
@@ -1562,7 +1552,6 @@ async function writeRuntimeTestConfig(
           main: { seeds: { autoRun: env.DB_SEEDS_AUTO_RUN === 'true' } },
         },
       },
-      hub: { host: { enabled: false } },
     },
   });
   testConfigs.push(config);

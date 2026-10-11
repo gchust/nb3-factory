@@ -4,7 +4,7 @@ Part of the [projects worked example](../example.md).
 
 **Depends on**: [status badge](../i18n.md#dynamic-keys), [session alert](session-expired-alert.md), [types](types.md), [copy](copy.md); `projectDetailRoutes` in [section 1 of `page.md`](../page.md#1-declare-the-route), and the route in ["The same drawer over another page" in `overlay.md`](../overlay.md#the-same-drawer-over-another-page).
 
-**Add first**: `yes n | pnpm exec shadcn add alert card chart empty skeleton @nocobase/data-table`, then format the files it creates, move the `recharts` and `@tanstack/react-table` it installs to `devDependencies` and put back the `^` range of `@nocobase/i18n` ([how](../shadcn.md#1-what-the-template-ships-and-how-to-add-the-rest)).
+**Add first**: `yes n | pnpm exec shadcn add alert card chart empty skeleton`, then format the files it creates and move the `recharts` it installs to `devDependencies` ([how](../shadcn.md#1-what-the-template-ships-and-how-to-add-the-rest)); `DataTable` is the one the [list page](list-page.md) builds.
 
 **Links to**: the [detail drawer](detail-drawer.md) and its [edit dialog](edit-dialog.md), declared under this page, and the projects list ("View all").
 
@@ -30,17 +30,17 @@ import {
 import { Link, Outlet, useLocation } from 'react-router';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-import { DataTable } from '@/components/data-table';
-import { PageContainer } from '@/components/page-container';
-import { PageHeader } from '@/components/page-header';
-import { SessionExpiredAlert } from '@/components/session-expired-alert';
+import { DataTable } from '#components/data-table';
+import { PageContainer } from '#components/page-container';
+import { PageHeader } from '#components/page-header';
+import { SessionExpiredAlert } from '#components/session-expired-alert';
 import {
   Alert,
   AlertAction,
   AlertDescription,
   AlertTitle,
-} from '@/components/ui/alert';
-import { Button, buttonVariants } from '@/components/ui/button';
+} from '#components/ui/alert';
+import { Button, buttonVariants } from '#components/ui/button';
 import {
   Card,
   CardAction,
@@ -48,22 +48,22 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '#components/ui/card';
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart';
+} from '#components/ui/chart';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
+} from '#components/ui/empty';
+import { Skeleton } from '#components/ui/skeleton';
+import { Spinner } from '#components/ui/spinner';
 
 import { ProjectStatusBadge } from '../projects/status-badge.js';
 import {

@@ -8,11 +8,11 @@ See [server routes](server-routes.md) for mounting, authentication and authoriza
 
 - **Segments are camelCase.** `/apiKeys`, `/permissionSets`, never `/api-keys` or `/api_keys`. Collections are plural nouns.
 - **A plugin's routes start with its namespace:** the package name without `app-plugin-`, in camelCase, in its singular or its plural form, whichever reads as the plugin's main resource. Every resource of the plugin lives under that one namespace. The application's own routes have no namespace: `/orders`.
-- **When the main resource has the plugin's own name, the segment appears once.** The users plugin lists users at `/users` and disables one at `/users/{userId}/disable`, never `/users/users`. The workflow plugin's workflows are `/workflows` and `/workflows/{workflowId}/enable`, and its other resources nest under the same word: `/workflows/runs`, `/workflows/runs/{runId}/nodeRuns`.
+- **When the main resource has the plugin's own name, the segment appears once.** The users plugin lists users at `/users` and disables one at `/users/{userId}/disable`, never `/users/users`.
 - **When the resource word differs from the plugin's, the namespace comes first.** The scheduler plugin lists schedules at `/scheduler/schedules`. `@nocobase/app-plugin-notification-in-app` owns `/notificationInApp/...`.
 - **A plugin mounted through another plugin's dispatcher keeps the host's namespace.** The authorization rule plugins answer under `/authorization/defaultAccess`, `/authorization/sharingRules` and `/authorization/restrictionRules`, because the authorization plugin owns `/authorization` and dispatches to them. Their errors use the host's domain too.
 - **`/swagger`, `/auth` and `/healthz` are reserved** for the generated API documentation, Better Auth and the health check.
-- **Fixed segments go before path parameters.** Hono matches in registration order and the first match wins without warning, so register `/workflows/runs` before `/workflows/:workflowId`. A user-chosen id must then never equal a fixed sibling segment: reject it when the resource is created, with `400 INVALID_ARGUMENT` and a field violation. An AI employee named `roster` would otherwise be unreachable behind `/aiEmployees/roster`.
+- **Fixed segments go before path parameters.** Hono matches in registration order and the first match wins without warning, so register `/orders/archived` before `/orders/:orderId`. A user-chosen id must then never equal a fixed sibling segment: reject it when the resource is created, with `400 INVALID_ARGUMENT` and a field violation. A record whose chosen id is `archived` would otherwise be unreachable behind `/orders/archived`.
 - **Two routes with the same method and path fail application start.** Hono would otherwise run only the first; parameter names do not distinguish routes, so `/orders/:id` and `/orders/:orderId` are the same route, while `/orders/:orderId` and `/orders/archived` are not.
 - **The client encodes ids.** An id containing `/` or `:` reaches the route encoded and arrives decoded in `context.req.param()`.
 
@@ -48,7 +48,7 @@ The method follows the resource it acts on: `/{collection}/{id}/{verb}` for one 
 
 A custom method answers `200 { data }` when it has a result, `202` when the work continues asynchronously, and `204` with no body when there is nothing to return.
 
-One operation has one URL across the whole system. Enabling a workflow is `POST /workflows/{workflowId}/enable` and nothing else.
+One operation has one URL across the whole system. Disabling a user is `POST /users/{userId}/disable` and nothing else.
 
 ## Responses
 
@@ -118,7 +118,7 @@ Every failed `/api` response then has this body, with the same `requestId` in th
   Two HTTP statuses exist outside this table, both as an `INVALID_ARGUMENT` that passes `httpStatus`: `413` for a request body over a size limit the route sets or the application's `api.bodyLimit` and `415` for an unsupported request content type. Nothing else overrides the status, and neither covers anything else: a generated output that grows too large is `400 FAILED_PRECONDITION`, and a file with the wrong extension is `400 INVALID_ARGUMENT`. There is no `422`: an invalid request is `INVALID_ARGUMENT` and a valid one the state forbids is `FAILED_PRECONDITION`, both `400`. There is no `502`: a failing upstream is `503 UNAVAILABLE`.
 
 - **`reason`** is what clients branch on: UPPER_SNAKE_CASE, unique within its domain, stable once released. A client never parses `message`.
-- **`domain`** is the namespace of whoever defined the reason: the plugin namespace, or the application's name for its own routes. The framework uses `app`. A plugin has one domain even when it serves several URL prefixes: every AI employee error is `aiEmployees`, including those under `/aiEmployee/...`, and every AI knowledge base error is `aiKnowledgeBases`. An error passed through from another plugin keeps the domain of the plugin that defined its reason, so the users plugin passing on `LAST_ASSIGNMENT` answers with domain `authorization`.
+- **`domain`** is the namespace of whoever defined the reason: the plugin namespace, or the application's name for its own routes. The framework uses `app`. A plugin has one domain even when it serves several URL prefixes: every AI knowledge base error is `aiKnowledgeBases`. An error passed through from another plugin keeps the domain of the plugin that defined its reason, so the users plugin passing on `LAST_ASSIGNMENT` answers with domain `authorization`.
 - **`message`** is an English sentence for developers. It is never shown to users.
 - **`localizedMessage`**, `{ locale, message }`, is optional user-facing text the handler has already translated with the request's i18n.
 - **`fieldViolations`**, `[{ field, description }]`, names the invalid fields of an `INVALID_ARGUMENT`.
@@ -263,7 +263,7 @@ A script or an agent reads the JSON document with an API key in the `x-api-key` 
 curl -H "x-api-key: <key>" http://127.0.0.1:13000/main/api/swagger
 ```
 
-`/main` is the application's `APP_BASE_PATH`; an application mounted at `/crm` serves `/crm/api/swagger`, and one mounted at the origin root serves `/api/swagger`. A user creates an API key on the API keys settings page, `<APP_BASE_PATH>/settings/api-keys`, and the key acts as that user; the `nocobase-app-plugin-api-keys` Skill describes the plugin and its configuration.
+`/main` is the application's `APP_BASE_PATH`; an application mounted at `/crm` serves `/crm/api/swagger`, and one mounted at the origin root serves `/api/swagger`. A signed-in user creates an API key with `POST <APP_BASE_PATH>/api/apiKeys`, and the key acts as that user; the `nocobase-app-plugin-api-keys` Skill describes the plugin and its configuration.
 
 Only a request one of the registered access checks allows may read either route: the authentication plugin allows a signed-in session and the API keys plugin a valid API key. Anything else is answered `401` with reason `API_DOCS_UNAUTHENTICATED`. While no access check is registered, as in an application without the authentication plugin, both routes answer `404 ROUTE_NOT_FOUND`: an application that cannot tell who is asking does not publish its API. There is no setting that makes the documentation public.
 
@@ -275,14 +275,14 @@ A plugin can add its own access check through `apiDocsToken`: `container.resolve
 
 Every hand-written `/api` route declares itself with `describeRoute()` from `@nocobase/app-server/router`, as in the example above, after its authentication and permission middleware and before its `apiValidator()`s. A route that declares nothing is a defect the API check reports by name.
 
-- **`tags`**: the plugin name in PascalCase, such as `Hub`, `Users` or `AiEmployee`. The application's own routes tag the resource, such as `Orders`.
-- **`summary`**: an English verb phrase, such as `Deploy an app`.
-- **`operationId`**: the namespace, a verb and the resource in camelCase, unique across the application, such as `hubDeployApp`; the application's own routes have no namespace, `cancelOrder`.
-- **`description`**: what a caller cannot read from the schemas, such as the permission a route requires or which credential it expects. A credential that is not one of the document's security schemes is described here and only here, as the Hub's routes say which ones also accept a Hub publishing key in `Authorization: Bearer hub_app_…`.
+- **`tags`**: the plugin name in PascalCase, such as `Scheduler`, `Users` or `Agents`. The application's own routes tag the resource, such as `Orders`.
+- **`summary`**: an English verb phrase, such as `Enable a Schedule`.
+- **`operationId`**: the namespace, a verb and the resource in camelCase, unique across the application, such as `schedulerListOccurrences`; the application's own routes have no namespace, `cancelOrder`.
+- **`description`**: what a caller cannot read from the schemas, such as the permission a route requires or which credential it expects. A credential that is not one of the document's security schemes is described here and only here.
 - **Inputs**: `apiValidator()` for every path, query, header and JSON input, which documents the parameters and the body.
 - **Responses**: `dataResponse(schema)` for `{ data }`, `listResponse(itemSchema, metaSchema?)` for `{ data, meta }`, `emptyResponse()` for a `204`, and the standard error body through `apiErrorResponse(status)` or `apiErrorResponse(409, 'When …')`. Do not list `400` for input validation: a route that uses `apiValidator` gets the `400` automatically. List `400` yourself only for another reason, such as a failed precondition. `apiErrorResponses` is `401`, `403` and `500`, for an authenticated route with a permission check; otherwise list each status the route can return with `apiErrorResponse(code)`.
 - **Security**: a route a caller reaches without a credential, such as a status probe or the locales the sign-in page reads, declares `security: []`. Every other route inherits the document's top-level requirement, a session cookie (`cookieAuth`) or an API key in `x-api-key` (`apiKeyAuth`), which the authentication and API keys plugins contribute.
-- **Schemas** live in the plugin's `server/routes/schemas.ts`. A schema several routes share carries `.meta({ ref: '<PluginName><Thing>' })`, such as `HubDeployment`, and becomes a named component; public fields carry `.meta({ description })`, which stays next to the `$ref` when the field's schema is a shared one. A response object is documented open, so adding a field later is not a breaking change, unless its schema is `z.strictObject()`; a JSON body validated with `z.strictObject()` is documented closed. Recursive schemas such as `z.json()` need no workaround: they become components, named by their `ref` when they declare one.
+- **Schemas** live in the plugin's `server/routes/schemas.ts`. A schema several routes share carries `.meta({ ref: '<PluginName><Thing>' })`, such as `SchedulerSchedule`, and becomes a named component; public fields carry `.meta({ description })`, which stays next to the `$ref` when the field's schema is a shared one. A response object is documented open, so adding a field later is not a breaking change, unless its schema is `z.strictObject()`; a JSON body validated with `z.strictObject()` is documented closed. Recursive schemas such as `z.json()` need no workaround: they become components, named by their `ref` when they declare one.
 - **Response schemas describe what the handler returns.** Read the handler and the service it calls rather than guessing, and annotate the schema with the service's view type, `export const OrderSchema: z.ZodType<OrderView> = z.object({ ... })`, so that a response and its documentation cannot drift apart without failing `typecheck`.
 
 Import all of these from `@nocobase/app-server/router`, never from `hono-openapi`: the declarations are attached to middleware under a symbol that module owns, and only the application's copy generates the document. A plugin that declares `hono-openapi` fails `pnpm peers:check`.
@@ -296,6 +296,27 @@ A route that is not a contract for external callers declares `describeRoute({ hi
 - (e) a fallback router a plugin registers only while it is unconfigured, which answers every path with `503` until the plugin is set up and is replaced by the real routes afterwards.
 
 Everything an external caller — a script, an integration, an agent with an API key — may rely on is documented, admin and settings routes included.
+
+### Command-line hints
+
+The document is also the application's command line: `GET <APP_BASE_PATH>/api/cli/manifest` answers every documented operation as a command for a CLI client, once a plugin tells the application who calls (the agents plugin does, for a person and for an agent's run). A command's name comes from its tag, path and method (`GET /api/orders` → `orders list`, `GET /api/orders/{orderId}` → `orders get`, `POST` → `create`, `PATCH` → `update`, `DELETE` → `delete`, `POST /api/orders/{orderId}/cancel` → `orders cancel`), and its arguments and flags from the route's parameters and body. A route refines that with `cliRoute()` from `@nocobase/app-server/router`, spread into `describeRoute()`:
+
+```ts
+describeRoute({
+  tags,
+  summary: 'Cancel an order',
+  operationId: 'cancelOrder',
+  ...cliRoute({
+    command: 'order cancel',
+    flags: { orderId: { name: 'order' }, reason: { contentFile: true } },
+    confirm: 'Cancel the order?',
+    action: 'shop.orders/cancel',
+  }),
+  responses: { 200: dataResponse(OrderSchema), ...apiErrorResponses },
+});
+```
+
+`command` names it; `args` lists the fields given as positional arguments (the path parameters by default); `flags` renames a field (`name`), gives it an `alias`, reads it from a file (`contentFile`; a JSON field's file is parsed as JSON), fills it with `--from-env` from the caller's environment variable named by another field (`fromEnv: 'name'`, for a secret that should not sit on the command line), defaults it from the caller's environment when it is left out (`env`: variable names such as `['GITHUB_REPOSITORY', 'CI_PROJECT_PATH']`, or `{ file, path }` for a field of the JSON file a variable names, such as `{ file: 'GITHUB_EVENT_PATH', path: 'pull_request.head.sha' }`; the first found wins, and a flag given on the line always wins, so a CI step names only what CI cannot tell), asks for it (`prompt`) or hides it; `bodyFile` lets a JSON file be the body; `uploads` uploads files to another route first and sends their ids; `ticketUpload` streams one file to the upload ticket the route answers, so a large file never passes through the request; `changedFiles` sends, as `multipart/form-data` parts beside the fields, the files of a directory on the caller's machine that differ from the manifest it holds (the route accepts JSON as well, for a call without the flag); `columns` picks a list's table columns (paths such as `owner.name`); `confirm` asks before running; `examples` and `identities` (`person`, `run`) speak for themselves; and `action` names the business action a caller must hold to be offered it. `cliRoute(false)` keeps a route off the command line; an application keeps whole areas off it, such as the back-office routes of a plugin it does not mount, with `exclude({ tags, paths, operationIds })` on `cliToken`. A route an agent's run may call lists its credential in its `security`, as an application's do with `runToken`.
 
 A streaming route documents its media type, `text/event-stream` or `application/x-ndjson`, with a description of its frame format, and lists the errors it answers before the stream opens like any other route.
 
@@ -330,7 +351,7 @@ These `/api` routes keep their own shape. Nothing else is exempt, and code you w
 
 - **Data endpoints from `defineRepositoryApiRoutes`** are `POST /api/{name}/{action}`, such as `POST /api/salesOrders/findMany`. They keep their actions — `findMany`, `createOne` and the rest — and are always `POST`, because their filter is a tree that only fits in a body. The exposure name is a camelCase segment, `/^[a-z][a-zA-Z0-9]*$/`, checked when the routes are declared; name it after its Collection and never after a plugin namespace, whose first segment it would share. They report errors in the standard body, with domain `app` and the Repository error code as reason.
 - **The file plugin's upload actions on a file exposure**, `POST /api/{name}/uploadOne` and `POST /api/{name}/uploadMany`, belong to the data endpoints above: they take a multipart body and report errors in the standard body.
-- **Better Auth's routes under `/api/auth/`**, such as `POST /api/auth/sign-in/email`, are defined by the library and stay as it defines them. Routes this repository writes about authentication, such as the Hub's API key management, follow the rules above.
+- **Better Auth's routes under `/api/auth/`**, such as `POST /api/auth/sign-in/email`, are defined by the library and stay as it defines them. Routes this repository writes about authentication, such as the API keys plugin's key management, follow the rules above.
 - **`GET /api/healthz`** keeps the body load balancers and probes read.
 - **Streaming responses**, server-sent events and NDJSON, stay streaming and keep their own frame format once the stream has started. Their path, method and input follow the rules above. Everything that can be detected before the stream opens — invalid input, a missing resource, a refused permission, an exceeded limit — is answered with the standard error body and its status before the first frame, never as an error frame inside a `200` stream.
 

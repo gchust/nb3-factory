@@ -217,7 +217,7 @@ pnpm nocobase config check
 pnpm dev
 ```
 
-`pnpm nocobase config init` writes `config.yml` from `config.example.yml`, keeping its comments and filling in `auth.secret` and `session.secret`. It is only needed once; `pnpm dev` and `pnpm start` refuse to run until it has been. `pnpm nocobase config check` loads the configuration the way a start would, connects to any database other than SQLite, and reports what would stop the application from starting or quietly misbehave.
+`pnpm nocobase config init` writes `config.yml` from `config.example.yml`, keeping its comments and generating the first key of `secrets.keys`, which encrypts what the application stores as a secret and from which the sign-in and session keys are derived. It is only needed once; `pnpm dev` and `pnpm start` refuse to run until it has been. `pnpm nocobase config check` loads the configuration the way a start would, connects to any database other than SQLite, and reports what would stop the application from starting or quietly misbehave.
 
 `pnpm dev` starts the API server and the Vite client together, picks free ports if the defaults are taken, and prints the URL to open. Use the printed URL rather than assuming a port.
 
@@ -258,14 +258,16 @@ APP_SERVER_PORT=13399 PROXY_TARGET_URL=http://127.0.0.1:13000/main pnpm dev
 
 ### Review your configuration
 
-`pnpm nocobase config init` wrote `config.yml` from `config.example.yml`, with `auth.secret` and `session.secret` filled in. It gets you running on SQLite; adjust it for your situation:
+`pnpm nocobase config init` wrote `config.yml` from `config.example.yml`, with a generated `secrets.keys` key filled in. It gets you running on SQLite; adjust it for your situation:
 
 - **Database.** SQLite needs no server and works as it is. Another one means installing its driver first — `pnpm add @nocobase/db-postgres`, and `pnpm remove @nocobase/db-sqlite` if nothing else uses SQLite — then `pnpm nocobase config init --dialect postgres --force` to rewrite the connection, and `pnpm nocobase config set` for its settings, with `--from-env` for the password so it stays out of the shell history. Which dialects the application can run on is decided by what it depends on, not by this file: a driver it does not have cannot be introduced from here.
 - **Change a value** with `pnpm nocobase config set key=value`, which keeps the comments and refuses a section the application does not know. Values that differ per machine — `APP_SERVER_PORT`, `APP_SERVER_HOST`, `APP_PUBLIC_ORIGIN` — are better set in the environment, which is applied over this file; `config set` says when an environment variable overrides what it wrote.
 - **Where the application is served.** `APP_BASE_PATH` is the public mount path, `/main` by default, so the development URL looks like `http://127.0.0.1:13000/main/`. `APP_SERVER_PORT` and `APP_SERVER_HOST` change what the server binds to.
 - **Anything a feature you enable requires** — mail delivery, IM webhooks, storage. Every section is already here, commented out where it is optional.
 
-`config.yml` is gitignored because it holds your `auth.secret`. Deploy it through your secret management rather than committing it.
+`config.yml` is gitignored because it holds your `secrets.keys`. Deploy it through your secret management rather than committing it.
+
+Keep the key: what was encrypted under it cannot be read without it. To rotate it, put a new key first in `secrets.keys` with a higher version and keep the old one after it, run `pnpm nocobase secrets rotate` (`pnpm nocobase secrets status` shows what is left to reseal), then remove the old key. Changing the current key signs everyone out.
 
 To run against a production build instead:
 
@@ -282,7 +284,7 @@ client/                  Browser application
 ├── pages/               Your page components
 ├── components/          Your components
 │   └── ui/              shadcn/ui primitives
-├── layouts/             App, Settings and Dev layouts
+├── layouts/             App layout
 │   └── components/      Layout containers, navigation, branding and account controls
 ├── routing/             Route rendering, access checks, loading and error UI
 ├── locales/             Your translated strings
@@ -312,8 +314,8 @@ database/
     ├── migrations/      Your schema history (initially empty)
     └── seeds/           Your required initial data (initially empty)
 
-tests/                   Unit and integration tests
-e2e/                     Browser tests needing a real server
+tests/                   Unit and integration tests, run by Vitest
+└── playwright/          Browser tests against a running application, run by Playwright
 config.yml              Your configuration, written by pnpm nocobase config init; gitignored
 config.example.yml       Documented configuration template
 ```
@@ -362,6 +364,8 @@ Database tasks support `--connection <name>` and `--all`; no argument targets `d
 
 ### Plugins
 
+Mail (`@nocobase/app-plugin-mail`) is included and registered on the client and server. Configure mailbox providers under `mail.providers` in `config.yml` before connecting accounts; no provider credentials or demo mailboxes are included. See the [Mail configuration guide](.agents/skills/nocobase-app-plugin-mail/references/configuration-and-accounts.md). The plugin provides services and UI components; applications compose their own mailbox pages.
+
 Plugins add features to your application. Let these commands edit `package.json`, `client/plugins.ts`, and `server/plugins.ts` for you rather than editing those files by hand.
 
 | Command                                  | What it does                                                |
@@ -398,7 +402,7 @@ pnpm nocobase package remove @nocobase/example --dry-run
 pnpm nocobase package remove @nocobase/example --json
 ```
 
-For an ordinary package, the command uses the application's package manager to remove the dependency and update both `package.json` and the lockfile, then removes only the Skill directories recorded as owned by that package. For an `@nocobase/app-plugin-*` package, it reuses the `plugin unregister` workflow so Client, Server, and CLI registrations are removed together with the dependency and its Skills. `pnpm nocobase plugin unregister <name>` remains available when the task is specifically expressed as unregistering a plugin.
+For an ordinary package, the command uses the application's package manager to remove the dependency and update both `package.json` and the lockfile, then removes only the Skill directories recorded as owned by that package. For an `@nocobase/app-plugin-*` package, it reuses the `plugin unregister` steps so Client, Server, and CLI registrations are removed together with the dependency and its Skills. `pnpm nocobase plugin unregister <name>` remains available when the task is specifically expressed as unregistering a plugin.
 
 After an interrupted or manual removal, make sure the manifest no longer declares the package and run a full `pnpm nocobase skills sync` to reconcile stale package-owned output. Passing a package already absent from the manifest to `package remove` can clean its recorded historical Skill ownership without uninstalling any other package.
 
@@ -448,13 +452,35 @@ For example, `pnpm build --target linux-x64 --node-version 24` produces:
 }
 ```
 
-`nodeMajor` describes the target runtime, not the Node version used to run the build. No target patch version is implied. These fields provide platform and Node ABI checks for Hub deployment; they do not describe system libraries, CPU instruction requirements, or other runtime prerequisites.
+`nodeMajor` describes the target runtime, not the Node version used to run the build. No target patch version is implied. These fields provide platform and Node ABI checks for deployment; they do not describe system libraries, CPU instruction requirements, or other runtime prerequisites.
 
 If your application has no native modules — `pg`, `mysql2`, and `tedious` are all plain JavaScript — no platform-specific binaries need retargeting. The build still records the selected target, and the deployment runtime must satisfy `engines.node`.
 
+#### Serving static assets from a CDN
+
+Set `CDN_BASE_URL` when building to use a CDN for Vite-generated asset URLs:
+
+```bash
+CDN_BASE_URL=https://cdn.example.com/my-app/v1/ pnpm build
+```
+
+Use a full HTTPS URL ending in `/`. The build reads the process environment first, then `.env.local`, then `.env`. Unset, empty or whitespace-only values keep the default relative base (`./`). Development ignores this variable. This is a build parameter, not a `config.yml` option or a runtime variable listed by `pnpm nocobase config variables` or `dist/variables.json`; changing it requires rebuilding.
+
+Upload the static files in `dist/client/` to the configured CDN prefix, preserving their paths. For example, `dist/client/assets/index-abc.js` must be available at `https://cdn.example.com/my-app/v1/assets/index-abc.js`. Configure the CDN to allow cross-origin module and font requests from the application origin. A release-specific prefix keeps different builds separate; retain assets needed by clients still running an older release.
+
+Keep the complete `dist/client/` tree on the application server, and serve the application's HTML through it so runtime configuration is injected. The CDN setting changes Vite-processed HTML, JavaScript and CSS resource URLs, and static files addressed with `resolveAssetUrl`, including this template's logos:
+
+```tsx
+import { resolveAssetUrl } from '@nocobase/app-client';
+
+<img src={resolveAssetUrl('/assets/logo-mark.png')} alt='Logo' />;
+```
+
+Pass the file's path relative to `dist/client/`, with or without a leading slash. `resolveAssetUrl` reads `import.meta.env.BASE_URL`, which Vite replaces with the configured `base` during the application build; the browser does not read `CDN_BASE_URL` from the server environment. With an absolute HTTP(S) CDN base it returns the CDN URL, otherwise it falls back to `resolveAppUrl` and the runtime `APP_BASE_PATH`. Already resolved URLs are preserved. Use `resolveAppUrl` for API URLs, page links and runtime-generated resources; the CDN must actually contain a file before it can be served there.
+
 #### Packing the build
 
-`pnpm build --tar` writes `storage/exports/dist.tar.gz`, the artifact you upload to a Hub to deploy this application.
+`pnpm build --tar` writes `storage/exports/dist.tar.gz`, the artifact `@nocobase/app-installer` installs on a server.
 
 The archive has two levels: `config.example.yml` and `dist/` sit at the root, and the build is inside `dist/`. What `dist/` holds varies with the application; this is the shape:
 
@@ -477,6 +503,14 @@ pnpm build --target linux-x64 --tar
 ```
 
 #### Building a Docker image
+
+For a source build using a CDN, pass its URL as a build argument:
+
+```bash
+docker build --build-arg CDN_BASE_URL=https://cdn.example.com/my-app/v1/ -t my-app .
+```
+
+With `DIST=prebuilt`, set `CDN_BASE_URL` on the earlier `pnpm build` command instead: the image packages the existing client files unchanged. Setting `CDN_BASE_URL` on a prebuilt image build or with `docker run -e` cannot change their compiled URLs. The source build does not read the host's `.env`; use the build argument.
 
 `Dockerfile` builds this application from its sources into a production image. From the project root:
 
@@ -549,32 +583,22 @@ Rebuild with a matching `--target` and `--node-version`. ABI 115 is Node 20, 127
 
 ## Configuration
 
-`server/config/` and `client/config/` contain editable TypeScript defaults. `config.yml` holds environment-specific overrides, written by `pnpm nocobase config init` and yours to edit from there. It is gitignored because it carries your `auth.secret`; deploy it through your secret management rather than committing it. It is generated from `config.example.yml`, which is kept beside it as the reference for every option.
+`server/config/` and `client/config/` contain editable TypeScript defaults. `config.yml` holds environment-specific overrides, written by `pnpm nocobase config init` and yours to edit from there. It is gitignored because it carries your `secrets.keys`; deploy it through your secret management rather than committing it. It is generated from `config.example.yml`, which is kept beside it as the reference for every option.
 
 Two settings decide where the application is reachable:
 
 - `APP_BASE_PATH` is the public path the application is mounted at, `/main` by default. The browser API base URL is derived from it as `<APP_BASE_PATH>/api`.
 - `APP_PUBLIC_ORIGIN` is the external origin used to build callback and redirect URLs. Set it in production. It must not repeat the base path — the runtime joins the two.
 
-Configuration is resolved from the file, environment variables, and defaults in that order of precedence.
+An environment variable a section declares takes precedence over the file, and the file over the code defaults. `pnpm nocobase config env` lists the variables and whether each is set; `pnpm nocobase config variables` describes each one — what it sets, whether it is a secret, whether a deployment must supply it — and `pnpm build` writes that description to `dist/variables.json`. `DB_*` set the main database connection, `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` the first administrator, and `APP_SAMPLE_DATA=true` loads the sample data when the database is first installed. `${NAME}` in `config.yml` is not expanded.
 
 ## Testing
 
-Tests live in `tests/`, never beside the source they cover. Put logic and integration tests under `tests/logic/` and component tests under `tests/components/`. Tests needing a real server, real authentication, or a real database belong in `e2e/`.
-
-### AI server end-to-end testing
-
-`pnpm test:e2e` discovers the source workspace’s optional AI server test and skips it unless `AI_LOCAL_E2E=1`. Build first and use a dedicated, installed test application database with a configured LLM service and an API key belonging to a test user. Set `AI_E2E_LLM_SERVICE`, `AI_E2E_MODEL`, and `AI_E2E_API_KEY`; `AI_E2E_EMPLOYEE` defaults to `viz`. The test starts the compiled local server, makes a real model request, and removes its conversation afterward. Never point it at production data. Generated applications ship the Playwright configuration but no template tests, so an empty run succeeds.
+Tests live in `tests/`, never beside the source they cover. Put logic and integration tests under `tests/logic/` and component tests under `tests/components/`. Browser tests belong in `tests/playwright/`, which Vitest skips. Playwright does not start the application: start it first (`pnpm dev`, or `pnpm build` and then the built application), then run `pnpm test:e2e`; each test reads the application URL, including its base path, from `APP_URL`. Tests that only need a real server, real authentication, or a real database run under Vitest with `createAppTest()` from `@nocobase/app-testing/server`.
 
 ### Notification testing
 
-After signing in with the `notification:test` `send` permission, use the
-notification logs settings page to send a real message through the durable
-Notification Manager. The form is generated from safe Channel test metadata;
-Email tests require an address and IM tests use the configured logical target.
-The button remains visible so configuration problems are discoverable. The
-server enforces the `notification:test` `send` permission only when the message
-is submitted.
+With the `notification:test` `send` permission, send a real message through the durable Notification Manager with `POST <APP_BASE_PATH>/api/notifications/testSends`. `GET <APP_BASE_PATH>/api/notifications/testTargets` lists each configured channel and the fields its test takes: Email tests require an address and IM tests use the configured logical target. The server enforces the permission when the message is submitted.
 
 ## API documentation
 
@@ -583,7 +607,7 @@ The application documents every `/api` endpoint it serves — its own routes, ev
 - Swagger UI: `<origin><APP_BASE_PATH>/api/swagger/docs`, such as `http://127.0.0.1:13000/main/api/swagger/docs`
 - JSON: `<origin><APP_BASE_PATH>/api/swagger`
 
-Only a signed-in user or an API key may read them; anyone else gets `401`. Open the Swagger UI in a browser where you are signed in, or, from a script, send an API key created at `<APP_BASE_PATH>/settings/api-keys` in the `x-api-key` header. Swagger UI's **Authorize** button takes a key too and keeps it across reloads.
+Only a signed-in user or an API key may read them; anyone else gets `401`. Open the Swagger UI in a browser where you are signed in, or, from a script, send an API key created with `POST <APP_BASE_PATH>/api/apiKeys` in the `x-api-key` header. Swagger UI's **Authorize** button takes a key too and keeps it across reloads.
 
 ```bash
 curl -H "x-api-key: <key>" http://127.0.0.1:13000/main/api/swagger
@@ -598,46 +622,6 @@ Replace `/main` with the application's `APP_BASE_PATH`. An application without t
 ## License
 
 MIT
-
-## Publish to an application Hub
-
-This template depends on `@nocobase/hub-cli`, which gives the application the `pnpm nocobase hub` commands; removing the dependency removes them. Run them in the source checkout or in CI: a built `dist/` does not register them, because they build and send the application from its sources.
-
-### Add the Hub as a remote
-
-A remote is one App on one Hub, addressed as `<Hub URL>/apps/<App ID>`, where the Hub URL includes the Hub's mount path:
-
-```bash
-pnpm nocobase hub remote add origin http://127.0.0.1:13000/main/apps/crm
-pnpm nocobase hub remote list
-```
-
-Remotes are saved in `.nocobase/hub.json`, which holds addresses only and belongs in version control. The first remote added is the default; every other `hub` command takes `--remote <name>` to pick another, and `hub remote remove <name>` deletes one.
-
-### Create and save a publishing key
-
-The `hub` commands authenticate with a Hub publishing key, created in Hub rather than in this application. Open **API Keys** in the Hub navigation (`<Hub URL>/api-keys`); reaching that page requires `hub.app / manage-api-keys`, granted to `hub-administrator` and `hub-operator` by default. In **Create API Key**, select this application under **Applications**, or **All applications (including future apps)**, then grant the permissions the commands below need: **Upload release** for `pnpm nocobase hub upload`, and both **Upload release** and **Deploy release** for `pnpm nocobase hub deploy`.
-
-The plaintext key is shown once at creation; while the key stays active its creator can copy it again from the same page. Bound applications and granted permissions cannot be changed afterwards, so a key created without `Deploy release` has to be deleted and recreated rather than edited. A key never exceeds its creator's current permissions, so uploads fail if the creator later loses access to the bound application. See [Publish applications with Hub](https://github.com/nocobase/nocobase3/blob/develop/docs/docs/en/deployment/hub.md) for the console walkthrough.
-
-Save the key with `pnpm nocobase hub auth login`, which asks for it without echoing it and checks with the Hub that it opens the App. It is stored outside the project in `$XDG_CONFIG_HOME/nocobase/hub-credentials.json` (`~/.config` when that is unset, `%APPDATA%\nocobase` on Windows), readable by the owner only, one key per remote URL. The commands read no key or Hub address from `.env`, the environment or command-line flags. `hub auth status` reports whether each remote has a key the Hub accepts, and `hub auth logout` removes a saved key. In CI, pipe the key in from a secret:
-
-```bash
-echo "$HUB_KEY" | pnpm nocobase hub auth login --remote origin --with-token
-pnpm nocobase hub deploy --remote origin --json
-```
-
-### Deploy
-
-```bash
-pnpm nocobase hub deploy --json
-pnpm nocobase hub upload --json
-pnpm nocobase hub deploy --release-id <releaseId> --json
-```
-
-`hub deploy` asks the Hub which platform it runs Apps on, builds the application for it with `nocobase build --target … --node-version … --tar`, uploads the archive as a Release and deploys it, waiting for the result unless `--no-wait` is given. Do not run `pnpm build --tar` first. When the Hub already has the archive, its Release is deployed. `hub upload` builds and uploads without deploying, and `hub deploy --release-id` deploys a Release already on the Hub, which is also how to roll back. `--no-build` sends the existing `storage/exports/dist.tar.gz` and `--file` another archive; both are checked against the Hub's platform and fail with `BUILD_TARGET_MISMATCH` when they were built for another. Hub has no automatic or manual deployment setting; scripts decide which commands to run.
-
-`node_modules/@nocobase/hub-cli/README.md` is the full reference: every flag, `--config` for the runtime configuration, retry identity, the `--json` document and the exit codes. Exit 3 does not mean the deployment failed or was cancelled; inspect the deployment in Hub and retry with the same `--idempotency-key` if necessary.
 
 ## Runtime paths and application creation
 

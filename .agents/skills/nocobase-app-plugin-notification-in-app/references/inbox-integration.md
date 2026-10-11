@@ -22,13 +22,21 @@ import {
 
 Do not import `server/realtime`, store implementations, or other internal implementation paths from application code.
 
-The package's Client plugin contributes this development-only App-relative route:
+An application that renders its own inbox imports the React Query hooks from `/client/inbox`, with `@tanstack/react-query` installed and a `QueryClientProvider` above them:
 
-```text
-/dev/notification-in-app
+```ts
+import {
+  inboxKeys,
+  useInboxActions,
+  useInboxItems,
+  useInboxRefresh,
+  useInboxUnreadCount,
+} from '@nocobase/app-plugin-notification-in-app/client/inbox';
 ```
 
-Register `@nocobase/app-plugin-notification-in-app/client` in the application Client composition root. The page mounts `NotificationInAppProvider` locally and cleans up its realtime and focus listeners when navigation leaves the page. The Dev Route and its exclusive dependencies are absent from production builds.
+Prefer the hooks over calling the API helpers from components: `useInboxItems(pageSize)` pages by `nextPageToken`, `useInboxActions()` marks, deletes and reads all optimistically and refetches once settled, and `useInboxRefresh(extraTopics)` mounts the realtime, reconnection and focus invalidation once for the page. Extend `inboxKeys.all` invalidation for data the application attaches to messages by passing its own realtime topics to `useInboxRefresh` rather than subscribing separately.
+
+Register `@nocobase/app-plugin-notification-in-app/client` in the application Client composition root. The plugin contributes no routes: an application that wants an inbox page renders `NotificationInAppInbox` inside `NotificationInAppProvider` in a page it declares among its own routes. Mounting the Provider in that page cleans up its realtime and focus listeners when navigation leaves the page.
 
 ## Final delivery validation
 
@@ -36,7 +44,7 @@ The database Provider checks the recipient through Authentication’s user admin
 
 ## HTTP and realtime behavior
 
-The authenticated inbox API is rooted at `notificationInApp` relative to the injected `ApiClient` API base. Reads are `GET notificationInApp/messages` (`pageSize`, `unreadOnly`, `pageToken`; answers `{ data, meta: { nextPageToken } }`) and `GET notificationInApp/messages/unreadCount` (`{ data: { count } }`). Writes are `POST notificationInApp/messages/{messageId}/markRead`, `POST .../markUnread`, `DELETE notificationInApp/messages/{messageId}` (`204`) and `POST notificationInApp/messages/markAllRead`; they need no CSRF token, because the authentication plugin rejects a cookie-authenticated write from an untrusted origin with 403 `INVALID_CSRF_ORIGIN` (domain `authentication`). Without a signed-in user every inbox route answers 401 `AUTHENTICATION_REQUIRED` (domain `authentication`) from the authentication plugin. Other failures use the standard error body with domain `notificationInApp`; branch on `ApiClientError.reason`, such as `IN_APP_NOTIFICATION_NOT_FOUND` or `IN_APP_NOTIFICATION_INVALID_PAGE_TOKEN`, never on the message. Prefer the exported `fetchInbox`, `fetchUnreadCount`, `mutateInboxItem` and `markInboxRead` helpers over hand-written requests.
+The authenticated inbox API is rooted at `notificationInApp` relative to the injected `ApiClient` API base. Reads are `GET notificationInApp/messages` (`pageSize`, `unreadOnly`, `pageToken`; answers `{ data, meta: { nextPageToken } }`) and `GET notificationInApp/messages/unreadCount` (`{ data: { count } }`). Writes are `POST notificationInApp/messages/{messageId}/markRead`, `POST .../markUnread`, `DELETE notificationInApp/messages/{messageId}` (`204`) and `POST notificationInApp/messages/markAllRead`; they need no CSRF token, because the authentication plugin rejects a cookie-authenticated write from an untrusted origin with 403 `INVALID_CSRF_ORIGIN` (domain `authentication`). Without a signed-in user every inbox route answers 401 `AUTHENTICATION_REQUIRED` (domain `authentication`) from the authentication plugin. Other failures use the standard error body with domain `notificationInApp`; branch on `ApiClientError.reason`, such as `IN_APP_NOTIFICATION_NOT_FOUND` or `IN_APP_NOTIFICATION_INVALID_PAGE_TOKEN`, never on the message. Prefer the `/client/inbox` hooks in React, and the exported `fetchInbox`, `fetchUnreadCount`, `mutateInboxItem` and `markInboxRead` helpers elsewhere, over hand-written requests.
 
 The running application documents every inbox route under the `NotificationInApp` tag at `/api/swagger/docs` (JSON at `/api/swagger`, signed in); check a request or response shape there rather than guessing it.
 
@@ -48,7 +56,7 @@ When an application configures `api.baseURL` or `api.realtimeURL`, both transpor
 
 #### Ownership and upgrades
 
-The plugin owns the inbox components, Provider, Dev Route, authentication enforcement, per-user isolation, persistence, and event publication. Applications receive UI changes by upgrading the plugin. A production inbox surface requires a separate product decision and must use an authenticated App or Settings Route rather than exposing the Dev Route.
+The plugin owns the inbox components, Provider, authentication enforcement, per-user isolation, persistence, and event publication. Applications receive UI changes by upgrading the plugin. The application owns the inbox page and its route, which must require authentication.
 
 ## Diagnosis order
 

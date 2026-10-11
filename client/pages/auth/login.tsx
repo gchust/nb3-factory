@@ -4,8 +4,8 @@ import { useTranslation } from '@nocobase/i18n/client';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router';
 
-import { PasswordLoginForm } from '@/extensions/nocobase-auth-forms/password-login-form';
-import { AuthMethods } from '@/extensions/nocobase-auth-methods/auth-methods';
+import { PasswordLoginForm } from '#extensions/nocobase-auth-forms/password-login-form';
+import { AuthMethods } from '#extensions/nocobase-auth-methods/auth-methods';
 
 import { AuthPage } from './shared.js';
 
@@ -32,6 +32,7 @@ export default function LoginPage(): ReactElement {
           {
             content: (
               <PasswordLoginForm
+                className='[&_[data-slot=input]]:h-12 [&_[data-slot=input-group]]:h-12 [&_button[type=submit]]:h-12'
                 error={login.error?.message}
                 footer={
                   signUpAvailable ? (

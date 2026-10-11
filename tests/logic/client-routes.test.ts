@@ -21,18 +21,16 @@ describe('app client routes', () => {
         '/register',
         '/forgot-password',
         '/reset-password',
+        // The page `deviceAuthorization()`'s verificationUri names, where a CLI's sign-in is approved.
+        '/device',
       ]),
     );
   });
 
   it('loads every page component', async () => {
     const resolved = resolveRoutes();
-    const loaders = [
-      ...componentLoadersIn(resolved.routes),
-      ...componentLoadersIn(resolved.settingsRouteTree),
-      ...componentLoadersIn(resolved.devRouteTree),
-    ];
-    // The trees above are filtered by loader, so an empty list would make the loop below pass without loading
+    const loaders = componentLoadersIn(resolved.routes);
+    // The tree above is filtered by loader, so an empty list would make the loop below pass without loading
     // anything at all.
     expect(loaders).not.toHaveLength(0);
 
@@ -52,10 +50,18 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'inbox', authorizedAs: null },
     ]);
+  });
+
+  it('keeps the inbox out of the application navigation', () => {
+    // The inbox is reached from the header's inbox button, so it deliberately declares no menu entry.
+    expect(
+      applicationRoutes[0].routes.find((route) => route.name === 'inbox'),
+    ).not.toHaveProperty('navigation');
   });
 });
 

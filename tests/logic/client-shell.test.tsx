@@ -11,7 +11,6 @@ import {
 } from '@nocobase/app-plugin-authentication/client';
 import {
   AuthorizationClient,
-  type AuthorizationCheck,
   authorizationClientToken,
 } from '@nocobase/app-plugin-authorization/client';
 import {
@@ -20,6 +19,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import type { ComponentType, ReactElement } from 'react';
 import { Outlet, MemoryRouter } from 'react-router';
@@ -29,6 +29,13 @@ import { AppRouter } from '../../client/routing/app-router.tsx';
 import { AppThemeProvider } from '../../client/theme/index.ts';
 
 afterEach(() => vi.unstubAllGlobals());
+
+/** The sidebar's entries; the header's breadcrumb names the current page as well. */
+const sidebar = (): HTMLElement =>
+  document.querySelector<HTMLElement>('[data-slot=sidebar]') ?? document.body;
+const findSidebarLink = (name: string): Promise<HTMLElement> =>
+  waitFor(() => within(sidebar()).getByRole('link', { name }));
+
 describe('application shell', () => {
   beforeEach(() => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -51,7 +58,7 @@ describe('application shell', () => {
     expect(
       await screen.findByRole('navigation', { name: 'Application navigation' }),
     ).toBeVisible();
-    expect(await screen.findByRole('link', { name: 'Home' })).toHaveAttribute(
+    expect(await findSidebarLink('Home')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -60,10 +67,10 @@ describe('application shell', () => {
         .getByRole('complementary', { name: 'Application navigation' })
         .querySelector('[data-sidebar="sidebar"]'),
     ).toHaveClass('bg-sidebar');
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute(
-      'data-active',
-    );
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveClass(
+    expect(
+      within(sidebar()).getByRole('link', { name: 'Home' }),
+    ).toHaveAttribute('data-active');
+    expect(within(sidebar()).getByRole('link', { name: 'Home' })).toHaveClass(
       'data-active:bg-sidebar-primary',
       'data-active:text-sidebar-primary-foreground',
       'ring-sidebar-ring',
@@ -95,47 +102,16 @@ describe('application shell', () => {
     ).toBeVisible();
   });
 
-  it.each([true, false])(
-    'shows the Settings entry only when a page is accessible (%s)',
-    async (allowed) => {
-      const can = vi.fn(
-        async ({ resource }: AuthorizationCheck) =>
-          resource.id !== 'preferences' || allowed,
-      );
-      renderApplication('/', true, [], {
-        authorization: { can },
-        settingsRouteTree: [
-          createRoute(
-            'preferences',
-            '/settings/preferences',
-            'required',
-            () => <h2>Preferences</h2>,
-            'plugin',
-            'Preferences',
-            true,
-          ),
-        ],
-      });
-      await screen.findByRole('heading', { name: 'App client is ready' });
-      await waitFor(() =>
-        expect(can).toHaveBeenCalledWith(
-          expect.objectContaining({
-            resource: { type: 'page', id: 'preferences' },
-            action: 'access',
-          }),
-        ),
-      );
-      if (allowed) {
-        expect(
-          await screen.findByRole('link', { name: 'Settings' }),
-        ).toBeVisible();
-      } else {
-        expect(
-          screen.queryByRole('link', { name: 'Settings' }),
-        ).not.toBeInTheDocument();
-      }
-    },
-  );
+  it('renders no Settings or Inbox entry in the header', async () => {
+    renderApplication('/', true);
+    await screen.findByRole('heading', { name: 'App client is ready' });
+    expect(
+      screen.queryByRole('link', { name: 'Settings' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /inbox/i }),
+    ).not.toBeInTheDocument();
+  });
 
   it('renders nested pages through manual outlets and selects the nearest menu ancestor', async () => {
     const child = createRoute('detail', '/orders/42', 'required', () => (
@@ -155,12 +131,13 @@ describe('application shell', () => {
     expect(await screen.findByText('Order detail')).toBeVisible();
     expect(screen.getByText('Orders layout')).toBeVisible();
     expect(
-      screen.getByRole('link', { name: 'Orders' }).querySelector('svg'),
+      within(sidebar())
+        .getByRole('link', { name: 'Orders' })
+        .querySelector('svg'),
     ).toBeNull();
-    expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(
+      within(sidebar()).getByRole('link', { name: 'Orders' }),
+    ).toHaveAttribute('aria-current', 'page');
   });
 
   it('keeps a parent page link clickable independently of its menu disclosure', async () => {
@@ -181,18 +158,17 @@ describe('application shell', () => {
       children: [child],
     };
     renderApplication('/orders', true, [parent]);
-    expect(await screen.findByRole('link', { name: 'Orders' })).toHaveAttribute(
-      'href',
-      '/orders',
-    );
+    expect(await findSidebarLink('Orders')).toHaveAttribute('href', '/orders');
     const toggle = screen.getByRole('button', { name: 'Orders' });
     fireEvent.click(toggle);
     expect(
-      screen.queryByRole('link', { name: 'Reports' }),
+      within(sidebar()).queryByRole('link', { name: 'Reports' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Orders' })).toBeVisible();
+    expect(
+      within(sidebar()).getByRole('link', { name: 'Orders' }),
+    ).toBeVisible();
     fireEvent.click(toggle);
-    fireEvent.click(screen.getByRole('link', { name: 'Reports' }));
+    fireEvent.click(within(sidebar()).getByRole('link', { name: 'Reports' }));
     expect(await screen.findByText('Reports page')).toBeVisible();
     expect(screen.getByText('Orders layout')).toBeVisible();
   });
@@ -204,15 +180,20 @@ describe('application shell', () => {
       name: 'Application navigation',
     });
 
+    // The toggle writes the shared sidebar preference, an external store the shell only re-renders from once its
+    // subscription effect has run; after a lazily loaded mount that effect can still be pending when the click lands,
+    // so the collapsed shell is awaited rather than read synchronously.
     fireEvent.click(
       screen.getByRole('button', { name: 'Collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'collapsed',
+    await waitFor(() =>
+      expect(sidebar.closest('[data-state]')).toHaveAttribute(
+        'data-state',
+        'collapsed',
+      ),
     );
     expect(
-      screen.getByRole('button', { name: 'Expand navigation' }),
+      await screen.findByRole('button', { name: 'Expand navigation' }),
     ).toHaveAttribute('aria-pressed', 'true');
     // The footer keeps only its shield; focusing it shows the slogan, name and version.
     const footerIcon = screen.getByRole('img', {
@@ -229,9 +210,11 @@ describe('application shell', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Expand or collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'expanded',
+    await waitFor(() =>
+      expect(sidebar.closest('[data-state]')).toHaveAttribute(
+        'data-state',
+        'expanded',
+      ),
     );
     expect(
       screen.queryByRole('img', { name: /Default Template/ }),
@@ -284,7 +267,6 @@ function renderApplication(
   routes: readonly AppClientRegisteredRoute[] = [],
   options: {
     readonly authorization?: Pick<AuthorizationClient, 'can'>;
-    readonly settingsRouteTree?: readonly AppClientRegisteredRoute[];
   } = {},
 ): void {
   const clientRoutes = [
@@ -310,7 +292,6 @@ function renderApplication(
   ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
-    runtime: { settingsRouteTree: options.settingsRouteTree ?? [] },
     services: {
       has: (token: unknown) => registered.has(token),
       resolve: (token: unknown) => {
@@ -324,11 +305,7 @@ function renderApplication(
       <AuthenticationProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
           <AppThemeProvider>
-            <AppRouter
-              devRouteTree={[]}
-              clientRoutes={clientRoutes}
-              settingsRouteTree={options.settingsRouteTree ?? []}
-            />
+            <AppRouter clientRoutes={clientRoutes} />
           </AppThemeProvider>
         </MemoryRouter>
       </AuthenticationProvider>

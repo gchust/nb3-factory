@@ -18,15 +18,15 @@ import { type ReactElement, useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { SessionExpiredAlert } from '@/components/session-expired-alert';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SessionExpiredAlert } from '#components/session-expired-alert';
+import { Alert, AlertDescription } from '#components/ui/alert';
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+} from '#components/ui/field';
+import { Input } from '#components/ui/input';
 import {
   Select,
   SelectContent,
@@ -34,7 +34,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '#components/ui/select';
 
 import { PROJECT_STATUSES, type Project } from './types.js';
 
@@ -242,7 +242,7 @@ export function ProjectForm({
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className='w-auto max-w-[min(var(--container-sm),var(--available-width))] min-w-(--anchor-width) [&_[data-slot=select-item]>:first-child]:whitespace-normal'>
                   <SelectGroup>
                     {statusItems.map((item) => (
                       <SelectItem key={item.value} value={item.value}>

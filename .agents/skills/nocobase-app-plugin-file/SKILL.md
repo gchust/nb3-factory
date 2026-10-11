@@ -20,7 +20,7 @@ Inspect `client/extensions/nocobase-file-component-ui/` before writing upload or
 | Legacy DOC / XLS / PPT and OpenDocument              | Office Online fallback            | Internet-accessible absolute URL; cannot use the App session                   |
 | Unsupported or unsafe active content                 | Explanation and optional download | Download still requires permission                                             |
 
-For custom attachment lists, uploads or business associations, reuse `FilePreviewDialog` with file records and `contentUrl`; it requires no repository prop. Extend the existing UI or add the necessary content adapter rather than reimplementing format detection and dropping supported formats. A DOCX download fallback indicates a request/rendering failure or an outdated/custom component, not that the plugin lacks DOCX support. Report the actual failure and preserve its evidence.
+To show a record's files as thumbnails and chips, or take uploads beside a form or a comment, install the UI Library's `attachment-list` component (`yes n | pnpm exec shadcn add @nocobase/attachment-list`; its example is `@nocobase/attachment-list-demo`), map file records to `AttachmentFile`, and open `FilePreviewDialog` from its `onPreview`. For custom attachment lists, uploads or business associations, reuse `FilePreviewDialog` with file records and `contentUrl`; it requires no repository prop. Extend the existing UI or add the necessary content adapter rather than reimplementing format detection and dropping supported formats. A DOCX download fallback indicates a request/rendering failure or an outdated/custom component, not that the plugin lacks DOCX support. Report the actual failure and preserve its evidence.
 
 If the installed package, synchronized Skill and copied UI disagree, inspect the resolved plugin version, run `pnpm nocobase skills sync` to refresh guidance, and reconcile the UI source separately. Skills synchronization does not upgrade Registry copies.
 
@@ -63,6 +63,8 @@ export default migration;
 ```
 
 The fields are fixed; mapping is unsupported. The primary key must accept a 36-character UUID, string fields accept string/char/text, size accepts integer/bigInt, and timestamps accept datetime/datetimeTz. Apply with the App's migration command. Never import a live collection schema from a migration.
+
+Runtime code that selects or checks the full column set imports `FILE_COLUMNS` (and its element type `FileColumn`) from `@nocobase/app-plugin-file/server` instead of copying the list, for example `select: (s) => s.fields(...FILE_COLUMNS)`. A migration still spells its columns out as above, because importing the list would let a later release change an already applied migration.
 
 Upload generates the ID and storage key, normalizes the filename/extension, validates stored size, and supplies timestamps. Extra required columns need defaults because upload accepts no business values. `contentUrl` is derived, never persisted. Save returned file IDs through an App-owned relation or link table when submitting the business form; upload and form submission are separate commits.
 
@@ -202,7 +204,7 @@ import {
 import {
   FileUploadField,
   FileList,
-} from '@/extensions/nocobase-file-component-ui';
+} from '#extensions/nocobase-file-component-ui';
 
 export function InvoiceAttachments(): ReactElement {
   const manager = useService(clientFileRepositoryManagerToken);
@@ -232,7 +234,7 @@ FileUploadField takes a repository and controlled value/onChange; onStatusChange
 
 ### Preview and content access
 
-Preview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.
+Preview supports safe raster images, PDF, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. PDF is fetched and embedded as a same-origin `blob:` retyped to `application/pdf`, and an HTML or XML response is refused; the browser's own PDF viewer renders it, so a browser without one downloads it instead. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.
 
 OOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.
 
@@ -244,7 +246,7 @@ OOXML request or rendering failure displays an error and, when downloads are ena
 
 Verify upload → query → contentUrl → identical downloaded bytes, including batch upload, resource aliases and host prefixes. After materialization run the consuming App's typecheck/build and exercise upload, cancel/retry, remove, download and preview. Restricted files need anonymous, forbidden-user and permitted-user tests against both API and content routes. Inspectors check registration only.
 
-For preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.
+For preview integration or changes, verify each of PDF/DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Verify PDF in a headed browser: previewing and paging a PDF must keep the top-level URL and the session. In a headless browser without a PDF viewer, a download or an `about:blank` tab is a browser limitation: record the browser and its mode and retry headed before reporting a component defect. A login redirect points to the content route or the session. Unit mocks and a successful build do not establish document rendering fidelity.
 
 - Upload defaults are 5 MiB single / 20 MiB batch for the whole multipart body, including overhead. Direct Server uploads have no HTTP limit; UI maxSize checks an individual file. The Client supplies the multipart boundary.
 - Upload failures use the standard `/api` error body with domain `file`; branch on `error.reason` (`ApiClientError.reason` in the Client), never on `message`. A successful upload answers 201.

@@ -41,19 +41,19 @@ Build the feature in the application. Do not run a plugin generator, create a `p
 
 NocoBase packages may publish Skills under `.agents/skills/`. Current application templates run `pnpm nocobase skills sync` automatically through `postinstall`; run it manually if install scripts were disabled or that directory is missing or stale. Confirm that the package is a direct `@nocobase/*` dependency or a registered plugin before relying on its Skill. The common capability mappings are:
 
-| The requirement sounds like                                                                   | Read the Skill for                    |
-| --------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Approvals, multi-step processes, "when X happens then Y"                                      | `@nocobase/app-plugin-workflow`       |
-| An assistant in the app: chat, reading files dropped into it, acting through tools you define | `@nocobase/app-plugin-ai-employee`    |
-| Email, IM, or in-app messages                                                                 | `@nocobase/app-plugin-notification`   |
-| Roles, permissions, per-user or per-record access                                             | `@nocobase/app-plugin-authorization`  |
-| Sign-in, registration, sessions                                                               | `@nocobase/app-plugin-authentication` |
-| File upload and metadata through Repository                                                   | `@nocobase/app-plugin-file`           |
-| Translated text and language switching                                                        | `@nocobase/app-plugin-i18n`           |
-| User administration and application-owned role assignment                                     | `@nocobase/app-plugin-users`          |
-| Reading or writing data, schema changes, migrations                                           | `@nocobase/db`                        |
+| The requirement sounds like                               | Read the Skill for                    |
+| --------------------------------------------------------- | ------------------------------------- |
+| Email, IM, or in-app messages                             | `@nocobase/app-plugin-notification`   |
+| Roles, permissions, per-user or per-record access         | `@nocobase/app-plugin-authorization`  |
+| Sign-in, registration, sessions                           | `@nocobase/app-plugin-authentication` |
+| File upload and metadata through Repository               | `@nocobase/app-plugin-file`           |
+| Translated text and language switching                    | `@nocobase/app-plugin-i18n`           |
+| User administration and application-owned role assignment | `@nocobase/app-plugin-users`          |
+| Reading or writing data, schema changes, migrations       | `@nocobase/db`                        |
 
 Read the relevant Skill before writing the feature, but treat this table as a map rather than an installed-package list. Implementing a permission system, a notification sender, or a scheduler by hand when a registered plugin provides one is the most expensive mistake available here.
+
+When the stages of a business record are fixed by developers rather than drawn by administrators — an expense report, a ticket, a contract, an order — build it with `@nocobase/lifecycle` as [record lifecycles](references/lifecycle.md) describes: the state stays in the record's own field and changes only through declared transitions.
 
 For notification configuration or sending, follow the notification plugin Skill: `notification.channels` maps each name to one flat Provider configuration, and `send({ idempotencyKey, messages })` supplies a complete message per Channel. Use native addresses; email and in-app arrays create independent deliveries, while Webhooks forbid `to`.
 
@@ -71,7 +71,7 @@ The running application describes every `/api` endpoint it serves — its own ro
 curl -H "x-api-key: <key>" http://127.0.0.1:13000/main/api/swagger
 ```
 
-Replace `/main` with the application's `APP_BASE_PATH`. Swagger UI for people is at `<APP_BASE_PATH>/api/swagger/docs`. Reading either needs a signed-in session or an API key, which a user creates at `<APP_BASE_PATH>/settings/api-keys`; without one the routes answer `401`, and an application with no access check registered, such as one without the authentication plugin, answers `404`. Ask the user for a key rather than creating one yourself. [HTTP API design](references/http-api.md#api-documentation) explains how to read the document and how a new route declares itself in it.
+Replace `/main` with the application's `APP_BASE_PATH`. Swagger UI for people is at `<APP_BASE_PATH>/api/swagger/docs`. Reading either needs a signed-in session or an API key, which a signed-in user creates with `POST <APP_BASE_PATH>/api/apiKeys`; without one the routes answer `401`, and an application with no access check registered, such as one without the authentication plugin, answers `404`. Ask the user for a key rather than creating one yourself. [HTTP API design](references/http-api.md#api-documentation) explains how to read the document and how a new route declares itself in it.
 
 ## Removing a direct NocoBase package
 
@@ -91,22 +91,23 @@ The handbook's "Look up by task" table routes each frontend task to the sections
 
 Read the page for the task in front of you. Do not read all of them.
 
-| Task                                                                                                                 | Read                                                                                                                                                                             |
-| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Anything under `client/`: pages, routes, components, styling, forms, API calls, copy, frontend tests                 | [frontend workflow](references/frontend/ui-workflow.md), which routes to the [frontend handbook](references/frontend/frontend-dev.md), the theme reference or the worked example |
-| Add an API endpoint, a webhook, or a callback; authenticate and authorize it                                         | [server routes](references/server-routes.md)                                                                                                                                     |
-| Name an endpoint, shape its response or errors, validate its input, paginate a list, document it in the API document | [HTTP API design](references/http-api.md)                                                                                                                                        |
-| Query or write data, resolve the database, work with transactions                                                    | [database and data access](references/database-and-data.md)                                                                                                                      |
-| Create a table, alter a column, add an index, write required initial data                                            | [migrations and seeds](references/migrations.md)                                                                                                                                 |
-| Switch the database, register a dialect, add a second connection                                                     | [database connections](references/database-connections.md)                                                                                                                       |
-| Translate server-produced text, add a language, set the default language                                             | [internationalization](references/i18n.md)                                                                                                                                       |
-| Departments, positions or another organisation dimension that permission sets are assigned to                        | [organisation dimension](references/organization.md)                                                                                                                             |
-| Design who gets what across departments, heads and cross-department work                                             | [organisation permission design](references/organization/permission-design.md)                                                                                                   |
-| Add a reusable service, share it across routes, run background or scheduled work                                     | [services and jobs](references/services-and-jobs.md)                                                                                                                             |
-| Write server and migration tests, choose a test layer, verify before finishing                                       | [testing and verification](references/testing.md)                                                                                                                                |
-| Run a CLI command: configure, migrate, manage plugins, read the data model                                           | [the command line](references/cli.md)                                                                                                                                            |
-| Add or change an application command under `cli/commands/`                                                           | [adding an application command](references/commands.md)                                                                                                                          |
-| Understand behavior inherited from an official application template                                                  | [template variants](references/template-variants.md)                                                                                                                             |
+| Task                                                                                                                   | Read                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anything under `client/`: pages, routes, components, styling, forms, API calls, copy, frontend tests                   | [frontend workflow](references/frontend/ui-workflow.md), which routes to the [frontend handbook](references/frontend/frontend-dev.md), the theme reference or the worked example |
+| Add an API endpoint, a webhook, or a callback; authenticate and authorize it                                           | [server routes](references/server-routes.md)                                                                                                                                     |
+| Name an endpoint, shape its response or errors, validate its input, paginate a list, document it in the API document   | [HTTP API design](references/http-api.md)                                                                                                                                        |
+| Query or write data, resolve the database, work with transactions                                                      | [database and data access](references/database-and-data.md)                                                                                                                      |
+| Create a table, alter a column, add an index, write required initial data                                              | [migrations and seeds](references/migrations.md)                                                                                                                                 |
+| Switch the database, register a dialect, add a second connection                                                       | [database connections](references/database-connections.md)                                                                                                                       |
+| Translate server-produced text, add a language, set the default language                                               | [internationalization](references/i18n.md)                                                                                                                                       |
+| Departments, positions or another organisation dimension that permission sets are assigned to                          | [organisation dimension](references/organization.md)                                                                                                                             |
+| Design who gets what across departments, heads and cross-department work                                               | [organisation permission design](references/organization/permission-design.md)                                                                                                   |
+| Add a reusable service, share it across routes, run background or scheduled work                                       | [services and jobs](references/services-and-jobs.md)                                                                                                                             |
+| A record that moves through stages defined in code: approvals, tickets, orders, timeouts, effects after a state change | [record lifecycles](references/lifecycle.md)                                                                                                                                     |
+| Write server and migration tests, choose a test layer, verify before finishing                                         | [testing and verification](references/testing.md)                                                                                                                                |
+| Run a CLI command: configure, migrate, manage plugins, read the data model                                             | [the command line](references/cli.md)                                                                                                                                            |
+| Add or change an application command under `cli/commands/`                                                             | [adding an application command](references/commands.md)                                                                                                                          |
+| Understand behavior inherited from an official application template                                                    | [template variants](references/template-variants.md)                                                                                                                             |
 
 A feature with a page and an API usually needs migrations, server routes, and a frontend change that follows the frontend workflow.
 
@@ -138,7 +139,7 @@ Everything else — `client/routing/`, `client/layouts/`, `client/theme/`, the s
 
 When the built-in mechanism genuinely cannot express the requirement, changing that structure is a legitimate answer. Comment what you changed and why the built-in path did not fit, and update the application's `AGENTS.md` in the same change so it still describes the real application. The synchronized NocoBase Skills are package-owned; propose a change to their source package when the shared framework guidance itself is wrong.
 
-When you do change the shell (`client/layouts/`, `client/routing/`), keep the behaviors listed in [customizing the shell](references/frontend/references/shell.md#1-behaviors-to-keep): the Settings and Dev tools header entries, the language submenu, navigation group state, permission refresh and sign-out handling.
+When you do change the shell (`client/layouts/`, `client/routing/`), keep the behaviors listed in [customizing the shell](references/frontend/references/shell.md#1-behaviors-to-keep): a single App shell with no settings area, the language submenu, navigation group state, permission refresh and sign-out handling.
 
 ## Ownership
 
@@ -172,14 +173,14 @@ These cause real damage and appear in every reference:
 
 - **Every server route owns its own authentication and authorization.** Mounting under `/api` authenticates nothing.
 - **Every `/api` route follows [HTTP API design](references/http-api.md).** camelCase paths, `{ data }` on success, `ApiError` on failure, input validated through `apiValidator()`, and a `describeRoute()` declaration for the API document. Never hand-write an error body.
-- **A migration is immutable history and self-contained.** Never import an evolving definition into one. Never edit one whose branch is merged.
+- **A migration is immutable history and self-contained.** Never import an evolving definition into one. Never edit one whose branch is merged, not even to reformat it: change the schema incrementally with a new migration. See [migrations change incrementally](references/migrations.md#migrations-change-incrementally).
 - **Every user-visible string goes through a translation key**, the English built into shadcn/ui primitives included.
 - **Let the owning page supply `PageContainer`.** One per page; inline child pages and tabs use the parent's, covering child pages add their own, overlays use their own container. See [section 2 of pages and routes](references/frontend/references/page.md#2-the-page-component).
 - **Visual consistency is application-wide.** Restyling only your part is a defect. Change the design tokens if a change is needed.
 - **Route paths never include the deployment base path.** The runtime restores it.
 - **Route navigation creates sidebar entries.** Declare `navigation` in `client/routes.ts`. Refine resources create no menu entries and, with no data provider registered, load nothing; pages load data with `useApiClient` (see [calling the API](references/frontend/references/api.md)).
 - **Reach for the built-in mechanism first.** Changing framework structure is allowed when nothing else fits — comment it and update the docs.
-- **Tests live in `tests/` or `e2e/`,** never beside the source.
+- **Tests live in `tests/`,** never beside the source; browser tests against a running application go in `tests/playwright/`.
 - **Remove direct NocoBase packages with `package remove` after reviewing their usage.** Do not hand-delete only the manifest entry or leave synchronized Skills and plugin registrations behind.
 
 ## Development file watching
@@ -212,18 +213,14 @@ After adding or removing a language in `client/locales/` or `server/locales/`, r
 
 Application startup defaults belong in `config.yml`: `i18n.defaultLocale` for the language, and `client.app.defaultColorScheme` and `client.app.defaultTheme` for appearance. Valid browser-local choices take precedence. Which languages the interface offers is not configured — `client/locales/` is that list, while `server/locales/` independently defines the server's translated languages. See [internationalization](references/i18n.md), [frontend copy](references/frontend/references/i18n.md) and [themes and tokens](references/frontend/references/theme.md).
 
-## Publish application releases
-
-Deploying to a Hub uses the `pnpm nocobase hub` commands, which the application has while it depends on `@nocobase/hub-cli`: `hub remote add` records the target App in `.nocobase/hub.json`, `hub auth login` saves its API key outside the project, and `hub deploy` builds for the Hub, uploads and deploys. Read `.agents/skills/nocobase-hub-cli/SKILL.md`, which that package ships, before running them, and the `nocobase-deployment` Skill for the rest of a production deployment.
-
-## Logging and hosted applications
+## Logging
 
 Use the application logging service for diagnostics so entries carry application identity and follow its level and output policy. Development pretty output uses local time and displays `[appId/logger]`; file and JSON console output retain UTC timestamps and structured context. Request starts and headers, configuration diagnostics and AI resource loading stages are DEBUG; request completions and AI resource totals are INFO. Default optional `ai/skills` directories may be absent; explicitly configured missing directories still warn.
 
-The Hub configures hosted application output under `hub.logging.apps`; its own output uses `logging`. Deployed releases carry their own runtime and logging packages: updating the Hub cannot repair an old application formatter that prints numeric levels or omits context, or make an old runtime understand the structured console policy. Upgrade the application dependencies, rebuild and deploy a new release; never edit a deployed artifact or intercept process-wide stdout to rewrite other applications’ logs. Verify console enablement and pretty mode after upgrading.
+Deployed releases carry their own runtime and logging packages: an old release keeps the formatter it was built with. Upgrade the application dependencies, rebuild and deploy a new release; never edit a deployed artifact or intercept process-wide stdout to rewrite its logs. Verify console enablement and pretty mode after upgrading.
 
 Authentication diagnostics use the application `auth` logger unless an explicit authentication logger is configured. A missing Better Auth base URL is a configuration warning, not a logging error: configure `app.publicOrigin` with the externally reachable origin in the application deployment configuration. Do not substitute the internal Host bind address or suppress the warning to make startup appear clean.
 
-## Hub storage maintenance
+## Storage
 
-Hub storage separates Hub-owned state, Host runtime files, release archives, expanded revisions and persistent application volumes. Standalone source and compiled entries share the deployment directory's storage; `APP_STORAGE_DIR` selects another storage directory, and explicit storage paths take precedence over it. Embedded applications use Host-provided paths. Expanded releases live at `appRevisionsDir/<appId>/<sha256>` and restart recovery requires their installed metadata. Build archives use `storage/exports/dist.tar.gz`.
+Standalone source and compiled entries share the deployment directory's storage; `APP_STORAGE_DIR` selects another storage directory, and explicit storage paths take precedence over it. Embedded applications use Host-provided paths. Expanded releases live at `appRevisionsDir/<appId>/<sha256>` and restart recovery requires their installed metadata. Build archives use `storage/exports/dist.tar.gz`.
