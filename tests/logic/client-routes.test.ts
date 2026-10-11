@@ -54,6 +54,10 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      // The Scheduler API checks `page:scheduler.schedules/access` itself, so the page opts out of a client-side rule
+      // and renders the 403 when the grant is missing.
+      { name: 'schedules', authorizedAs: null },
     ]);
   });
 
