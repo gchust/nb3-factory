@@ -50,6 +50,10 @@ const zhCN: AppResource = {
   'auth.foundation': 'NocoBase 基础能力',
   'auth.foundationDescription': '可靠的数据、访问控制、工作流与治理。',
   'auth.marketingFooter': '自由构建，可靠支撑。',
+  'auth.demoAccounts': '演示账号',
+  'auth.demoOwner': '资料员甲（维护者）— 用户名 materials.owner',
+  'auth.demoColleague': '普通同事乙（同事）— 用户名 materials.colleague',
+  'auth.demoPassword': '两个账号的密码均为：Materials#2026',
   'status.loading': '加载中',
   'status.loadingPage': '正在加载页面',
   'status.loadingSettings': '正在加载设置',
@@ -59,6 +63,7 @@ const zhCN: AppResource = {
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
+  'navigation.materials': '资料与附件',
   'routeOverlay.close': '关闭',
   'status.deniedDescription': '你没有访问 {{label}} 的权限。',
   'status.routeFailedDescription':
@@ -89,6 +94,35 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  'materials.title': '项目资料与私有附件',
+  'materials.description': '维护自己的资料及其附件。每份资料与附件仅本人可见。',
+  'materials.formDescription':
+    '先上传附件，再填写标题并保存。保存被拒绝时，已上传的文件会保留，无需重新上传。',
+  'materials.detailDescription': '可预览、下载或移除附件，保存后改动生效。',
+  'materials.new': '新建资料',
+  'materials.detailTitle': '资料详情',
+  'materials.empty': '还没有资料，创建第一份吧。',
+  'materials.attachments': '附件',
+  'materials.titleLabel': '标题',
+  'materials.titlePlaceholder': '请输入标题',
+  'materials.titleRequired': '标题不能为空。',
+  'materials.filesLabel': '附件',
+  'materials.savedFiles': '已保存的附件',
+  'materials.addFiles': '添加附件',
+  'materials.noFiles': '暂无附件。',
+  'materials.accept': '支持 PNG 图片与 DOCX 文档。',
+  'materials.uploading': '正在上传…',
+  'materials.save': '保存',
+  'materials.saving': '正在保存…',
+  'materials.saved': '已保存。',
+  'materials.saveFailed': '保存资料失败。',
+  'materials.delete': '删除',
+  'materials.deleting': '正在删除…',
+  'materials.deleteFailed': '删除资料失败。',
+  'materials.confirmDelete': '确认删除该资料及其附件？',
+  'materials.cancel': '取消',
+  'materials.loadFailed': '加载资料失败。',
+  'materials.notFound': '该资料不存在，或不属于你。',
 
   appearance: {
     title: '外观',
@@ -150,6 +184,14 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  overrides: {
+    // Rewords the file plugin's image preview failure. The application owns the previewer that reports it, but the
+    // `files` namespace belongs to the plugin, so the wording is overridden here instead of edited there.
+    '@nocobase/app-plugin-file': {
+      'files.imageFailed':
+        '无法显示该图片，文件可能已损坏或格式不受浏览器支持。',
+    },
   },
 };
 

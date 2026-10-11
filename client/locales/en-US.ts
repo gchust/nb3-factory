@@ -54,6 +54,10 @@ const enUS = {
   'auth.foundationDescription':
     'Reliable data, access control, workflows and governance.',
   'auth.marketingFooter': 'Freedom above. Confidence below.',
+  'auth.demoAccounts': 'Demo accounts',
+  'auth.demoOwner': 'Owner (资料员甲) — username materials.owner',
+  'auth.demoColleague': 'Colleague (普通同事乙) — username materials.colleague',
+  'auth.demoPassword': 'Password for both: Materials#2026',
   'status.loading': 'Loading',
   'status.loadingPage': 'Loading page',
   'status.loadingSettings': 'Loading settings',
@@ -63,6 +67,7 @@ const enUS = {
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
+  'navigation.materials': 'Materials',
   'routeOverlay.close': 'Close',
   'status.deniedDescription': 'You do not have permission to access {{label}}.',
   'status.routeFailedDescription':
@@ -96,6 +101,37 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  'materials.title': 'Project materials and private attachments',
+  'materials.description':
+    'Keep your own materials and the attachments that belong to them. Each material and its attachments are visible only to you.',
+  'materials.formDescription':
+    'Upload the attachments first, then give the material a title and save. Files already uploaded are kept when the save is rejected.',
+  'materials.detailDescription':
+    'Preview, download or remove an attachment, then save the change.',
+  'materials.new': 'New material',
+  'materials.detailTitle': 'Material',
+  'materials.empty': 'No materials yet. Create the first one.',
+  'materials.attachments': 'Attachments',
+  'materials.titleLabel': 'Title',
+  'materials.titlePlaceholder': 'Enter a title',
+  'materials.titleRequired': 'A title is required.',
+  'materials.filesLabel': 'Attachments',
+  'materials.savedFiles': 'Saved attachments',
+  'materials.addFiles': 'Add attachments',
+  'materials.noFiles': 'No attachments yet.',
+  'materials.accept': 'PNG images and DOCX documents are supported.',
+  'materials.uploading': 'Uploading…',
+  'materials.save': 'Save',
+  'materials.saving': 'Saving…',
+  'materials.saved': 'Saved.',
+  'materials.saveFailed': 'Unable to save the material.',
+  'materials.delete': 'Delete',
+  'materials.deleting': 'Deleting…',
+  'materials.deleteFailed': 'Unable to delete the material.',
+  'materials.confirmDelete': 'Delete this material and its attachments?',
+  'materials.cancel': 'Cancel',
+  'materials.loadFailed': 'Unable to load materials.',
+  'materials.notFound': 'This material does not exist or is not yours.',
 
   appearance: {
     title: 'Appearance',
