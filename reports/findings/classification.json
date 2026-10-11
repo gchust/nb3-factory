@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "54469ce4f5647b515c9effd9291a59bce6d88f0a02754648a653174865e7350d",
+  "inputHash": "0ef37a69a587f00da895f9a6fba86a5e9deabd22c2395cc2f54abba94177cc8e",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -931,6 +931,11 @@
       "id": "690:38089380163:1:F5",
       "report": "690:38089380163:1",
       "fingerprint": "e76c6579f32df8870a00507b52a3004e4bfeade0f2234af0ab4605c44fe173b4"
+    },
+    {
+      "id": "700:38106774507:1:F3",
+      "report": "700:38106774507:1",
+      "fingerprint": "5ce1cf59777f30bd7f87f1ad2da9652995dae7944b3776853a401a523f66b19f"
     }
   ],
   "groups": [
@@ -1309,11 +1314,12 @@
       ]
     },
     {
-      "title": "指引未说明运行时 schema/表结构探查应走框架内省，Agent 改用原始 SQL 驱动并以逻辑名查询失败",
-      "reason": "跨报告合并（含本次新增 630:F7）。528:F5（E6/E44）与 630:F7（E26/E77）都记录 nocobase-db Skill 只给出逻辑 Collection/字段名与物理名的映射，却未给出受支持的只读 schema/表结构探查路径；实现 Agent 因此用 better-sqlite3/sqlite3 直接对已迁移库执行 SQL，并沿用逻辑集合/列名（contacts.customerId、meetingRooms/startAt），得到 no such column / no such table。触发条件（db apply 后核对实际结构）、期望（用框架内省、Query 层或 collections doctor 只读检查结构）、实际（原始方言驱动 + 逻辑名失败）与修复方向（在 nocobase-db 的 Builder/Collections 章节或 §3/§4 顶部补充推荐探查途径并提示逻辑名到物理列的转换）一致。",
+      "title": "指引未说明逻辑名与物理表/列名的映射，Agent 绕过框架用原始 SQL 驱动并以逻辑名查询失败",
+      "reason": "跨报告合并。528:F5（E6/E44）、630:F7（E26/E77）与 700:F3（E29/E33/E15）指向同一缺口：nocobase-db 指引只零散说明逻辑名到物理名由 underscored/tablePrefix 决定，却没有给出受支持的只读 schema/表结构探查路径，也没有把这一映射与原生 SQL 的列名规则讲清；实现 Agent 因此绕过框架，用 better-sqlite3/sqlite3 直接对已迁移库执行 SQL 并沿用逻辑集合/字段名，分别得到 no such column: customerId（528）、no such table: meetingRooms（630）、no such column: dueAt（700，逻辑 dueAt 的物理列为 due_at）。触发条件（框架外原始 SQL 引用逻辑名/核对实际结构）、实际行为（物理名不匹配报错）与修复方向（指引明确物理命名规则并给出框架内省/只读结构检查的推荐途径）一致，故合并。",
       "members": [
         "528:37073999569:1:F5",
-        "630:37590168713:1:F7"
+        "630:37590168713:1:F7",
+        "700:38106774507:1:F3"
       ]
     },
     {
@@ -1725,9 +1731,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38099105199",
+    "runId": "38109416379",
     "attempt": 1,
-    "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-11T00:39:56.881Z"
+    "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+    "completedAt": "2026-10-11T03:47:59.402Z"
   }
 }
