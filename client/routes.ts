@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, LaptopIcon } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -61,6 +61,30 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/device.js'),
     name: 'device',
     path: '/device',
+  },
+  {
+    // The device ledger (issue #701): one shared list of devices with their code, name and status. `authz: 'skip'`
+    // keeps it reachable by every signed-in user, like the landing page; the endpoints still require a session.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: LaptopIcon },
+    path: '/devices',
+    children: [
+      {
+        // The create dialog, opened from the list's header or its empty state and rendered in the list's <Outlet>.
+        componentLoader: () => import('./pages/devices/new.js'),
+        name: 'devices-new',
+        path: 'new',
+      },
+      {
+        // A row's edit dialog, opened alone over the list; closing returns to the same filtered list.
+        componentLoader: () => import('./pages/devices/edit.js'),
+        name: 'devices-edit',
+        path: 'edit/:deviceId',
+      },
+    ],
   },
 ]);
 
