@@ -94,7 +94,7 @@ function overlayFixture(root) {
     '.github/workflows/refresh-template.yml',
     'factory-workflow\n',
   );
-  write(control, '.npmrc', '@nocobase:registry=https://npm.nocobase.ai/\n');
+  write(control, '.npmrc', '@nocobase:registry=https://registry.npmjs.org/\n');
   write(control, '.agents/skills/custom/SKILL.md', 'custom guidance');
   write(control, 'client/old-business.ts', 'must not survive refresh');
   write(control, 'docs/factory-guide.md', '# Factory guide\n');
@@ -580,7 +580,7 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(sync, /group: template-refresh-global\n\s+queue: max/);
   // Job-level, so issues events the job skips never wait for a refresh.
   assert.doesNotMatch(sync, /^concurrency:/m);
-  assert.match(sync, /^    concurrency:\n      group: template-refresh-global\n/m);
+  assert.match(sync, /^ {4}concurrency:\n {6}group: template-refresh-global\n/m);
   // Pull request checks are never skipped for non-owners; publishing still is.
   assert.match(workflow, /\(github\.event_name == 'workflow_dispatch' && github\.actor == github\.repository_owner\) \|\|/);
   const publisher = workflow.split('\n  publish:')[1];
@@ -591,7 +591,7 @@ test('refresh workflow has its own queue and isolates generated code from write 
     /pnpm create "@nocobase\/app@\$FACTORY_CREATOR_VERSION" nb3-factory/,
   );
   assert.match(workflow, /template-creator.mjs record/);
-  assert.match(workflow, /--template-tag=latest/);
+  assert.match(workflow, /--template-tag=beta/);
   assert.match(workflow, /scripts\/verify.sh/);
   assert.doesNotMatch(workflow, /rm -f config\.yml/);
   assert.match(publisher, /contents: write/);
@@ -609,7 +609,7 @@ test('a superseded PR refresh run stops before generation and skips every later 
   const concurrency = /^concurrency:\n((?: {2}.*\n)+)/m.exec(workflow)[1];
   assert.match(concurrency, /queue: max/);
   assert.doesNotMatch(concurrency, /cancel-in-progress/);
-  assert.match(generate, /^      pull-requests: read$/m);
+  assert.match(generate, /^ {6}pull-requests: read$/m);
   const steps = generate
     .split(/\n {6}- (?=name:|uses:)/)
     .slice(1)
@@ -666,7 +666,7 @@ test('refresh caches the generated application pnpm store and saves it only from
     'Locate the pnpm store',
     'Restore the template pnpm store',
     'Install and lock the new application dependencies',
-    'Install, register, and inspect the required Pro plugin baseline',
+    'Sync Skills and record the template plugin inventory',
     'Drop store entries the generated lockfile no longer uses',
     'Save the template pnpm store before verification',
     'Format the generated application and plugin registrations',

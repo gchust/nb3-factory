@@ -111,7 +111,7 @@ writeFileSync(
     {
       template: '@nocobase/app-template-default',
       templateVersion: app.nocobase.defaultTemplateVersion,
-      creator: '@nocobase/create-app@latest',
+      creator: '@nocobase/create-app@beta',
       controlSha,
       tooling: '@nocobase/app-cli',
       generatedAt: new Date().toISOString(),

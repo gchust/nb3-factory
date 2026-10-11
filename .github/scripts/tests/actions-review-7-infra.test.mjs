@@ -1,5 +1,6 @@
 // Round 7 of the Actions review: re-runs, retried reads and skipped work in
 // the review, evaluation, framework-fix and template workflows.
+/* global Response */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -12,7 +13,6 @@ import {
 } from '../independent-review.mjs';
 import { fetchTaxonomy } from '../problem-classification.mjs';
 import { checkClassification, newerQueuedRun } from '../classify-findings.mjs';
-import { callTimeoutMs, CALL_MARGIN_MS } from '../template-plugins.mjs';
 
 const workflow = (name) =>
   readFileSync(new URL(`../../workflows/${name}`, import.meta.url), 'utf8');
@@ -467,26 +467,11 @@ test('template checks skip build task PRs and superseded source-baseline runs', 
   );
 });
 
-test('every pnpm call of the plugin step shares one deadline inside the step limit', () => {
-  const now = 1_000_000_000_000;
-  const deadline = now / 1000 + 600;
-  assert.equal(callTimeoutMs(deadline, now), 600_000 - CALL_MARGIN_MS);
-  assert.equal(
-    callTimeoutMs(deadline, now + 300_000),
-    300_000 - CALL_MARGIN_MS,
-  );
-  assert.throws(
-    () => callTimeoutMs(deadline, now + 590_000),
-    /deadline has passed/,
-  );
-  assert.equal(callTimeoutMs(undefined, now), 12 * 60 * 1000);
-});
-
 test('every network step of the template checks has a bound below its job limit', () => {
   const refresh = workflow('refresh-template.yml');
   assert.match(
     refresh,
-    /- name: Create a fresh application from the latest published template\n(?: {8}.*\n)*? {8}timeout-minutes: 10\n/,
+    /- name: Create a fresh application from the published beta template\n(?: {8}.*\n)*? {8}timeout-minutes: 10\n/,
   );
   const baseline = workflow('source-baseline.yml');
   for (const [name, minutes] of [
@@ -500,20 +485,8 @@ test('every network step of the template checks has a bound below its job limit'
       ),
       name,
     );
-  const plugins = readFileSync(
-    new URL('../template-plugins.mjs', import.meta.url),
-    'utf8',
-  );
-  assert.match(
-    plugins,
-    /timeout: callTimeoutMs\(process\.env\.FACTORY_PLUGIN_STEP_DEADLINE\)/,
-  );
   assert.match(
     refresh,
-    /export FACTORY_PLUGIN_STEP_DEADLINE=\$\(\( \$\(date \+%s\) \+ 14 \* 60 \)\)/,
-  );
-  assert.match(
-    refresh,
-    /- name: Install, register, and inspect the required Pro plugin baseline\n {8}timeout-minutes: 15\n/,
+    /- name: Sync Skills and record the template plugin inventory\n {8}timeout-minutes: 15\n/,
   );
 });

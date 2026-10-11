@@ -120,10 +120,10 @@ PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列�
 
 ## 刷新到最新 NocoBase 3 基线
 
-在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。每次刷新先由 `template-creator.mjs pin` 解析创建器 `@nocobase/create-app` 当前 `latest` 的确切版本，本次运行全程固定使用该版本，并记录在 `factory-template.json` 的 `creator` 字段；默认模板仍按 `latest` 标签解析：
+在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。发布包统一来自公开 npm（`https://registry.npmjs.org/`）。每次刷新先由 `template-creator.mjs pin` 解析创建器 `@nocobase/create-app@beta` 的确切版本，本次运行全程固定使用该版本；默认模板也使用 `beta` 标签。`factory-template.json` 记录实际创建器与模板版本，以及 `releaseChannel` 和 `registry`：
 
 ```bash
-pnpm create @nocobase/app@<本次解析出的创建器版本> nb3-factory --no-install --template=default --template-tag=latest
+pnpm create @nocobase/app@<本次解析出的创建器版本> nb3-factory --no-install --template=default --template-tag=beta
 ```
 
 当前创建器不再接受 `--db-dialect`；生成时使用模板默认配置，验证时由 `create-runtime-config.mjs` 显式配置独立的 SQLite 数据库。
@@ -134,9 +134,9 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 验证使用 SQLite：模板已声明 `@nocobase/db-sqlite` 时沿用模板的版本范围，未声明时才安装该适配器，与验证配置的 dialect 一致。对 `beta.38` 发布包中的 monorepo 测试假设做定向兼容：检查生成应用的包名、使用公开包入口、校验真实路径，并按工厂策略保留 `.agents`；不跳过测试。兼容变更记录在 `factory-template.json`。
 
-工厂只支持当前新版 NocoBase 3：构建使用官方 `nocobase build`，Skill、插件和数据库操作统一使用 `pnpm exec nocobase <命令>`。旧模板补丁、旧 script 别名和迁移回退已删除。刷新时解析官方 latest，完整验证通过后才发布；每次任务固定使用该基线提交和 lockfile，过程中不漂移版本。
+工厂只支持当前新版 NocoBase 3：构建使用官方 `nocobase build`，Skill、插件和数据库操作统一使用 `pnpm exec nocobase <命令>`。旧模板补丁、旧 script 别名和迁移回退已删除。刷新时解析公开 npm 的 beta 模板，完整验证通过后才发布；每次任务固定使用该基线提交和 lockfile，过程中不漂移版本。
 
-当前默认应用已合入 beta.47 模板，保留 AI Employee、Knowledge Base 和 Mail 插件。旧任务分支不自动升级，请从当前验证过的基线创建新任务。
+刷新后的插件集合、版本、注册和配置由 beta 模板决定。工厂同步 Skills 后校验模板声明的生产插件与核心版本是否兼容，并记录实际安装版本；注册和运行行为由应用验证覆盖；不再强制追加 AI Employee、Knowledge Base，也不再独立选择 Mail 的最新版本。当前 beta 模板已自带 Mail。旧任务分支不自动升级，请在刷新验证并发布成功后，从新基线创建任务。
 
 模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。重新生成的目录树与 `develop` 只差 `factory-template.json` 里的刷新时间（`generatedAt`）和来源控制提交（`controlSha`）时，不发布：不新增提交、不建备份分支，进行中任务的基线也不会变。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有应用分支保持原样：测试新基线时可新建 Issue 并留空目标分支，或指定一个尚不存在的分支。仓库 Secrets、Variables 也不会被 Git 推送改动。
 
