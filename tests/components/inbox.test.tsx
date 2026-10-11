@@ -7,6 +7,8 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, expect, it, vi } from 'vitest';
 
 import locales from '../../client/locales/index.js';
+import { inboxBadge } from '../../client/components/inbox-badge';
+import { InboxButton } from '../../client/components/inbox-button';
 import { TooltipProvider } from '../../client/components/ui/tooltip';
 
 const mocks = vi.hoisted(() => ({
@@ -117,4 +119,24 @@ it("lists the plugin's messages as notifications and marks one read when it is o
       method: 'POST',
     }),
   );
+});
+
+it('links the header button to the inbox and shows the unread count as a badge', () => {
+  render(
+    <Frame path='/'>
+      <InboxButton badge={inboxBadge(0, 3)} />
+    </Frame>,
+  );
+  expect(screen.getByRole('link', { name: 'Inbox, 3 unread' })).toHaveAttribute(
+    'href',
+    '/inbox',
+  );
+  expect(screen.getByTestId('nocobase-inbox-badge')).toHaveTextContent('3');
+});
+
+it('prefers waiting decisions over unread items and shows nothing at zero', () => {
+  expect(inboxBadge(3, 12)).toMatchObject({ kind: 'decisions', text: '3' });
+  expect(inboxBadge(150, 0)).toMatchObject({ kind: 'decisions', text: '99+' });
+  expect(inboxBadge(0, 12)).toMatchObject({ kind: 'unread', text: '12' });
+  expect(inboxBadge(0, 0)).toBeNull();
 });

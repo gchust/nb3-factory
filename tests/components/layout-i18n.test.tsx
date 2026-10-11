@@ -16,6 +16,11 @@ import { AppLayout } from '../../client/layouts/app-layout.js';
 vi.mock('@nocobase/app-plugin-i18n/client', () => ({
   useSyncServerLocale: () => {},
 }));
+// The header's inbox entry reads the unread count through the API client, which this
+// shell-only test does not set up. The badge is not what this test covers, so stub the hook.
+vi.mock('@nocobase/app-plugin-notification-in-app/client/inbox', () => ({
+  useInboxUnreadCount: () => ({ data: 0 }),
+}));
 
 vi.mock('../../client/theme/index.js', () => ({ ThemeSettings: () => null }));
 vi.mock('../../client/layouts/components/user-menu.js', () => ({

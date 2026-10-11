@@ -13,6 +13,7 @@ import {
   AuthorizationClient,
   authorizationClientToken,
 } from '@nocobase/app-plugin-authorization/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   act,
   fireEvent,
@@ -102,14 +103,16 @@ describe('application shell', () => {
     ).toBeVisible();
   });
 
-  it('renders no Settings or Inbox entry in the header', async () => {
+  it('renders an Inbox entry but no Settings entry in the header', async () => {
     renderApplication('/', true);
     await screen.findByRole('heading', { name: 'App client is ready' });
+    // Tickets notify through the inbox, so the header links to it; the template has no Settings page here.
+    expect(screen.getByRole('link', { name: /inbox/i })).toHaveAttribute(
+      'href',
+      '/inbox',
+    );
     expect(
       screen.queryByRole('link', { name: 'Settings' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: /inbox/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -302,13 +305,15 @@ function renderApplication(
   } as unknown as ClientApplication;
   render(
     <ClientApplicationContext.Provider value={app}>
-      <AuthenticationProvider>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <AppThemeProvider>
-            <AppRouter clientRoutes={clientRoutes} />
-          </AppThemeProvider>
-        </MemoryRouter>
-      </AuthenticationProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthenticationProvider>
+          <MemoryRouter initialEntries={[initialEntry]}>
+            <AppThemeProvider>
+              <AppRouter clientRoutes={clientRoutes} />
+            </AppThemeProvider>
+          </MemoryRouter>
+        </AuthenticationProvider>
+      </QueryClientProvider>
     </ClientApplicationContext.Provider>,
   );
 }

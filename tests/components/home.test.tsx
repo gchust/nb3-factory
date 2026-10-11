@@ -1,24 +1,31 @@
+import { ApiClientError } from '@nocobase/app-client';
 import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { ItDashboard, Ticket } from '../../client/pages/tickets/types.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
+// One object for the whole file: a new one per call would restart the page's load effect.
+const { api, refresh } = vi.hoisted(() => ({
+  api: { request: vi.fn() },
+  refresh: vi.fn(),
 }));
 
 vi.mock('@nocobase/app-client', async (original) => ({
+  // Keep the real module, so `ApiClientError` stays the class the page checks with `instanceof`.
   ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+  useApiClient: () => api,
+}));
+vi.mock('@nocobase/app-plugin-authentication/client', () => ({
+  useAuthentication: () => ({ refresh }),
 }));
 
 // Strict: a key the locale lacks fails the test instead of rendering as text.
@@ -30,145 +37,162 @@ const runtime = await createTestI18nRuntime({
 });
 
 function I18n({ children }: { readonly children: ReactNode }): ReactElement {
-  return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
+  return (
+    <MemoryRouter>
+      <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>
+    </MemoryRouter>
+  );
 }
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
-
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
-  });
-  return user;
+function ticket(
+  overrides: Partial<Ticket> & Pick<Ticket, 'id' | 'title'>,
+): Ticket {
+  return {
+    description: '',
+    urgency: 'normal',
+    status: 'pending',
+    statusChangedAt: '2026-10-01T00:00:00.000Z',
+    reporterId: 'u1',
+    reporterName: 'Reporter',
+    assigneeId: null,
+    assigneeName: null,
+    resolution: null,
+    resolvedAt: null,
+    closedAt: null,
+    closedById: null,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+    overdue: false,
+    attachments: [],
+    ...overrides,
+  };
 }
 
-describe('home page', () => {
-  beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
-  });
+const dashboard: ItDashboard = {
+  role: {
+    userId: 'u1',
+    role: 'serviceDesk',
+    isRoot: false,
+    isServiceDesk: true,
+  },
+  pending: 7,
+  processing: 8,
+  resolved: 9,
+  closed: 5,
+  overdue: 3,
+  mine: 4,
+  engineers: [
+    { userId: 'e1', name: 'Alice Chen', role: 'engineer', open: 6, total: 12 },
+    { userId: 'e2', name: 'Bob Li', role: null, open: 0, total: 1 },
+  ],
+};
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+const openTickets: readonly Ticket[] = [
+  ticket({ id: 101, title: 'Printer is broken', overdue: true }),
+  ticket({ id: 102, title: 'VPN drops', status: 'processing' }),
+  ticket({ id: 103, title: 'Screen flickers' }),
+];
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
-  });
+const ticketList = {
+  data: openTickets,
+  meta: { total: openTickets.length, page: 1, pageSize: 100 },
+};
 
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
-
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
-    });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
-
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
-      }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
-    expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
-  });
-
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
-    );
-
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
-  });
+beforeEach(() => {
+  api.request.mockReset();
+  refresh.mockReset();
+  api.request.mockImplementation(
+    async ({ path }: { readonly path: string }) => {
+      if (path === 'itDashboard') return { data: dashboard };
+      if (path === 'itTickets') return ticketList;
+      throw new Error(`Unexpected path: ${path}`);
+    },
+  );
 });
 
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
+describe('dashboard home page', () => {
+  it('shows the pending, overdue and workload views on the landing page', async () => {
+    render(<HomePage />, { wrapper: I18n });
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: enUS.dashboard.title,
+      }),
+    ).toBeInTheDocument();
+
+    // One card per metric the service desk tracks.
+    for (const value of [
+      dashboard.pending,
+      dashboard.processing,
+      dashboard.resolved,
+      dashboard.overdue,
+      dashboard.mine,
+      dashboard.closed,
+    ]) {
+      expect(screen.getByText(String(value))).toBeInTheDocument();
     }
+
+    // Only pending tickets appear in the queue; the processing one does not. The pending ticket that is also over a
+    // day old shows in both the pending and the overdue list.
+    expect(screen.getAllByText('Printer is broken')).toHaveLength(2);
+    expect(screen.getByText('Screen flickers')).toBeInTheDocument();
+    expect(screen.queryByText('VPN drops')).not.toBeInTheDocument();
+
+    // The overdue list repeats only the ticket that has waited more than a day.
+    expect(screen.getAllByText('#101')).toHaveLength(2);
+    expect(screen.getAllByText('#103')).toHaveLength(1);
+
+    // Every engineer's workload, including the one with nothing open.
+    expect(screen.getByText('Alice Chen')).toBeInTheDocument();
+    expect(screen.getByText('Bob Li')).toBeInTheDocument();
+    expect(screen.getByText(enUS.dashboard.workload.title)).toBeInTheDocument();
+  });
+
+  it('reports a failed load and retries it on demand', async () => {
+    // The two mount requests fail; the implementation set in `beforeEach` answers the retry.
+    api.request
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockRejectedValueOnce(new Error('network down'));
+    const user = userEvent.setup();
+    render(<HomePage />, { wrapper: I18n });
+
+    expect(
+      await screen.findByText(enUS.dashboard.error.title),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: enUS['status.retry'] }),
+    );
+
+    await waitFor(() => expect(api.request).toHaveBeenCalledTimes(4));
+    expect(
+      screen.queryByText(enUS.dashboard.error.title),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('Printer is broken')).toHaveLength(2);
+  });
+
+  it('shows the session-expired alert, not a retry, when the API answers 401', async () => {
+    api.request.mockRejectedValue(
+      new ApiClientError('unauthorized', {
+        status: 401,
+        method: 'GET',
+        url: '/api/itDashboard',
+      }),
+    );
+    const user = userEvent.setup();
+    render(<HomePage />, { wrapper: I18n });
+
+    expect(
+      await screen.findByText(enUS['status.sessionExpired']),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(enUS.dashboard.error.title),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: enUS.actions.signInAgain }),
+    );
+    expect(refresh).toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, LifeBuoy, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,41 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The ticket list is the shared entry point for every role: the server scopes what each person may read, so the
+    // page itself needs no page authorization. `authz: 'skip'` keeps it reachable for regular employees as well.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: LifeBuoy },
+    path: '/tickets',
+    children: [
+      {
+        // The create dialog renders over the list through the list's <Outlet />.
+        auth: 'required',
+        componentLoader: () => import('./pages/tickets/new.js'),
+        name: 'ticket-new',
+        path: 'new',
+      },
+      {
+        // A covering child page: the ticket detail replaces the list. Declared after `new` so the static segment wins.
+        auth: 'required',
+        componentLoader: () => import('./pages/tickets/detail/index.js'),
+        name: 'ticket-detail',
+        path: ':ticketId',
+      },
+    ],
+  },
+  {
+    // Only root may open this page; the role-assignment endpoints enforce the same rule server-side.
+    auth: 'required',
+    authz: 'unrestricted',
+    componentLoader: () => import('./pages/team/index.js'),
+    name: 'team',
+    navigation: { title: 'navigation.team', icon: Users },
+    path: '/team',
   },
   {
     auth: 'guest',
