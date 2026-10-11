@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d18819f19442dcf9c5b8e419b12a59c2880d55ab532946c97975be956b339cf6",
+  "inputHash": "7bc7d24d143e70d6e11a9fbf1797d956aea457ef5db1cd67a891749aa2d97f37",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -898,6 +898,16 @@
       "fingerprint": "24fa01b8c1276cd90af9febd1ba1976958ad4887f18405a979fad295af83c0b0"
     },
     {
+      "id": "688:38089375339:1:F1",
+      "report": "688:38089375339:1",
+      "fingerprint": "cca62cd218796bd18c33c2b64a965596573631ffb0b48f446af25b4f0180e467"
+    },
+    {
+      "id": "688:38089375339:1:F2",
+      "report": "688:38089375339:1",
+      "fingerprint": "cf7fccc06934f604682f80a860958246996bf084e889091eabe2b62689d0fa92"
+    },
+    {
       "id": "690:38089380163:1:F4",
       "report": "690:38089380163:1",
       "fingerprint": "b16895a8c363ae1d4ed60d5eceae5a73babd32749c9ac626cdcc6a92c38132c7"
@@ -939,14 +949,15 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
-      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。 646:F1（E29/E30/E40/E2/E3/E42）再次确认同一 code-and-seeds.md 第 40/69 行示例在 .ts 种子中以 .js 相对说明符导入 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js，而同页第 97 行文字却称导入 .ts，自相矛盾；task-loader 用 pathToFileURL().href 交给原生 import，__rewriteRelativeImportExtension 只对 ^\\.\\.?/ 字面量生效、不作用于 file URL，应用把说明符改成 .ts 后测试才通过。与既有成员同一错误指引、同一修复方向（示例改 .ts 或加载器回退解析），故并入。",
+      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。 646:F1（E29/E30/E40/E2/E3/E42）再次确认同一 code-and-seeds.md 第 40/69 行示例在 .ts 种子中以 .js 相对说明符导入 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js，而同页第 97 行文字却称导入 .ts，自相矛盾；task-loader 用 pathToFileURL().href 交给原生 import，__rewriteRelativeImportExtension 只对 ^\\.\\.?/ 字面量生效、不作用于 file URL，应用把说明符改成 .ts 后测试才通过。与既有成员同一错误指引、同一修复方向（示例改 .ts 或加载器回退解析），故并入。 688:F1（E29/E30/E24/E25/E31/E76）在 1.0.0-beta.55 复现同一错误指引：code-and-seeds.md 第 36/69/97 行把“共享 seed-data 模块 + .js 说明符导入”作为标准做法，实际应用启动即 Database seeds failed，Caused by ERR_MODULE_NOT_FOUND: .../database/seed-data/library-accounts.js imported from .../database/main/seeds/*.ts；task-loader 只用原生 import 并按字面路径解析、仅改写任务文件自身扩展名，对种子内部的传递导入无效，最终只能内联常量保持自包含，与既有成员同一错误指引与同一修复方向，故并入。",
       "members": [
         "474:36498921009:1:F1",
         "475:36498925234:1:F2",
         "496:36641602107:1:F1",
         "544:37156757587:1:F1",
         "649:37621548882:1:F1",
-        "646:37621545718:1:F1"
+        "646:37621545718:1:F1",
+        "688:38089375339:1:F1"
       ]
     },
     {
@@ -1000,14 +1011,15 @@
     },
     {
       "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
-      "reason": "跨报告合并。494:F2（E13/E14/E1/E7/E49）、518:F5（E24/E25/E40/E52）、530:F3（E2/E11/E18）都记录共享/限制/默认访问类 Skill 与 authorization 文档把 selection.records(ids) 当作单条记录交接的推荐写法，示例全为字符串主键，却未提示 records 仅接受非空字符串 id、整数自增主键集合会失败，也未给出 recordAccess 的等价写法；同一错误指引、同一修复方向（注明字符串约束并给整数主键对照示例）。554:F1（E1/E5/E15/E41/E43）显示共享 SKILL 与 authorization README 以 records(['quote-7']) 推荐单条记录共享，而 db SKILL 默认 collection.increments('id') 生成整数主键，parseRecordSelection 要求每个 id 为非空字符串，照做会抛 TypeError: Invalid record selection，指引同样未提示，故归入本组。 577:F3（E45/E27）显示共享规则 SKILL 以 selection.records(['quote-7']) 演示单条记录选择，却未提示 records 仅接受非空字符串 id，照做在整数主键上抛 TypeError('Invalid record selection')；同一错误指引与同一修复方向。 598:F3（E25/E26/E27/E28/E29）显示 nocobase-db SKILL 迁移示例默认 increments(\"id\")（E25/E26）、database-and-data.md 称其对普通表可用（E29），而共享/限制规则 Skill 只用 selection.records([字符串 id]) 演示（E27/E28），均未提示记录级选择需要字符串友好主键；同一指引缺口与同一修复方向。",
+      "reason": "跨报告合并。494:F2（E13/E14/E1/E7/E49）、518:F5（E24/E25/E40/E52）、530:F3（E2/E11/E18）都记录共享/限制/默认访问类 Skill 与 authorization 文档把 selection.records(ids) 当作单条记录交接的推荐写法，示例全为字符串主键，却未提示 records 仅接受非空字符串 id、整数自增主键集合会失败，也未给出 recordAccess 的等价写法；同一错误指引、同一修复方向（注明字符串约束并给整数主键对照示例）。554:F1（E1/E5/E15/E41/E43）显示共享 SKILL 与 authorization README 以 records(['quote-7']) 推荐单条记录共享，而 db SKILL 默认 collection.increments('id') 生成整数主键，parseRecordSelection 要求每个 id 为非空字符串，照做会抛 TypeError: Invalid record selection，指引同样未提示，故归入本组。 577:F3（E45/E27）显示共享规则 SKILL 以 selection.records(['quote-7']) 演示单条记录选择，却未提示 records 仅接受非空字符串 id，照做在整数主键上抛 TypeError('Invalid record selection')；同一错误指引与同一修复方向。 598:F3（E25/E26/E27/E28/E29）显示 nocobase-db SKILL 迁移示例默认 increments(\"id\")（E25/E26）、database-and-data.md 称其对普通表可用（E29），而共享/限制规则 Skill 只用 selection.records([字符串 id]) 演示（E27/E28），均未提示记录级选择需要字符串友好主键；同一指引缺口与同一修复方向。 688:F2（E6/E13/E77）再次确认共享/限制 Skill 用字符串 id 示例演示 selection.records 却未说明 parseRecordSelection 要求每个 id 为非空字符串：本搭建最初用 increments('id')，共享单条记录时失败，改用 collection.string('id') 后才能共享；同一指引缺口与同一修复方向（注明字符串约束并给整数主键对照写法），故并入。",
       "members": [
         "494:36641592184:1:F2",
         "518:36938133650:1:F5",
         "530:37074009060:1:F3",
         "554:37258077945:1:F1",
         "577:37394452688:1:F3",
-        "598:37453041764:1:F3"
+        "598:37453041764:1:F3",
+        "688:38089375339:1:F2"
       ]
     },
     {
@@ -1689,9 +1701,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38094750356",
+    "runId": "38096996324",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-10T23:23:12.281Z"
+    "completedAt": "2026-10-11T00:03:03.808Z"
   }
 }
