@@ -1,0 +1,2842 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 2,
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "runId": 38110476719,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/701/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 701,
+      "buildCommentId": null,
+      "title": "中英文设备台账"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 347,
+      "capturedAt": "2026-10-11T02:56:47Z",
+      "inputHash": "32a7b902abf50095515190ed3e608b060e2e2bf02e9dc623d5d49c38438706f3",
+      "reviewHash": "ba44df8c7cda4e6a6fde3609c372a14e0c7af92d47ee3f00edfa58ff44b84771"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-11T04:06:15Z",
+  "precedence": {
+    "producer": {
+      "runId": 38106776639,
+      "attempt": 1,
+      "startedAt": "2026-10-11T02:56:38Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-10-11T02:56:38Z",
+      "runId": 38106776639,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "candidate": {
+        "patchSha256": "52d2a33f6615e191d0fae9be1535ff2442b48d7ba7b4b9f1b82d19035f6a3c41",
+        "headSha": "62d13673b6109f4cb9e42fca6cce14a95b708648"
+      }
+    },
+    "factory": {
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "entrySha": "2c89ed9810a3468fa3efa87459c26f04da5b639f"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.30",
+      "templateVersion": "1.0.0-beta.61"
+    },
+    "dependencies": {
+      "lockfileSha256": "ef965c7d86ce8d2d48780106ad2a8f526eb46c334833a4889dc92de3d8b2b0be",
+      "baselineFingerprint": "c569eef8a588b9f774f505edcbee26a9f719dfa5b63f521cf79f38f3149b1d78",
+      "packages": [
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "3.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "2.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "1.0.0-beta.25"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "2.0.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "2.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-testing",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.21"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/jobs",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/lifecycle",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "756fb9281fd6240db271251435ca54c9adae1f1d7b530b107c51cdfa8cc8dbb5",
+      "files": 136
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "32a7b902abf50095515190ed3e608b060e2e2bf02e9dc623d5d49c38438706f3",
+      "pipelineInputHash": "b0b4a3135910e1d2edf0a4902023593d9e76a7492317d5ed67a2445b05563088",
+      "reviewHash": "ba44df8c7cda4e6a6fde3609c372a14e0c7af92d47ee3f00edfa58ff44b84771",
+      "reviewCriteriaHash": "ba44df8c7cda4e6a6fde3609c372a14e0c7af92d47ee3f00edfa58ff44b84771",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "492028e93eac1443abfb7f66c7411e97e461b3037df82f5e6f200fe4f7f80aa7"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "f63a830e44ea222599e5ef6cd951d64962bb592a8ed467ce06250f3f26f55060"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "0790d804d84c830b25ac962daa6adf7ae3bdfbb212f6c4e04b3b9c68e5f06c90"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/38106776639/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 38106776639,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-10-11T02:56:38Z",
+      "endedAt": "2026-10-11T04:05:24Z",
+      "jobSeconds": 4115,
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "patchSha256": "52d2a33f6615e191d0fae9be1535ff2442b48d7ba7b4b9f1b82d19035f6a3c41",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 704,
+      "headSha": "62d13673b6109f4cb9e42fca6cce14a95b708648"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/38106776639/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "从中文切到英文，设备页的导航、表头、表单、主要按钮和系统状态随之变化，没有直接显示翻译代码。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/04-devices-zh-two.png",
+              "qa/1/05-devices-en-list.png",
+              "qa/1/06-device-form-en.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "在英文界面漏填必填信息，出现可理解的英文提示；更正后可保存，并显示英文成功反馈。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/07-b02-missing-name-error.png",
+              "qa/1/08-b02-en-success.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "在一个页面填写尚未保存的设备编号，另一个页面先保存同编号设备；回到前一个页面提交，真正被拒绝且显示英文重复编号提示，不生成第二台同编号设备。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/10-b03-session2-saved.png",
+              "qa/1/11-b03-en-duplicate-error.png",
+              "qa/1/18-b03-single-sb003.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "切回中文后再次提交重复编号，显示中文提示；筛选到没有结果的状态时，空列表说明也使用中文。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/12-b04-zh-duplicate-error.png",
+              "qa/1/13-b04-zh-empty-filter.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "保存名称为“会议室投影仪”的设备，切成英文并刷新，语言仍为英文，设备名称保持原文，已保存数据不丢失。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/14-b05-zh-saved.png",
+              "qa/1/15-b05-en-after-refresh.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "两个独立登录会话分别选择中英文，其中一个切换语言，不改变另一个会话的显示语言。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/16-b06-session1-en.png",
+              "qa/1/17-b06-session2-zh.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/38106776639/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/38106776639/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "从中文切到英文，设备页的导航、表头、表单、主要按钮和系统状态随之变化，没有直接显示翻译代码。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "在英文界面漏填必填信息，出现可理解的英文提示；更正后可保存，并显示英文成功反馈。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "在一个页面填写尚未保存的设备编号，另一个页面先保存同编号设备；回到前一个页面提交，真正被拒绝且显示英文重复编号提示，不生成第二台同编号设备。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B04",
+        "text": "切回中文后再次提交重复编号，显示中文提示；筛选到没有结果的状态时，空列表说明也使用中文。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B05",
+        "text": "保存名称为“会议室投影仪”的设备，切成英文并刷新，语言仍为英文，设备名称保持原文，已保存数据不丢失。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B06",
+        "text": "两个独立登录会话分别选择中英文，其中一个切换语言，不改变另一个会话的显示语言。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 38106776639,
+        "attempt": 1,
+        "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+        "replay": false
+      },
+      "producer": {
+        "runId": 38106776639,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "0b1c6bd43ffd3055bebe49e9a4ce67ca1e3feb5c0c470a1bd793ed05a9775990",
+        "patchSha256": "52d2a33f6615e191d0fae9be1535ff2442b48d7ba7b4b9f1b82d19035f6a3c41",
+        "baseSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+        "lockfileSha256": "60ba3ab0b27264af11ed5a5653f8d19774abeaab8e6bc717b10f770f4b1fb805",
+        "reviewCriteriaHash": "ba44df8c7cda4e6a6fde3609c372a14e0c7af92d47ee3f00edfa58ff44b84771",
+        "artifactHash": "b31851f1b65833f21f363a27c473d5069df141620dcdfd0485c2599b422e33c6"
+      },
+      "buildReviewMode": "full",
+      "summary": "对 NocoBase3 框架在“双语设备台账”搭建中的表现做独立评审：客户端 i18n 运行时与切换、服务端语言解析与本地化错误、i18n 指引/Skill、以及唯一约束与 API 错误契约四个能力单元。框架在多语言切换、命名空间与刷新持久化、会话级语言、独特错误体上直接可用；主要缺口是 @nocobase/db 未公开可判定的唯一冲突错误（应用被迫二次查询绕行），以及语言偏好按浏览器而非按用户存储。B01–B06 均通过，但本评审不据此作为框架质量结论。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/38106776639.1/v2-0b1c6bd43ffd/M1",
+          "name": "客户端多语言运行时与语言切换",
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/app-plugin-i18n",
+            "skill:nocobase-app-plugin-i18n"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/i18n",
+              "subjectKey": "pkg:@nocobase/i18n",
+              "entrypoints": [
+                "I18nRuntime",
+                "I18nRuntime.init",
+                "I18nRuntime.changeLanguage",
+                "I18nRuntime.getFixedT",
+                "useTranslation",
+                "useLocale",
+                "NamespaceScope",
+                "APP_NS"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E3",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E4"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "createAppI18nRuntime",
+                "readStoredLocale",
+                "writeStoredLocale",
+                "DEFAULT_LOCALE",
+                "LOCALE_STORAGE_KEY"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E5"
+              ]
+            },
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-i18n",
+              "subjectKey": "pkg:@nocobase/app-plugin-i18n",
+              "entrypoints": [
+                "useAppLocale",
+                "useSyncServerLocale",
+                "notifyServerLocale"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E7"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+              "subjectKey": "skill:nocobase-app-plugin-i18n",
+              "entrypoints": [
+                "Adding a string",
+                "Naming translation keys",
+                "Naming a namespace",
+                "Adding a language",
+                "Rewording a plugin’s text"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E15",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E16"
+              ]
+            }
+          ],
+          "scope": "应用界面的语言运行时：语言集合推导、命名空间资源加载、原子切换、刷新持久化与语言选择入口。",
+          "limitations": "仅依据源码、指引与归档的 B01–B06 记录评估；未做视觉评审（当前模型无法读取截图）。“按用户隔离”为 suspected。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B04",
+            "B05",
+            "B06"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "中英双语界面；切换语言后导航、表头、表单标签、按钮、系统状态与提示随语言变化，用户录入文本原样保留。",
+              "responsibility": "框架提供单实例 i18next 运行时、按命名空间注册与加载资源、useTranslation/useLocale 订阅切换，并从应用 locale 文件推导可选语言；业务文案键与枚举翻译由应用编写。",
+              "support": "direct",
+              "recommendedUsage": "在 client/locales/index.ts 按语言声明动态 import，经 runtime 注册应用命名空间；组件用 useTranslation()/useLocale()；枚举这类数据值用动态键 t(`devices.status.${status}`)。",
+              "actualUsage": "应用在 client/locales 与 system 资源中声明中英，runtime 注册；页面与表单用 useTranslation；设备状态以英文规范值存储、UI 翻译（B01/B04 通过）。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E3",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14"
+              ]
+            },
+            {
+              "need": "语言选择刷新后保留，切换过程不出现半翻译页面。",
+              "responsibility": "框架提供 localStorage 持久化与“先加载全部命名空间资源再切换”的 changeLanguage。",
+              "support": "direct",
+              "recommendedUsage": "用插件的 useAppLocale() 切换；createAppI18nRuntime 在启动时以 readStoredLocale() 初始化。",
+              "actualUsage": "模板 language-switcher 调用 useAppLocale；B05 刷新后语言与设备数据均保持。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E18"
+              ]
+            },
+            {
+              "need": "语言偏好按用户隔离：一位用户切换语言不改变另一位用户看到的语言。",
+              "responsibility": "框架决定偏好存储作用域（浏览器 localStorage 单键 + 服务端会话），并应可接入按用户作用域。",
+              "support": "workaround",
+              "recommendedUsage": "当前没有按用户区分的公开入口；单键 localStorage 不区分账号，服务端只按会话存。",
+              "actualUsage": "应用未额外隔离，仅依赖两个独立浏览器会话（B06 通过）；同一浏览器 profile 的不同账号会共享同一 localStorage 语言。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 84,
+              "reason": "运行时直接覆盖双语切换、命名空间与刷新持久化；但“按用户隔离”只能靠独立浏览器会话，同 profile 跨账号共享语言，故不满分。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "useAppLocale 一步完成切换/持久化/通知服务端，useTranslation/useLocale 语义一致，模板已内置切换器；资源先加载后切换避免闪烁。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E4",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "Skill 与前端指引给出文件位置、键/命名空间命名、动态键与复用切换器的明确步骤，Agent 可按指引落地；未发现入口发现障碍。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E3",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14"
+              ]
+            },
+            "design": {
+              "score": 87,
+              "reason": "单标签页单实例、命名空间分片、APP_NS 哨兵与应用 overrides 的边界清晰，回退链显式。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E3",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E4"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "实现包含并发去重加载、资源缺失回退与失败兜底；持久化使用单键且未按用户维度，是可靠性上的已知边界。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E4",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E6"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38106776639.1/v2-0b1c6bd43ffd/M2",
+          "name": "服务端语言解析、会话偏好与本地化错误",
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "pkg:@nocobase/app-plugin-i18n",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/i18n",
+              "subjectKey": "pkg:@nocobase/i18n",
+              "entrypoints": [
+                "createI18nMiddleware",
+                "resolveRequestLocale",
+                "getRequestLocale",
+                "getRequestTranslator",
+                "AppI18nError",
+                "serializeI18nError",
+                "LOCALE_SESSION_KEY",
+                "isAppI18nError"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E11"
+              ]
+            },
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-i18n",
+              "subjectKey": "pkg:@nocobase/app-plugin-i18n",
+              "entrypoints": [
+                "GET /i18n/locales",
+                "PUT /i18n/locale",
+                "ServerLocaleListSchema",
+                "SetSessionLocaleInput",
+                "i18n locale routes"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E13"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/i18n.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Server-side text",
+                "Keeping the server in step with the browser",
+                "Default language",
+                "What an untranslated key falls back to",
+                "Verify"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+              ]
+            }
+          ],
+          "scope": "请求语言解析（会话→Accept-Language→默认）、服务端翻译、AppI18nError 序列化与 /i18n 端点。",
+          "limitations": "服务端本地化真实链路依赖应用在 router.onError 中显式转换；本模块未端到端验证后台任务与邮件收件人语言。",
+          "criteria": [
+            "B02",
+            "B03",
+            "B04",
+            "B06"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "服务端按请求语言返回文本：会话已选语言→Accept-Language→默认语言，未支持时优雅回退。",
+              "responsibility": "中间件解析并加载语言，把 locale/translator 注入请求上下文；app-plugin-i18n 提供读取/设置会话语言的端点。",
+              "support": "direct",
+              "recommendedUsage": "服务端用 getRequestTranslator(context, NS)；语言集合由 server/locales/index.ts 决定；前端用 useSyncServerLocale() 让服务端跟上浏览器。",
+              "actualUsage": "app/server/config/i18n.ts 设默认 en-US，server/locales 目前为空；B02/B04 的中/英提示由会话语言驱动。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            },
+            {
+              "need": "错误消息本地化：重复编号、必填校验等以用户语言显示。",
+              "responsibility": "AppI18nError 携带稳定 code/ns/key/params，序列化时翻译；router.onError→ApiError 暴露 reason 与 localizedMessage，或让前端按 reason 本地化。",
+              "support": "composition",
+              "recommendedUsage": "抛 AppI18nError；或在业务错误上用稳定 reason，前端用 t() 渲染本地化文案。",
+              "actualUsage": "设备路由抛 ApiError{reason:'DEVICE_CODE_TAKEN'}，前端按 reason 用 t() 渲染中/英提示（B03/B04 通过）。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E15"
+              ]
+            },
+            {
+              "need": "语言偏好按会话隔离：一个会话切换不改变另一个会话。",
+              "responsibility": "框架把服务端语言存放在会话（LOCALE_SESSION_KEY）。",
+              "support": "direct",
+              "recommendedUsage": "用 useAppLocale() 同时写本地与服务端会话；不同会话各自保存。",
+              "actualUsage": "B06 两个独立登录会话分别中/英成功；同一账号多标签会互相覆盖（插件 README 已记录）。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E11",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 86,
+              "reason": "请求语言解析、会话偏好、AppI18nError 与 /i18n 端点直接支撑中/英服务端文案与错误本地化；本地化路径需应用在路由层显式组合。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12"
+              ]
+            },
+            "usability": {
+              "score": 82,
+              "reason": "getRequestTranslator 一行取翻译器，端点语义清晰；应用侧仍需自行写 onError→ApiError 样板，指引已给出范例。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 85,
+              "reason": "中间件上下文键、AppI18nError 与端点契约都有类型与指引说明，Agent 能据此接线；错误本地化的组合点较隐晦但有样板。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "locale 随请求上下文传播、会话存储隔离、序列化时才翻译，职责分层清晰。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E11"
+              ]
+            },
+            "reliability": {
+              "score": 82,
+              "reason": "含 Accept-Language 多候选解析、资源预加载与快速失败；未验证后台任务/邮件收件人语言的端到端链路。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E11",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E12"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38106776639.1/v2-0b1c6bd43ffd/M3",
+          "name": "多语言指引与 Skill 覆盖度",
+          "subjectKeys": [
+            "skill:nocobase-app-plugin-i18n",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+              "subjectKey": "skill:nocobase-app-plugin-i18n",
+              "entrypoints": [
+                "Goal",
+                "The one rule that decides everything",
+                "Procedure",
+                "Translating on the server",
+                "Rules",
+                "Verification"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E15",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E16"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Where copy lives",
+                "Translating in a component",
+                "Dynamic keys",
+                "Language switching",
+                "Checks"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E17",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E19"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/i18n.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Server-side text",
+                "Keeping the server in step with the browser",
+                "Default language",
+                "What an untranslated key falls back to",
+                "Verify"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+              ]
+            }
+          ],
+          "scope": "面向 Agent 的多语言指引：文件位置、键与命名空间命名、动态键、切换入口、服务端翻译与检查清单。",
+          "limitations": "指引正确性以源码交叉核对为准；未评估其在多语言项目中的长期可维护性。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B04",
+            "B05"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "指引说明文案位置、语言声明方式、键/命名空间命名规则与动态键写法。",
+              "responsibility": "文档/Skill 描述框架的资源加载与命名空间模型。",
+              "support": "direct",
+              "recommendedUsage": "按指引在 client/locales 与 server/locales 声明；键用点分层级、命名空间用包名。",
+              "actualUsage": "Agent 读取了 SKILL 与前端 i18n.md 并按其结构落地（part-0047 有读取记录）。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E17",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E34"
+              ]
+            },
+            {
+              "need": "指引说明语言切换入口与刷新持久化，并警示不要另建选择器或副本。",
+              "responsibility": "文档指向 app-plugin-i18n 的 useAppLocale/useSyncServerLocale 与模板切换器。",
+              "support": "direct",
+              "recommendedUsage": "复用模板 language-switcher；用 useLocale().locale 读取、useAppLocale() 切换。",
+              "actualUsage": "应用沿用模板切换器，B01/B05 通过。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E21",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14"
+              ]
+            },
+            {
+              "need": "指引覆盖语言偏好的存储作用域与隔离边界（跨账号/跨标签）。",
+              "responsibility": "文档应说明浏览器 localStorage 与服务端会话的作用域及其后果。",
+              "support": "workaround",
+              "recommendedUsage": "当前只说明“保存在 localStorage 与会话”，未提示同 profile 跨账号共享。",
+              "actualUsage": "应用与文档均未处理同 profile 跨账号共享语言；Agent 在推理中识别到该点后选择不改动。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E21",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E35"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "指引覆盖文件位置、命名规则、动态键、服务端翻译、切换入口与检查清单，可直接指导落地；存储作用域说明不全。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E17",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E18"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "步骤化、带可复制代码与检查命令，并指出常见坑（动态加载键必须是运行时值、不得分支翻译消息）。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E19",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 90,
+              "reason": "Skill 描述与触发条件清晰，含 Non-Goals 防止重复造轮子；Agent 实际读取并使用。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E16",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E18"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "把客户端与服务端文案、默认语言、回退链拆分到两页指引，职责边界清楚。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E17",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "指引与源码实现一致（端点、回退链、存储位置经源码交叉核对）；未覆盖跨账号作用域这一边界。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E15",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E19",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38106776639.1/v2-0b1c6bd43ffd/M4",
+          "name": "唯一约束、Repository 错误契约与 API 错误映射",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "pkg:@nocobase/app-server"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration",
+                "builder.createCollection",
+                "collection.string",
+                "collection.unique",
+                "CollectionCompiler.compileConstraint",
+                "isUniqueConstraintViolation (internal)"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E22",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E24",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E25",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E27"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/repository-input",
+              "subjectKey": "pkg:@nocobase/repository-input",
+              "entrypoints": [
+                "RepositoryError",
+                "RepositoryErrorCode",
+                "repositoryErrorStatuses",
+                "RepositoryErrorStatus"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E28"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "ApiError",
+                "apiErrorStatusCodes",
+                "recognizeApiError",
+                "apiErrorHandler",
+                "invalidApiInputError",
+                "apiValidator"
+              ],
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E30",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E31"
+              ]
+            }
+          ],
+          "scope": "code 唯一约束的编译/落库，以及重复键失败在 Repository 与 API 层的可识别性与 HTTP 映射。",
+          "limitations": "重复键的绕行成本来自框架未公开类型化错误；应用侧实现（app/server/providers/devices.ts）仅作现象证据，不据此给框架加减分。",
+          "criteria": [
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "设备编号在数据库层唯一，并发或绕过预检查也不会写入重复。",
+              "responsibility": "框架把 unique 约束编译为物理约束并交由驱动执行；迁移负责创建。",
+              "support": "direct",
+              "recommendedUsage": "collection.unique('code', {name}) 或字段 unique；用 defineMigration 的 up/down 建/删约束。",
+              "actualUsage": "app 迁移用 collection.unique('code',{name:'uq_devices_code'})；B03 并发重复被真正拒绝。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E22",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E24",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E25"
+              ]
+            },
+            {
+              "need": "应用能识别“唯一键冲突”并映射为 409/稳定 reason，而无需解析驱动错误或二次查询。",
+              "responsibility": "框架应公开可判定的唯一冲突错误或提供唯一冲突的 RepositoryErrorCode。",
+              "support": "missing",
+              "recommendedUsage": "当前无公开判定入口：isUniqueConstraintViolation 是 database/internal 实现，RepositoryErrorCode/Status 均无唯一冲突项。",
+              "actualUsage": "应用在插入失败后再 exists 查询以区分冲突，形成“预检查 + 失败后复查”的绕行。",
+              "gapOwner": "framework",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E32"
+              ]
+            },
+            {
+              "need": "输入校验失败以 400 + 字段级错误返回，并可按 reason 本地化。",
+              "responsibility": "apiValidator/invalidApiInputError 生成 INVALID_INPUT 与 fieldViolations；recognizeApiError 统一映射 RepositoryError。",
+              "support": "direct",
+              "recommendedUsage": "路由用 apiValidator 校验，onError 用 apiErrorHandler 统一转换；前端按 reason 本地化。",
+              "actualUsage": "B02 漏填名称时显示字段级中/英提示，device route 用 fieldViolations 指向 code。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E31",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E30",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E33"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 74,
+              "reason": "唯一约束本身可靠落库并保证并发唯一；但“应用可判定唯一冲突”这一接入缺口需要应用绕行，故拉低需求满足度。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E25",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E29"
+              ]
+            },
+            "usability": {
+              "score": 78,
+              "reason": "约束声明与错误体 API 易用，但缺少类型化的唯一冲突错误，重复键处理需要两次查询与自定义领域错误。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E31"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 78,
+              "reason": "迁移/约束/错误体的类型与指引清晰；isUniqueConstraintViolation 未导出且无错误码，使 Agent 只能靠驱动错误或二次查询推断。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E30"
+              ]
+            },
+            "design": {
+              "score": 83,
+              "reason": "约束编译、物理执行、错误识别、HTTP 映射分层合理；唯一冲突未纳入 RepositoryErrorCode 是契约上的断点。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E22",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E29"
+              ]
+            },
+            "reliability": {
+              "score": 80,
+              "reason": "唯一约束端到端可靠（B03 通过）且有标准错误体；唯一冲突的可判定性依赖内部实现，属可靠性的薄弱环。",
+              "evidence": [
+                "review/38106776639.1/v2-0b1c6bd43ffd/E24",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E25",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                "review/38106776639.1/v2-0b1c6bd43ffd/E31"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/38106776639.1/v2-0b1c6bd43ffd/F1",
+          "localId": "F1",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "语言运行时与本地化错误在框架内形成可组合闭环",
+          "detail": "I18nRuntime 提供单实例、命名空间分片、先加载后切换与回退链；服务端 AppI18nError 在序列化时翻译并经 ApiError 暴露稳定 reason；客户端 useAppLocale 一步完成切换/持久化/通知。应用据此直接实现 B01–B06。",
+          "impact": "Agent 无需自造 i18n 机制即可覆盖双语界面、刷新持久化与中英错误提示，降低重复实现与状态不一致的风险。",
+          "suggestedChange": "保持该分层；可补一个“唯一冲突=>ALREADY_EXISTS”的端到端示例，但本项无需改动。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E12"
+          ],
+          "moduleKeys": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/M1",
+            "review/38106776639.1/v2-0b1c6bd43ffd/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/app-plugin-i18n",
+            "skill:nocobase-app-plugin-i18n",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/38106776639.1/v2-0b1c6bd43ffd/F2",
+          "localId": "F2",
+          "kind": "strength",
+          "owner": "documentation",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "i18n 指引/Skill 覆盖文件位置、动态键、服务端翻译与检查清单",
+          "detail": "SKILL 与前后端指引明确命名空间即包名、文案入 locale、用 useAppLocale 切换、服务端用 getRequestTranslator/AppI18nError，并给出 tsc/locales check/浏览器核对等检查。Agent 在本轮读取并遵循。",
+          "impact": "降低漏翻、硬编码文案与错误切换方式的风险，使多语言工作可被 Agent 稳定复现。",
+          "suggestedChange": "可在切换章节补一句存储作用域（浏览器级 localStorage + 会话级服务端）及其跨账号含义。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E19",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E20"
+          ],
+          "moduleKeys": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/M1",
+            "review/38106776639.1/v2-0b1c6bd43ffd/M2",
+            "review/38106776639.1/v2-0b1c6bd43ffd/M3"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/app-plugin-i18n",
+            "skill:nocobase-app-plugin-i18n",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/38106776639.1/v2-0b1c6bd43ffd/F3",
+          "localId": "F3",
+          "kind": "issue",
+          "owner": "framework",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "@nocobase/db 未公开可判定的唯一约束冲突错误",
+          "detail": "isUniqueConstraintViolation 已在 database/internal 实现并能跨驱动识别 23505/ER_DUP_ENTRY/SQLITE_CONSTRAINT 等，但未从包导出；RepositoryErrorCode 与 RepositoryErrorStatus 也没有唯一冲突 / ALREADY_EXISTS 项。因此应用无法用类型化错误区分重复键，只能捕获后二次查询（app/server/providers/devices.ts:186-193）。",
+          "impact": "每个需要唯一约束的应用都要自行判断驱动错误或增加额外查询，易出现泄漏数据库错误、竞态处理不一致与额外往返；框架自带的 recognizeApiError 已能映射 ALREADY_EXISTS:409，缺的只是可达的错误类型。",
+          "suggestedChange": "导出 isUniqueConstraintViolation，或新增 RepositoryErrorCode（如 ALREADY_EXISTS / UNIQUE_VIOLATION）并在 repository-error 映射中落到 409，使 recognizeApiError 可直接产出标准冲突响应。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E32"
+          ],
+          "diagnosis": {
+            "category": "capability-gap",
+            "trigger": "向带 unique 约束的集合插入重复键（并发插入或绕过应用预检查）。",
+            "expected": "框架抛出可类型判定的唯一冲突错误或提供对应 RepositoryErrorCode，recognizeApiError 映射为 409 并带稳定 reason。",
+            "actual": "判定函数仅存在于 database/internal 且未导出，RepositoryErrorCode/Status 无唯一冲突项，应用只能二次 exists 查询。",
+            "workaround": "应用先 exists 预检查，并在插入 catch 中再次 exists 判断竞态冲突后抛自定义领域错误。",
+            "acceptance": "重复键插入产生可类型判定的错误，应用无需额外查询即可映射为带稳定 reason 的 409 冲突响应。"
+          },
+          "feedbackReview": {
+            "status": "supported",
+            "reason": "冻结包证据支持这条能力缺口：@nocobase/db 内部已有 isUniqueConstraintViolation（E26），但公开导出不含它（E27）；repository-input 的 RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项（E28）。recognizeApiError 虽能把 ApiError 或状态非 INTERNAL 的 RepositoryError 映射为标准响应（E29/E30），create 路径却不产生该类型化错误，应用只能在 devices.ts 里先 exists 预检查、再在 catch 里二次 exists 兜底（E32），路由再手动映射 ALREADY_EXISTS（E33）。替代解释不适用：检测函数已覆盖 Postgres/MySQL/SQLite 多驱动（E26），缺口在公开错误类型而非某环境或驱动特例，也不是工厂产物。",
+            "checks": [
+              {
+                "kind": "contract",
+                "reason": "@nocobase/db 公开导出清单没有 isUniqueConstraintViolation，也没有任何唯一冲突错误类型（E27）；repository-input 的 RepositoryErrorCode 是封闭联合、无 ALREADY_EXISTS/UNIQUE 项，RepositoryErrorStatus 只有 INVALID_ARGUMENT/PERMISSION_DENIED/NOT_FOUND/ABORTED/INTERNAL（E28）。api-error 侧确实冻结了 ALREADY_EXISTS:409，且 recognizeApiError 只识别 ApiError/HTTPException/非 INTERNAL 的 RepositoryError（E29/E30）。故框架承诺了 409 响应映射，却没有可达的唯一冲突错误类型，改进空间成立。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E30"
+                ]
+              },
+              {
+                "kind": "behavior",
+                "reason": "实现实际只在内部使用该判定：unique-constraint.js 遍历 cause/originalError 链识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT、errno 1/1062/2601/2627 等（E26）；但公开 create 路径没有把它转成类型化错误，devices.ts 的 create 只能在插入 catch 中再次 exists 判断竞态并把数据库约束错误改写为领域错误（E32），与候选描述一致。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E32"
+                ]
+              },
+              {
+                "kind": "application",
+                "reason": "应用并未错误装配：它按现有 Repository/ApiError 契约，在 create 前 exists 预检查、catch 内二次 exists 兜底后抛 DeviceCodeTakenError（E32），路由再映射为 status:'ALREADY_EXISTS'、reason:'DEVICE_CODE_TAKEN'、fieldViolations 指向 code 的 ApiError（E33）。绕行成功只说明应用自行补齐了缺失的错误类型，不能反证缺口不存在。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E32",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E33"
+                ]
+              },
+              {
+                "kind": "environment",
+                "reason": "外部服务/驱动不足以解释：判定函数已覆盖 Postgres 23505、MySQL ER_DUP_ENTRY/1062、SQLite SQLITE_CONSTRAINT/1、2601/2627 及 errCode -6602（E26），缺口在各驱动一致存在，并非某个外部服务或依赖安装问题；无需额外环境材料即可排除环境解释。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E26"
+                ]
+              },
+              {
+                "kind": "factory",
+                "reason": "该结论落在冻结框架包的公开 API 边界（E27 导出清单与 E26 内部实现），未见工厂提示、注入配置、QA/构建脚本或模板覆盖参与其中；现有工厂材料没有指向本缺口，故不保留工厂归因。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E27"
+                ]
+              },
+              {
+                "kind": "existing-capability",
+                "reason": "现有能力只覆盖一半：recognizeApiError 能把 ALREADY_EXISTS 映射为 409，并把非 INTERNAL 的 RepositoryError 转为标准响应（E29/E30），但 repository-input 没有可用的唯一冲突 code/status（E28），db 也未导出判定函数（E27），正常组合下 create 无法产出该类型化错误；应用只能如 E32/E33 自行补映射。公开入口的改进空间由源码证实。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E30"
+                ]
+              }
+            ]
+          },
+          "moduleKeys": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "pkg:@nocobase/app-server"
+          ]
+        },
+        {
+          "id": "review/38106776639.1/v2-0b1c6bd43ffd/F4",
+          "localId": "F4",
+          "kind": "improvement",
+          "owner": "plugin",
+          "severity": "minor",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "语言偏好按浏览器存储、未按用户作用域",
+          "detail": "浏览器侧把语言保存在固定单键 localStorage（nocobase.locale），服务端保存在会话。因此同一浏览器 profile 内不同账号会共享语言选择；需求中的“按用户隔离、互不影响”只在独立浏览器会话下成立。Agent 在读取源码与 Skill 后也识别到该点并判断为框架既定机制、未改造。",
+          "impact": "同一台机器上交替登录的两位同事可能互相覆盖语言偏好；B06 用独立会话通过，但更贴近真实“按用户”要求的场景未被框架默认行为满足。",
+          "suggestedChange": "在 app-plugin-i18n 提供按用户命名空间/登录态区分的持久化键（或在登录/登出时迁移），并在指引中明确该作用域与限制。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E21",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E35"
+          ],
+          "diagnosis": {
+            "category": "usability-improvement",
+            "trigger": "同一浏览器 profile 内两个账号先后登录并各自选择语言。",
+            "expected": "语言偏好按用户隔离，切换互不影响，或在文档中明确说明限制并给出按用户隔离的接入方式。",
+            "actual": "单个 localStorage 键 nocobase.locale 无用户维度，服务端语言存会话；同 profile 跨账号共享。",
+            "workaround": "应用可在登录/登出时自行改写或清理该键，但框架未提供入口，指引也未提示。",
+            "acceptance": "同一 profile 两个账号分别选择中/英并刷新后各自保持；或指引明确该限制与按用户隔离做法。"
+          },
+          "feedbackReview": {
+            "status": "supported",
+            "reason": "源码与指引证实这项可用性改进空间：app-client 以固定单键 'nocobase.locale' 读写 localStorage，无用户维度（E5）；useAppLocale 切换时先 writeStoredLocale 再 notifyServerLocale（E6），服务端语言按请求会话保存（E8/E11/E12）；Skill 也写明启动语言取 localStorage、切换写 localStorage 与会话（E21）。因此同一浏览器 profile 内不同账号会共享该键的选择，只有独立浏览器/会话才互不影响。需说明的是既有验收只要求跨会话不互相影响，并未明文要求同 profile 按账号隔离，故这是超出原文的改进建议而非违约；但固定键确无用户作用域，改进空间客观存在。",
+            "checks": [
+              {
+                "kind": "contract",
+                "reason": "Skill/指引给出的边界：启动语言按 localStorage 中保存的选择 → defaultLocale → en-US 解析，切换语言写 localStorage 与服务端会话、且被描述为 'user-level choice'，不改 defaultLocale（E21）；前端指引要求复用模板 language-switcher、用 useAppLocale 切换、shell 调 useSyncServerLocale（E18）；框架实现以固定键持久化（E5）。契约未承诺按账号命名空间隔离，故候选陈述的是改进建议而非违约。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E21",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E5"
+                ]
+              },
+              {
+                "kind": "behavior",
+                "reason": "实际行为：LOCALE_STORAGE_KEY 固定为 'nocobase.locale'，readStoredLocale/writeStoredLocale 直接读写该单键（E5）；useAppLocale 的切换顺序为 setLocale→writeStoredLocale→notifyServerLocale（E6）；服务端中间件与会话按请求读取/保存语言（E8/E11），PUT /i18n/locale 把语言写入会话（E12）。同一 profile 下换账号不更换该键，故共享选择；E7 的注释也把“另一个标签页的切换”列为存储与服务端会话漂移的常见来源。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E7",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E11",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E12"
+                ]
+              },
+              {
+                "kind": "application",
+                "reason": "应用按指引正确装配：复用框架语言选择器与 useAppLocale，不自建语言存储，也没有按用户命名空间的接入点（E14/E18/E21）。现象来自框架默认持久化作用域，而非应用误用 API 或漏接业务逻辑。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+                ]
+              },
+              {
+                "kind": "environment",
+                "reason": "环境维度不改变结论：localStorage 可用性已用 try/catch 兜底（E5），服务端无会话时降级到 Accept-Language、不可读会话也降级（E8/E11）。共享与否取决于浏览器 profile 是否隔离；不存在足以解释该固定键作用域的外部服务或依赖因素。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E11"
+                ]
+              },
+              {
+                "kind": "factory",
+                "reason": "持久化作用域由冻结的 app-client 固定键与 Skill 指引决定（E5/E21），未见工厂提示、注入配置、QA/构建脚本或模板覆盖造成该行为；无需保留工厂归因。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+                ]
+              },
+              {
+                "kind": "existing-capability",
+                "reason": "现有公开入口只有固定键的 readStoredLocale/writeStoredLocale（E5）以及 useAppLocale/useSyncServerLocale（E6/E7），没有按用户或登录态命名的存储键，也没有文档化的按用户隔离接入方式（E21）。正常组合下无法满足同 profile 多账号隔离，指引亦未提示该限制，改进空间由源码与文档证实。",
+                "evidence": [
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E7",
+                  "review/38106776639.1/v2-0b1c6bd43ffd/E21"
+                ]
+              }
+            ]
+          },
+          "moduleKeys": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/M1",
+            "review/38106776639.1/v2-0b1c6bd43ffd/M2",
+            "review/38106776639.1/v2-0b1c6bd43ffd/M3"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/app-plugin-i18n",
+            "skill:nocobase-app-plugin-i18n",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/38106776639.1/v2-0b1c6bd43ffd/F5",
+          "localId": "F5",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "唯一约束落库可靠，API 错误契约统一",
+          "detail": "collection.unique 经 compileConstraint 生成物理 unique 约束并由 table.unique 落库，B03 并发重复被真正拒绝；app-server 用 ApiError + recognizeApiError + apiErrorHandler 把 Validation/Repository 错误统一为标准错误体，invalidApiInputError 提供字段级 400。",
+          "impact": "数据完整性有数据库兜底，客户端能用稳定 reason/fieldViolations 渲染本地化提示，避免直接暴露驱动错误。",
+          "suggestedChange": "把唯一冲突纳入同一错误契约（见 F3）即可形成完整闭环。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E24",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E25",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+            "review/38106776639.1/v2-0b1c6bd43ffd/E31"
+          ],
+          "moduleKeys": [
+            "review/38106776639.1/v2-0b1c6bd43ffd/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "pkg:@nocobase/app-server"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "当前模型不支持读取 PNG，虽存在 19 张验收截图（覆盖中/英列表、表单、校验错误、空态与跨会话）也无法据此给出视觉评分，故保持空值。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "当前模型无法读取图像，19 张验收截图未做视觉评审，UI 维度为空而非“无问题”。",
+        "只读评审：未运行应用、未执行测试、未安装依赖，可靠性结论基于源码、指引与归档 B01–B06 记录。",
+        "未覆盖账本之外的业务菜单/插件，也未评估包版本升级与长期维护成本。",
+        "F4（语言偏好按用户隔离）为 suspected：B06 在独立会话下通过，同浏览器 profile 跨账号场景未在验收中测试。",
+        "快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "complete",
+    "qa": "passed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "completed"
+  },
+  "processNotes": {
+    "state": "invalid",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记格式无效，未据此推断“无问题”。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:114373907244",
+          "executionKey": "run/38106776639/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 863498,
+              "output": 160754,
+              "cacheRead": 30737152,
+              "cacheWrite": 0,
+              "total": 31761404
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 51731,
+              "output": 39053,
+              "cacheRead": 5144576,
+              "cacheWrite": 0,
+              "total": 5235360
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 305778,
+              "output": 81113,
+              "cacheRead": 8143488,
+              "cacheWrite": 0,
+              "total": 8530379
+            },
+            "compaction": {
+              "input": 338604,
+              "output": 95330,
+              "cacheRead": 89088,
+              "cacheWrite": 0,
+              "total": 523022
+            }
+          },
+          "records": 679,
+          "missing": 1,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 1559611,
+        "output": 376250,
+        "cacheRead": 44114304,
+        "cacheWrite": 0,
+        "total": 46050165,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 4115,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 4126,
+      "jobs": [
+        {
+          "id": 114373868423,
+          "name": "prepare",
+          "executionKey": "run/38106776639/attempt/1",
+          "seconds": 13
+        },
+        {
+          "id": 114373907244,
+          "name": "agent",
+          "executionKey": "run/38106776639/attempt/1",
+          "seconds": 3954
+        },
+        {
+          "id": 114384373374,
+          "name": "verify-final",
+          "executionKey": "run/38106776639/attempt/1",
+          "seconds": 129
+        },
+        {
+          "id": 114384718938,
+          "name": "publish",
+          "executionKey": "run/38106776639/attempt/1",
+          "seconds": 19
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/core/runtime.js",
+      "lines": [
+        10,
+        49
+      ],
+      "sha256": "c0c01a640d42896dcd87bbd8362649ee1307b9d3e072649a09d021fe98e32469",
+      "observation": "I18nRuntime 每个进程/浏览器标签页一个 i18next 实例；computeLocales 把应用命名空间声明的语言与 defaultLocale 求并集，默认语言始终在列；resolveLocale 把不支持的语言回退到默认。",
+      "excerpt": "export class I18nRuntime {\n    options;\n    registry = new I18nRegistry();\n    i18n = createInstance();\n    declaredLocales;\n    locales;\n    defaultLocale;\n    initialized = false;\n    localeLoads = new Map();\n    constructor(options) {\n        this.options = options;\n        this.defaultLocale = options.defaultLocale;\n        this.declaredLocales = options.locales;\n        if (options.applicationNamespace) {\n            this.registry.setApplicationNamespace(options.applicationNamespace);\n        }\n        this.locales = this.computeLocales();\n    }\n    /**\n     * The languages on offer: whichever the application's own locale files declare, plus the default.\n     *\n     * A plugin's locale file supplies translations, not languages — an installed plugin that happens to ship `ja-JP`\n     * must not put Japanese in the application's picker. The default is always present so a resolution has somewhere to\n     * land even before any namespace has registered, and it is appended rather than prepended so changing it does not\n     * reorder a language picker.\n     */\n    computeLocales() {\n        const applicationNamespace = this.registry.getApplicationNamespace();\n        const declared = this.declaredLocales ??\n            (applicationNamespace\n                ? this.registry.getNamespaceLocales(applicationNamespace)\n                : []);\n        return [...new Set([...declared, this.defaultLocale])];\n    }\n    getDefaultLocale() {\n        return this.defaultLocale;\n    }\n    getLocales() {\n        return this.locales;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/core/runtime.js",
+      "lines": [
+        122,
+        167
+      ],
+      "sha256": "c0c01a640d42896dcd87bbd8362649ee1307b9d3e072649a09d021fe98e32469",
+      "observation": "init 先 ensureLocaleLoaded 目标语言再初始化，changeLanguage 同样先按命名空间加载完整资源再切换，因此首屏即翻译、切换原子，不会出现半翻译页面。",
+      "excerpt": "    /**\n     * Initializes the instance for a locale, loading that locale's resources first so the first render is already\n     * translated and no loading state is needed.\n     */\n    async init(locale = this.defaultLocale) {\n        if (this.initialized) {\n            await this.changeLanguage(locale);\n            return this.i18n;\n        }\n        const resolved = this.resolveLocale(locale);\n        this.initialized = true;\n        await this.i18n.init({\n            lng: resolved,\n            // A chain, not one language: the application's default first, then English. A plugin that has not translated\n            // the language in use falls back to the application's default, and to English when it lacks that one too — which\n            // is what an application defaulting to Chinese and adding Spanish leaves a plugin facing.\n            fallbackLng: [...new Set([this.defaultLocale, BASE_LOCALE])],\n            defaultNS: this.registry.getApplicationNamespace() ?? BASE_NAMESPACE,\n            // Keys nest, so `trigger.types.schedule` addresses a tree. Namespaces never travel inside the key: they are\n            // passed through options, which keeps a colon in a key from being read as a namespace separator.\n            keySeparator: '.',\n            nsSeparator: false,\n            // Resources are added by `ensureLocaleLoaded` rather than by a backend plugin, so there is nothing to defer and\n            // `t()` is usable the moment `init` resolves.\n            initAsync: false,\n            interpolation: { escapeValue: false },\n            react: {\n                // Without this react-i18next keeps only the first namespace of the list it is given, which would drop the\n                // fallback chain that `NamespaceScope` passes down and leave a plugin unable to reuse application wording.\n                nsMode: 'fallback',\n            },\n            ...this.options.initOptions,\n        });\n        await this.ensureLocaleLoaded(resolved);\n        return this.i18n;\n    }\n    getLocale() {\n        return this.resolveLocale(this.i18n.resolvedLanguage ?? this.i18n.language);\n    }\n    /** Loads the locale's resources across every namespace, then switches, so the change lands everywhere at once. */\n    async changeLanguage(locale) {\n        const resolved = this.resolveLocale(locale);\n        await this.ensureLocaleLoaded(resolved);\n        await this.i18n.changeLanguage(resolved);\n        return resolved;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/core/registry.js",
+      "lines": [
+        95,
+        141
+      ],
+      "sha256": "890f16487282039ea887f8ec8acb31770146821b040ace43f82f1a516d929edc",
+      "observation": "每个命名空间各自声明可用语言；getFallbackNamespaces 生成“自身→应用→BASE_NAMESPACE”的回退链，resolveNamespace 把 APP_NS 哨兵解析为应用包名。",
+      "excerpt": "    /**\n     * The locales one namespace declares loaders for, in declaration order.\n     *\n     * This is what lets the runtime offer exactly the languages the application's own locale files provide, rather than\n     * every language some installed plugin happens to translate. An unregistered namespace declares nothing.\n     */\n    getNamespaceLocales(namespace) {\n        const entry = this.namespaces.get(namespace);\n        return entry ? Object.keys(entry.loaders) : [];\n    }\n    /**\n     * The fallback chain for a namespace: its own keys, then the application's, then the base package's.\n     *\n     * A plugin that writes `t('save')` without naming a namespace therefore reuses the application's wording, and only\n     * falls through to the built-in term when the application has not defined one.\n     */\n    getFallbackNamespaces(namespace) {\n        const resolved = this.resolveNamespace(namespace);\n        const chain = [];\n        if (this.applicationNamespace && this.applicationNamespace !== resolved) {\n            chain.push(this.applicationNamespace);\n        }\n        if (resolved !== BASE_NAMESPACE) {\n            chain.push(BASE_NAMESPACE);\n        }\n        return chain;\n    }\n    /**\n     * Turns `APP_NS` into the application's actual package name, and leaves any other namespace as it is.\n     *\n     * With no application registered the sentinel has nothing to stand for, so it resolves to the base namespace and the\n     * lookup still finds the built-in terms instead of failing.\n     */\n    resolveNamespace(namespace) {\n        if (namespace !== APP_NS)\n            return namespace;\n        return this.applicationNamespace ?? BASE_NAMESPACE;\n    }\n    /** Every locale any registered namespace can produce. */\n    getAvailableLocales() {\n        const locales = new Set();\n        for (const entry of this.namespaces.values()) {\n            for (const locale of Object.keys(entry.loaders))\n                locales.add(locale);\n        }\n        return [...locales];\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/core/registry.js",
+      "lines": [
+        145,
+        204
+      ],
+      "sha256": "890f16487282039ea887f8ec8acb31770146821b040ace43f82f1a516d929edc",
+      "observation": "loadNamespace 对已加载/加载中的语言去重复用同一 import；loadLocale 并行加载所有已注册命名空间并合并应用 overrides。",
+      "excerpt": "    /**\n     * Loads one namespace's resource for a locale, or resolves to `undefined` when that namespace does not translate it.\n     *\n     * Concurrent callers share one import, and a resolved locale is never imported twice.\n     */\n    async loadNamespace(namespace, locale) {\n        const entry = this.namespaces.get(namespace);\n        if (!entry)\n            return undefined;\n        const loaded = entry.loaded.get(locale);\n        if (loaded)\n            return loaded;\n        const pending = entry.pending.get(locale);\n        if (pending)\n            return pending;\n        const loader = entry.loaders[locale];\n        if (!loader)\n            return undefined;\n        const request = loader()\n            .then((module) => {\n            const resolved = unwrapLocaleModule(module);\n            entry.loaded.set(locale, resolved);\n            return resolved;\n        })\n            .finally(() => {\n            entry.pending.delete(locale);\n        });\n        entry.pending.set(locale, request);\n        return request;\n    }\n    /**\n     * Loads a locale across every registered namespace in parallel.\n     *\n     * Loading is per locale rather than per namespace: the navigation renders labels owned by every plugin, so their\n     * namespaces have to be present from the first frame anyway.\n     */\n    async loadLocale(locale) {\n        const entries = await Promise.all([...this.namespaces.keys()].map(async (namespace) => {\n            const module = await this.loadNamespace(namespace, locale);\n            return module ? { namespace, module } : undefined;\n        }));\n        const resources = [];\n        let overrides = {};\n        for (const entry of entries) {\n            if (!entry)\n                continue;\n            const split = splitOverrides(entry.module);\n            resources.push({\n                namespace: entry.namespace,\n                locale,\n                resource: split.resource,\n            });\n            // Only the application declares overrides; merging them all keeps the registry from having to care which\n            // namespace it came from.\n            if (Object.keys(split.overrides).length > 0) {\n                overrides = { ...overrides, ...split.overrides };\n            }\n        }\n        return { locale, resources, overrides };\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E5"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/i18n.js",
+      "lines": [
+        1,
+        53
+      ],
+      "sha256": "f2662f6a42ff435a1b9660f265a6f293a5c975713f7392c81f1bbbf3728e2716",
+      "observation": "LOCALE_STORAGE_KEY 固定为单键 'nocobase.locale'；readStoredLocale/writeStoredLocale 带 try/catch 兜底；createAppI18nRuntime 以 stored ?? default 初始化并注册应用命名空间。",
+      "excerpt": "import { I18nRuntime } from '@nocobase/i18n';\nconst LOCALE_STORAGE_KEY = 'nocobase.locale';\n/** The language an application falls back to when its configuration names none. */\nexport const DEFAULT_LOCALE = 'en-US';\n/**\n * Reads the visitor's stored language preference.\n *\n * Storage is the source of truth on the client, so the first frame renders in the right language without waiting for\n * the server. Access is guarded because a browser can refuse it outright in private modes.\n */\nexport function readStoredLocale() {\n    try {\n        return globalThis.localStorage?.getItem(LOCALE_STORAGE_KEY) ?? undefined;\n    }\n    catch {\n        return undefined;\n    }\n}\nexport function writeStoredLocale(locale) {\n    try {\n        globalThis.localStorage?.setItem(LOCALE_STORAGE_KEY, locale);\n    }\n    catch {\n        // A visitor who blocks storage still gets a working switch for this session.\n    }\n}\n/**\n * Builds the i18n runtime for an application and loads the starting locale.\n *\n * Every contribution's resources for that one locale are fetched in parallel before this resolves, so the application\n * renders already translated instead of flashing keys behind a loading state. Other locales stay unfetched until the\n * visitor switches to one.\n */\nexport async function createAppI18nRuntime(options) {\n    const applicationContribution = options.contributions.find((contribution) => contribution.source === 'application');\n    const runtime = new I18nRuntime({\n        defaultLocale: options.defaultLocale ?? DEFAULT_LOCALE,\n        locales: options.locales,\n        applicationNamespace: applicationContribution?.packageName,\n    });\n    for (const contribution of options.contributions) {\n        if (contribution.source === 'application') {\n            // Registering the application's namespace is also what settles which languages are on offer: its own locale\n            // files are the list, and a plugin's only supply translations for languages already on it.\n            runtime.registerApplicationNamespace(contribution.packageName, contribution.locales);\n        }\n        else {\n            runtime.registerNamespace(contribution.packageName, contribution.locales);\n        }\n    }\n    await runtime.init(options.initialLocale ?? readStoredLocale());\n    return runtime;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-i18n/dist/client/use-locale.js",
+      "lines": [
+        25,
+        54
+      ],
+      "sha256": "4ac6a653f32beb82cf7bc0ecae597598c004f1703994faabb04019635eeee100",
+      "observation": "useAppLocale 的切换流程为 setLocale → writeStoredLocale → notifyServerLocale，并把服务端回退/失败作为结果返回，调用方据此提示。",
+      "excerpt": "export function useAppLocale() {\n    const api = useApiClient();\n    const runtime = useOptionalI18nRuntime();\n    const { locale, locales, setLocale, switching, error } = useRuntimeLocale();\n    const [syncing, setSyncing] = useState(false);\n    const [syncError, setSyncError] = useState();\n    const changeLocale = useCallback(async (next) => {\n        setSyncing(true);\n        setSyncError(undefined);\n        try {\n            await setLocale(next);\n            const selected = runtime?.getLocale() ?? next;\n            writeStoredLocale(selected);\n            return await notifyServerLocale(api, selected);\n        }\n        catch (cause) {\n            setSyncError(cause instanceof Error ? cause : new Error(String(cause)));\n            throw cause;\n        }\n        finally {\n            setSyncing(false);\n        }\n    }, [api, runtime, setLocale]);\n    return {\n        locale,\n        locales,\n        setLocale: changeLocale,\n        switching: switching || syncing,\n        error: syncError ?? error,\n    };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E7"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-i18n/dist/client/use-locale.js",
+      "lines": [
+        56,
+        75
+      ],
+      "sha256": "4ac6a653f32beb82cf7bc0ecae597598c004f1703994faabb04019635eeee100",
+      "observation": "useSyncServerLocale 在启动时把本地语言同步到服务端，失败被吞掉、不阻塞界面；服务端不支持时返回成功结果而非错误。",
+      "excerpt": "/**\n * Tells the server which language this browser is using, once, at startup.\n *\n * Storage and the server's session drift apart routinely — a different browser, an expired session, a switch made in\n * another tab — and this is what brings them back together.\n */\nexport function useSyncServerLocale() {\n    const api = useApiClient();\n    // Optional, so the shell can call this unconditionally: an application composed without i18n, which is what a\n    // focused test renders, has no language to report and simply does nothing.\n    const runtime = useOptionalI18nRuntime();\n    useEffect(() => {\n        if (!runtime)\n            return;\n        const synchronization = notifyServerLocale(api, runtime.getLocale());\n        synchronization.catch(() => {\n            // Nothing to do: the interface is already correct, and the next startup tries again.\n        });\n    }, [api, runtime]);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/server/middleware.js",
+      "lines": [
+        6,
+        51
+      ],
+      "sha256": "bb228c1f54a1adacfced1b877b8f24fe8c1805232ab81420f6727513d0447fda",
+      "observation": "createI18nMiddleware 依次按“会话已选语言→Accept-Language→默认语言”解析请求语言，加载资源后写入 LOCALE_CONTEXT_KEY / TRANSLATOR_CONTEXT_KEY。",
+      "excerpt": "/** Session key the chosen locale is stored under. */\nexport const LOCALE_SESSION_KEY = 'locale';\nasync function readSessionLocale(context, sessionKey) {\n    // An application may mount no session middleware at all, which is a valid configuration rather than an error.\n    const session = getContextSession(context);\n    if (!session)\n        return undefined;\n    try {\n        const data = await session.get();\n        const value = data?.[sessionKey];\n        return typeof value === 'string' ? value : undefined;\n    }\n    catch {\n        // An unreadable session should degrade to header negotiation, not fail the request.\n        return undefined;\n    }\n}\n/**\n * Resolves the locale for a request: the session's stored choice, then `Accept-Language`, then the default.\n */\nexport async function resolveRequestLocale(runtime, context, options = {}) {\n    const stored = await readSessionLocale(context, options.sessionKey ?? LOCALE_SESSION_KEY);\n    // The locale endpoint explicitly selects English for a client-only language, even when the application's own\n    // server locale list omits it. Base English resources are always loaded alongside the configured default.\n    if (stored === BASE_LOCALE)\n        return BASE_LOCALE;\n    if (stored)\n        return runtime.resolveLocale(stored);\n    const accepted = parseAcceptLanguage(context.req.header('accept-language') ?? undefined);\n    return runtime.resolvePreferredLocale(accepted);\n}\n/**\n * Puts the request's locale and a translator bound to it on the context.\n *\n * Mount it after the session middleware, which it reads the stored locale from. It awaits the locale's resources, so a\n * handler can translate synchronously without risking a silent fallback to the key.\n */\nexport function createI18nMiddleware(runtime, options = {}) {\n    return async (context, next) => {\n        const locale = await resolveRequestLocale(runtime, context, options);\n        await runtime.ensureLocaleLoaded(locale);\n        context.set(LOCALE_CONTEXT_KEY, locale);\n        context.set(TRANSLATOR_CONTEXT_KEY, runtime.getFixedT(options.namespace ?? APP_NS, locale));\n        await next();\n    };\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/server/middleware.js",
+      "lines": [
+        52,
+        74
+      ],
+      "sha256": "bb228c1f54a1adacfced1b877b8f24fe8c1805232ab81420f6727513d0447fda",
+      "observation": "getRequestTranslator 从请求上下文读取 translator，未安装中间件时抛出明确错误（快速失败而非静默用错语言）。",
+      "excerpt": "export function getRequestLocale(context) {\n    return context.get(LOCALE_CONTEXT_KEY);\n}\n/**\n * Returns the translator installed for the current request, optionally bound to a namespace.\n *\n * The i18n middleware loads the request locale before installing this translator. A missing translator therefore\n * means the middleware did not run before the route, which is an application wiring error rather than an optional\n * request state.\n */\nexport function getRequestTranslator(context, namespace) {\n    const translator = context.get(TRANSLATOR_CONTEXT_KEY);\n    if (!translator) {\n        throw new Error('Request translator is unavailable. Make sure the i18n HTTP middleware is mounted before the route.');\n    }\n    if (!namespace)\n        return translator;\n    return (key, options) => translator(key, {\n        ...options,\n        ns: options?.ns ?? namespace,\n    });\n}\n//# sourceMappingURL=middleware.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/server/errors.js",
+      "lines": [
+        1,
+        42
+      ],
+      "sha256": "1899fb82df8b1448cab6d7fd1c05415c2acc8344ee9debc3438886c28d92271b",
+      "observation": "AppI18nError 携带稳定 code/ns/key/params/status，serializeI18nError 在序列化时按目标 locale 翻译，正文语言随接收者。",
+      "excerpt": "/**\n * An error that carries what it needs to be translated, rather than a message translated when it was thrown.\n *\n * Translation happens at serialization, where the request's locale is known. The same error therefore renders in\n * whatever language the caller asked for, and constructing one never requires knowing the locale.\n */\nexport class AppI18nError extends Error {\n    code;\n    ns;\n    key;\n    params;\n    status;\n    constructor(code, options) {\n        // The untranslated message is what logs and stack traces show; the translated one is produced on serialization.\n        super(`${code}: ${options.ns}:${options.key}`, { cause: options.cause });\n        this.name = 'AppI18nError';\n        this.code = code;\n        this.ns = options.ns;\n        this.key = options.key;\n        this.params = options.params;\n        this.status = options.status ?? 400;\n    }\n}\nexport function isAppI18nError(error) {\n    return error instanceof AppI18nError;\n}\n/**\n * Renders an error for a response body.\n *\n * `message` is translated into the request's locale so an API-only application needs nothing else, while `ns`, `key`,\n * and `params` let a frontend re-render it in whatever language its interface is currently showing.\n */\nexport function serializeI18nError(runtime, error, locale) {\n    const translate = runtime.getFixedT(error.ns, locale);\n    return {\n        code: error.code,\n        message: translate(error.key, error.params),\n        ns: error.ns,\n        key: error.key,\n        ...(error.params ? { params: error.params } : {}),\n    };\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/server/session.js",
+      "lines": [
+        1,
+        17
+      ],
+      "sha256": "6a07f84e87bdd70952e7594d94031e7975df4dbf428bf6ee5516549db2abf424",
+      "observation": "getContextSession 仅接受可实现 i18n 会话挂载的上下文对象，语言偏好存放在会话上而非全局。",
+      "excerpt": "export function isI18nSession(value) {\n    if (!value || typeof value !== 'object')\n        return false;\n    const candidate = value;\n    return (typeof candidate.get === 'function' && typeof candidate.set === 'function');\n}\n/**\n * Reads the session off a Hono context.\n *\n * Hono types `c.get` against the router's declared variables, and a router that declares none types every key as\n * `never`. Route contributions here are plain `Hono` instances, so the lookup goes through this one accessor instead\n * of each caller widening the context itself.\n */\nexport function getContextSession(context) {\n    const session = context.get('session');\n    return isI18nSession(session) ? session : undefined;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E12"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-i18n/dist/server/routes.js",
+      "lines": [
+        13,
+        59
+      ],
+      "sha256": "3a476ba7913b78336061191ff2517ac9c42c242048ff58fbe44f90dbec6b18eb",
+      "observation": "GET /i18n/locales 返回 {defaultLocale, locales}（安全策略为空）；PUT /i18n/locale 写入会话语言，服务端不支持该语言时返回 fallback 结果。",
+      "excerpt": "export const i18nApiRoutes = defineApiRoutes(({ container }) => {\n    const router = new Hono();\n    const runtime = container.resolve(i18nToken);\n    // Validation errors answer in the standard body even when the router is mounted on its own.\n    router.onError(apiErrorHandler);\n    router.get('/i18n/locales', describeRoute({\n        tags: ['I18n'],\n        summary: 'List the languages the server answers in',\n        operationId: 'i18nListLocales',\n        // The sign-in page reads it before anyone is signed in.\n        security: [],\n        description: 'The server’s default language and every language it offers. Needs no session or API key.',\n        responses: {\n            200: dataResponse(ServerLocaleListSchema),\n            500: apiErrorResponse(500),\n        },\n    }), (context) => context.json({\n        data: {\n            defaultLocale: runtime.getDefaultLocale(),\n            locales: runtime.getLocaleDefinitions(),\n        },\n    }));\n    // The session's language is a singleton setting, so it is replaced with PUT rather than created with POST.\n    router.put('/i18n/locale', \n    // Hidden: it stores a preference on the browser's cookie session for the application shell; a caller with an API\n    // key has no session, so the call changes nothing it could rely on.\n    describeRoute({ hide: true }), apiValidator('json', SetSessionLocaleInput), async (context) => {\n        const { locale: requested } = context.req.valid('json');\n        // Client and server locale lists are independent. A client-only language must not prevent a browser switch, so\n        // an unsupported language is a successful fallback to English rather than an error.\n        const supported = runtime\n            .getLocales()\n            .find((locale) => locale === requested);\n        const locale = supported ?? BASE_LOCALE;\n        const session = getContextSession(context);\n        if (session)\n            await session.set(LOCALE_SESSION_KEY, locale);\n        return context.json({\n            data: {\n                locale,\n                requestedLocale: requested,\n                fallback: supported === undefined,\n            },\n        });\n    });\n    return router;\n});",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E13"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-i18n/dist/server/schemas.js",
+      "lines": [
+        1,
+        23
+      ],
+      "sha256": "e59e5d4a05775893c5bee1097168f2923c599234b90e64f6277b569ca42a1da1",
+      "observation": "SetSessionLocaleInput 用 strictObject 校验 locale 非空；ServerLocaleListSchema 描述端点返回契约并带 ref。",
+      "excerpt": "import { z } from 'zod';\n/** The body of `PUT /i18n/locale`: the language this session wants answers in. */\nexport const SetSessionLocaleInput = z.strictObject({\n    locale: z.string().trim().min(1, 'A locale is required.'),\n});\n/** What `GET /i18n/locales` answers in `data`, for the API document at `/api/swagger/docs`. */\nexport const ServerLocaleListSchema = z\n    .object({\n    defaultLocale: z.string().meta({\n        description: 'The language the server answers in when a session has chosen none.',\n    }),\n    locales: z.array(z.object({\n        locale: z\n            .string()\n            .meta({ description: 'A BCP 47 tag, such as `zh-CN`.' }),\n        label: z\n            .string()\n            .meta({ description: 'The language’s name in that language.' }),\n        direction: z.enum(['ltr', 'rtl']),\n    })),\n})\n    .meta({ ref: 'I18nLocaleList' });\n//# sourceMappingURL=schemas.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E14"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        15,
+        60
+      ],
+      "sha256": "12afdb44486ee0f5c1d601ea0f1aa933b00b2ebefdf3cfc383e54f909963c9c0",
+      "observation": "Skill 定义目标/范围/非目标与“一条规则”：命名空间即包名、随渲染树确定；文案必须进 locale 文件，插件只提供翻译、不新增语言，也不得另建语言选择器。",
+      "excerpt": "# Goal\n\nPut user-facing text behind a translation key correctly the first time: in the right file, under the right namespace, and in a way that survives a language switch.\n\n# Scope\n\n- Wire locale files into a package that has none yet.\n- Add a string to an application or a plugin and render it translated, in the browser or on the server.\n- Throw an error that callers see in their own language, and translate mail or jobs for their recipient.\n- Add a language to a package that already has locale files.\n- Reword a plugin's copy from the application, without editing the plugin.\n- Translate a menu or breadcrumb title.\n\n# Non-Goals\n\n- Do not build a language picker. `useAppLocale()` exists; `app-template-default` already renders one in `client/layouts/components/language-switcher.tsx`.\n- Do not add i18n machinery to an application. The plugin is registered by default, the client runtime is built by `createAppI18nRuntime`, and the server's by `I18nProvider`.\n- Do not configure the list of languages. It is whatever the application's own `locales/index.ts` declares; configuration names only the default, `i18n.defaultLocale` (overridden by `APP_DEFAULT_LOCALE`). The `@nocobase/app-plugin-i18n` README covers that, `useAppLocale()`, the endpoints, and `useSyncServerLocale()`, which the template shell already calls to keep the server's language in step with the browser's.\n\n# The one rule that decides everything\n\n**A namespace is a package name, and the namespace in scope follows the render tree.**\n\nAn application's pages get the application's namespace; a plugin's pages get that plugin's, because the host wraps each contribution using the `packageName` it already records. So a component in its own package's routes translates with no namespace at all.\n\nThe exception is what most mistakes come from: a component a plugin exports for the application to render is in the _application's_ scope, not its own. It has to name its namespace.\n\n# Procedure\n\n## Wiring locales into a package for the first time\n\nA package has a `client/locales/` and a `server/locales/` tree, each with an `en-US.ts`, the other languages, and an `index.ts` mapping every language to a dynamic import:\n\n```ts\n// client/locales/index.ts, and server/locales/index.ts in the same shape\nimport type { LocaleLoaders } from '@nocobase/i18n';\n\nconst locales: LocaleLoaders = {\n  'en-US': () => import('./en-US.js'),\n  'zh-CN': () => import('./zh-CN.js'),\n};\n\nexport default locales;\n```\n\nImport that module and pass it as `locales`, the same way on both sides:",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E15"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        180,
+        212
+      ],
+      "sha256": "12afdb44486ee0f5c1d601ea0f1aa933b00b2ebefdf3cfc383e54f909963c9c0",
+      "observation": "服务端翻译章节：请求内用 getRequestTranslator；给调用方看的错误抛 AppI18nError，序列化时翻译；router.onError 转成 ApiError，code→reason、译文→localizedMessage，ns/key/params→metadata。",
+      "excerpt": "## Translating on the server\n\nServer text lives in the package's `server/locales/`, wired as above, and is translated in the language of whoever it is for.\n\nInside a request, the i18n middleware has already resolved the language (session choice, then `Accept-Language`, then the default) and loaded it:\n\n```ts\nimport { getRequestTranslator } from '@nocobase/i18n/server';\n\nconst NS = '@acme/app-plugin-orders';\n\nrouter.get('/orders/:id', async (context) => {\n  const t = getRequestTranslator(context, NS);\n  return context.json({\n    data: { message: t('orders.archived', { id: context.req.param('id') }) },\n  });\n});\n```\n\nFor an error the caller should see in its own language, throw an `AppI18nError` instead of translating a message. It carries a stable code, the namespace, the key and the parameters, and is translated only when it is serialized:\n\n```ts\nimport { AppI18nError } from '@nocobase/i18n/server';\n\nthrow new AppI18nError('ORDER_NOT_FOUND', {\n  status: 404,\n  ns: NS,\n  key: 'errors.notFound',\n  params: { id },\n});\n```\n\nUnder `/api` every failure is the standard error body, so an `AppI18nError` that reaches the application on its own is rendered only by its status: its namespace, key, parameters and translated text are lost. The router's `onError` translates it into an `ApiError` and hands everything else on unchanged. The error's code becomes `reason`, the translated text `localizedMessage`, and `ns`, `key` and `params` go in `metadata` so the browser can re-render it in the language its interface is showing:",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E16"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        317,
+        335
+      ],
+      "sha256": "12afdb44486ee0f5c1d601ea0f1aa933b00b2ebefdf3cfc383e54f909963c9c0",
+      "observation": "验证清单：pnpm typecheck、pnpm nocobase locales check、pnpm test，并在运行中的应用切换语言确认；末尾列出 README 参考。",
+      "excerpt": "# Verification\n\n```bash\npnpm typecheck                    # a key absent from the interface\npnpm nocobase locales check      # a language declared on only one side\npnpm test                         # if application text changed\n```\n\nRun these from the application. Inside this monorepo the equivalents are `pnpm --filter <package> typecheck` and `pnpm --filter <app> exec nocobase locales check`. The root `pnpm i18n:check` is a different check: it reads every `locales/` directory under `packages/` and reports keys missing from a locale, without comparing the languages each side declares.\n\nThen switch language in the running application and confirm the new text follows. A string that does not change is still a literal somewhere.\n\n# References\n\nThis Skill is copied into each application that installs the plugin, so the packages are named rather than linked by path — where they resolve to depends on whether you are in this repository or in a generated application.\n\n- `@nocobase/i18n` README — namespaces, the fallback chain, server-side translation, error payloads\n- `@nocobase/app-plugin-i18n` README — the switch itself, the default language, endpoints, `useAppLocale`, `useSyncServerLocale`, and the session-stored language shared across tabs\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E17"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+      "lines": [
+        1,
+        27
+      ],
+      "sha256": "049eeddfa01eaf84cc8ce10f0a2debae010eb81eb3d89914a92ec4c49827ceb1",
+      "observation": "前端文案位置与共享键说明，并给出 client/locales 的组织方式，明确文案不在组件里硬编码。",
+      "excerpt": "# Copy and translation\n\nAll text a user can see goes through a translation key: titles, buttons, column headers, placeholders, `aria-label`, toasts and validation messages all count. Text hard-coded in a component cannot be translated, and changing its wording means changing code.\n\nFor the wording itself (which verb a button uses, how to write empty states and errors, how to put record names in quotes), see section C of [`../ui-guidelines.md`](../ui-guidelines.md); this document covers only how to write the code.\n\n## Where copy lives\n\n| File                             | Purpose                                                                                                                                              |\n| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `client/locales/system/en-US.ts` | The template's own English copy: the shell, the sign-in pages under `auth.*`, shared components and the homepage. Exports the type `SystemResource`  |\n| `client/locales/system/zh-CN.ts` | The template's own Chinese copy; typed as `SystemResource`                                                                                           |\n| `client/locales/en-US.ts`        | English: spreads `system/en-US.ts`, then adds the application's own groups; defines the structure of all the copy and exports the type `AppResource` |\n| `client/locales/zh-CN.ts`        | Chinese: spreads `system/zh-CN.ts`, then adds the same groups; typed as `AppResource`, so its structure must match the English                       |\n| `client/locales/index.ts`        | One dynamic `import()` per language, so the browser downloads only the language being shown                                                          |\n\nRules:\n\n- Write the application's copy in `client/locales/en-US.ts` and `zh-CN.ts`, never in `client/locales/system/`. The system files belong to the template, and a template upgrade replaces them; keeping the two apart is what lets it do so without touching the application's copy.\n- A group the application writes replaces the system group of the same name rather than merging with it. To add a key to a shared group such as `navigation` or `appearance`, spread the system group first: `navigation: { ...systemEnUS.navigation, projects: 'Projects' }`, and the same with `systemZhCN` in `zh-CN.ts`. Rewording a system key works the same way: write the key after the spread.\n- Each new feature gets its own group (`projects: { … }`), which holds all of the feature's copy.\n- Add menu titles to the existing `navigation` group (`navigation.projects`), and write `navigation: { title: 'navigation.projects' }` in the route (see [`page.md`](page.md)).\n- Add the key to `en-US.ts` first, then add the same key to `zh-CN.ts`. A key missing from `zh-CN.ts` or extra in it (including a misspelled one) fails type checking.\n- The sign-in pages' copy is the flat `auth.*` keys; the authentication blocks in `client/extensions/nocobase-auth-*/` take their text as props, so `client/pages/auth/` passes these translations in.\n- **Keys passed to `t()` are not type-checked.** `t('projects.titel')` compiles, and the page shows `projects.titel` as is. `tests/logic/app-locale-coverage.test.ts` catches it; run it after every copy change (its limits are in [\"Checks\"](#checks)).\n- The English built into a few shadcn/ui primitives, such as the visually hidden \"Close\" of `Sheet`, is translated too (guideline C1): pass the translation as a prop where the primitive takes one, and otherwise replace the literal in the primitive with a key. [\"English built into primitives\" in `shadcn.md`](shadcn.md#english-built-into-primitives) lists each case.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E18"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+      "lines": [
+        332,
+        341
+      ],
+      "sha256": "049eeddfa01eaf84cc8ce10f0a2debae010eb81eb3d89914a92ec4c49827ceb1",
+      "observation": "语言切换规则：复用模板 language-switcher；用 useLocale().locale 读当前语言；切换必须用 useAppLocale（setLocale 不会保存）；shell 调用 useSyncServerLocale。",
+      "excerpt": "## Language switching\n\n`@nocobase/app-plugin-i18n` handles choosing a language and saving the choice.\n\n- The account menu already has a language switcher: `client/layouts/components/language-switcher.tsx`, a shadcn submenu with radio items, which must sit inside `DropdownMenuContent` to keep keyboard navigation and the selected state. It is hidden when there is only one language. Do not build another selector, and do not store a separate copy of the current language.\n- Read the current language from the `locale` of `useLocale()`.\n- Do not switch languages with the `setLocale` of `useLocale()`: it switches only the interface and does not save the choice. When you really need to switch somewhere else, use the plugin's `useAppLocale()` (`@nocobase/app-plugin-i18n/client`), which saves the choice.\n- Switching loads all of the new language's copy first and then switches, so the page never shows half Chinese and half English; components re-render, with no page reload.\n- The application shell (`client/layouts/app-layout.tsx`) calls `useSyncServerLocale()` at startup; keep this call when you change the shell.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E19"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+      "lines": [
+        369,
+        379
+      ],
+      "sha256": "049eeddfa01eaf84cc8ce10f0a2debae010eb81eb3d89914a92ec4c49827ceb1",
+      "observation": "检查清单：tsc 校验键集合、locale coverage 测试覆盖字面量与动态键族、逐语言在浏览器核对 aria/placeholder/toast/校验消息、无硬编码文案。",
+      "excerpt": "## Checks\n\nLimit these to the changed files and the parts they affect:\n\n- `pnpm exec tsc -p tsconfig.json --noEmit`: reports keys missing from or extra in the Chinese locale. It does not check whether the keys used in `t()` exist.\n- `pnpm exec vitest run tests/logic/app-locale-coverage.test.ts`: reports every literal key the code uses (`t('…')` calls, including ones Prettier wrapped, and route `title`s) that either locale lacks, and every dynamic family (``t(`…${x}`)`` or `t('….' + x)`) with no key under its prefix. It does not check each value of a family: a missing `projects.status.done` passes while `projects.status.active` exists, so write one entry per value and look at each in the browser. It skips files that translate in a plugin's namespace (`useTranslation('@nocobase/…')`); a key held in data and passed as `t(item.key)` is not seen, so check those in the browser.\n- After adding or removing a language: `pnpm nocobase locales check` (see \"Adding a language\").\n- Look at the page in the browser in each language: no leftover English or Chinese, no key names; also check `aria-label`, placeholders, toasts and validation messages.\n- Switch the language without reloading and check that the page follows: column headers, options, validation messages and date formats all update.\n- No hard-coded user-visible text in components.\n- Tests that cover copy render with the real locale files and assert real text in both languages, not keys (see [`testing.md`](testing.md)).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E20"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/i18n.md",
+      "lines": [
+        5,
+        23
+      ],
+      "sha256": "7084f8e35b0a6c3dfacdd55634407a76022ea5a0392e5a22e7e8a7756c083bb3",
+      "observation": "服务端文本与语言集合：请求语言按“会话→Accept-Language→defaultLocale”；client/server 各自的 locales/index.ts 决定可选语言，插件不向选择器新增语言。",
+      "excerpt": "## Server-side text\n\nAPI error messages, notifications and mail need translation too. The server translates them from `server/locales/`: `en-US.ts` states the wording and exports `AppServerResource`, and every other server locale is annotated with that type, so a key missing from one is a compile error. The template's server locales start empty — the server text that exists belongs to plugins — so add keys when the application's own endpoints start producing text. Name them by the same rules as client keys.\n\n- The server resolves a request's language from the session's stored choice, then `Accept-Language`, then `i18n.defaultLocale`.\n- Outbound content follows its recipient: mail, notifications and background work translate into the recipient's language, not the language of whoever triggered the work. A background job has no request to inherit a language from — resolve the recipient's locale explicitly and load it before translating. The `nocobase-app-plugin-i18n` Skill shows how server code translates, inside a request with `getRequestTranslator`, as an `AppI18nError` that the router's `onError` turns into an `ApiError` with a `localizedMessage`, and outside one with `getFixedT(namespace, locale)`.\n- The frontend does not display an endpoint's `message` as is; it maps the status and the error's `reason` to its own copy (see [calling endpoints](frontend/references/api.md)).\n\n## Keeping the server in step with the browser\n\n`@nocobase/app-plugin-i18n` owns the language selector, persistence, and the server locale endpoints. The application shell calls `useSyncServerLocale()` so server messages use the browser's language when the server supports it; keep that call when changing the shell. If the server does not have that locale, the browser still switches and the server uses English; the language control shows an informational notice about the fallback.\n\n## Which languages the application offers\n\nThe application's own locale files are the list. `client/locales/index.ts` decides what the browser offers and `server/locales/index.ts` what the server does, so adding a language means adding its file and loader entry on the side that needs it — there is no configured list to keep in step.\n\nTo add a language to the server, add its file annotated with `AppServerResource` (for example `server/locales/ja-JP.ts`) and its loader entry in `server/locales/index.ts`; the client side is described in [frontend copy and translations](frontend/references/i18n.md).\n\nA plugin's locale file supplies translations for those languages, never a new one. A plugin shipping `ja-JP` to an application that does not offer Japanese puts nothing in the picker. Prefer keeping the client and server lists aligned when server-produced text needs the language. A client-only language is also valid: the interface switches to it, `PUT /api/i18n/locale` records English for the server, and the language control explains the fallback with an informational notice.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E21"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/i18n.md",
+      "lines": [
+        34,
+        38
+      ],
+      "sha256": "7084f8e35b0a6c3dfacdd55634407a76022ea5a0392e5a22e7e8a7756c083bb3",
+      "observation": "启动语言解析为“localStorage 中保存的选择→defaultLocale→en-US”；切换语言写 localStorage 与服务端会话，不改变 defaultLocale。",
+      "excerpt": "It defaults to `en-US`, and `APP_DEFAULT_LOCALE` overrides it. A value the application does not translate is ignored on the client and falls back on every key on the server.\n\nThe browser resolves its startup language as: the visitor's saved choice in `localStorage` → `i18n.defaultLocale` → `en-US`. The browser's own `navigator.language` is deliberately not consulted — the language an application starts in is the product's decision, not the visitor's operating system's. A default is never written to storage as though the visitor had chosen it, so changing configuration still reaches anyone who has not picked a language. Refresh after changing it.\n\nSwitching language in the interface remains a user-level choice: it writes `localStorage` and the server session, and never changes `defaultLocale`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/compiler/compiler.js",
+      "lines": [
+        459,
+        480
+      ],
+      "sha256": "47c19465f6929e85cad88577883f751e98c6f3cd859b45fb1de3ab53c79cf2cb",
+      "observation": "compileConstraint 的 unique 分支解析字段列名并生成索引名/谓词，交给 schema 层落库。",
+      "excerpt": "    compileConstraint(tableName, constraint, fields, collection, context = {}) {\n        if ((constraint.type === 'primary' || constraint.type === 'unique') &&\n            constraint.fields.some((name) => fields.some((field) => field.name === name && field.type === 'enum')))\n            throw new Error('V1 enum Fields cannot be identity Fields.');\n        switch (constraint.type) {\n            case 'primary':\n                return {\n                    ...constraint,\n                    columns: constraint.fields.map((field) => this.resolveColumn(field, fields, collection)),\n                    name: constraint.name ??\n                        this.namingFor(collection).indexName(tableName, constraint.fields.map((field) => this.resolveColumn(field, fields, collection))),\n                };\n            case 'unique':\n                return {\n                    ...constraint,\n                    columns: constraint.fields.map((field) => this.resolveColumn(field, fields, collection)),\n                    name: constraint.name ??\n                        this.namingFor(collection).indexName(tableName, constraint.fields.map((field) => this.resolveColumn(field, fields, collection))),\n                    predicate: constraint.predicate\n                        ? this.compileFilterExpression(constraint.predicate, collection)\n                        : undefined,\n                };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        131,
+        138
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "collection.unique(fields, options) 把 type:'unique' 约束（含可选 name）压入集合定义。",
+      "excerpt": "    unique(fields, options = {}) {\n        this.definition.constraints?.push({\n            type: 'unique',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E24"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/schema/internal/knex/adapter.js",
+      "lines": [
+        293,
+        311
+      ],
+      "sha256": "e76f8deec8211c54659c3ca879b4a5673751113b29cd965de44feebab8f2fdb1",
+      "observation": "buildConstraint 的 'unique' 分支调用 addUniqueConstraint，传递索引名、deferrable、mode 与 predicate。",
+      "excerpt": "    buildConstraint(table, constraint) {\n        switch (constraint.type) {\n            case 'primary':\n                addPrimaryConstraint(table, constraint.columns, constraintOptions({\n                    constraintName: constraint.name,\n                    deferrable: normalizeDeferrable(constraint.deferrable),\n                }));\n                break;\n            case 'unique':\n                addUniqueConstraint(table, constraint.columns, indexOptions({\n                    indexName: constraint.name,\n                    deferrable: normalizeDeferrable(constraint.deferrable),\n                    storageEngineIndexType: constraint.indexType,\n                    useConstraint: constraint.mode === 'constraint' ? true : undefined,\n                    predicate: constraint.predicate\n                        ? this.buildPredicate(constraint.predicate)\n                        : undefined,\n                }));\n                break;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E25"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/schema/internal/knex/adapter.js",
+      "lines": [
+        417,
+        426
+      ],
+      "sha256": "e76f8deec8211c54659c3ca879b4a5673751113b29cd965de44feebab8f2fdb1",
+      "observation": "addUniqueConstraint 最终调用 table.unique(columns, options)，由 Knex 驱动发出唯一的索引/约束。",
+      "excerpt": "function addUniqueConstraint(table, columns, options) {\n    if (typeof options === 'string') {\n        table.unique(columns, options);\n    }\n    else if (options === undefined) {\n        table.unique(columns);\n    }\n    else {\n        table.unique(columns, options);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E26"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/database/internal/unique-constraint.js",
+      "lines": [
+        1,
+        24
+      ],
+      "sha256": "1b51c60088f9efe287afb45a5b365b0af534a12261e2bf355454f91ff4fcb143",
+      "observation": "isUniqueConstraintViolation 遍历 cause/originalError 链识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT、errno 1/1062/2601/2627 等——但这是 database/internal 下的函数。",
+      "excerpt": "export function isUniqueConstraintViolation(error) {\n    const visited = new Set();\n    let current = error;\n    while (current && typeof current === 'object' && !visited.has(current)) {\n        visited.add(current);\n        const record = current;\n        const code = record.code;\n        const number = record.errno ?? record.number ?? record.errorNum;\n        if (record.errCode === -6602 ||\n            code === '23505' ||\n            code === 'ER_DUP_ENTRY' ||\n            code === 'SQLITE_CONSTRAINT' ||\n            code === 'SQLITE_CONSTRAINT_UNIQUE' ||\n            code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||\n            number === 1 ||\n            number === 1062 ||\n            number === 2601 ||\n            number === 2627) {\n            return true;\n        }\n        current = record.cause ?? record.originalError;\n    }\n    return false;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/index.d.ts",
+      "lines": [
+        55,
+        60
+      ],
+      "sha256": "3bb2f85c55c8801adf351fc21de81344565bde30f6f964e305302b2acf5b1e78",
+      "observation": "包公开导出里没有 isUniqueConstraintViolation，也没有任何唯一冲突错误类型；只导出 UnsupportedCapabilityError、RepositoryError、repositoryErrorStatuses 等。",
+      "excerpt": "export type { NumericCapabilityStrategy } from './schema/inspector/shared/column-capabilities.js';\nexport { numericCapabilities, sqliteAffinity, } from './schema/inspector/shared/column-capabilities.js';\nexport type { DecodedPhysicalCollectionCursor } from './schema/inspector/shared/cursor.js';\nexport type { PhysicalCheckConstraintSchema, PhysicalDataType, PhysicalCollectionIdentifier, PhysicalCollectionKind, PhysicalCollectionSchema, PhysicalCollectionSummary, PhysicalForeignKeySchema, PhysicalIndexKey, PhysicalIndexSchema, PhysicalSchemaInfo, PhysicalUniqueConstraintSchema, SchemaInspectionWarning, } from './schema/inspector/types.js';\nexport { UnsupportedCapabilityError } from './schema/capabilities.js';\nexport { RepositoryError, repositoryErrorStatuses, } from './repository/errors.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/errors.d.ts",
+      "lines": [
+        1,
+        10
+      ],
+      "sha256": "49606c34f5b1a7b8e66342e240dc7f8b19ef406aa3f1dcba0a64809070f9fec3",
+      "observation": "RepositoryErrorCode 与 RepositoryErrorStatus 的枚举都没有唯一冲突 / ALREADY_EXISTS 项，应用无法用类型化错误码区分重复键。",
+      "excerpt": "export type RepositoryErrorCode = 'COLLECTION_NOT_FOUND' | 'FIELD_NOT_FOUND' | 'FIELD_CAPABILITY_NOT_SUPPORTED' | 'FIELD_NOT_WRITABLE' | 'RELATION_NOT_FOUND' | 'READ_ONLY_COLLECTION' | 'INVALID_AST' | 'INVALID_CONTEXT' | 'INVALID_FILTER' | 'INVALID_PAGINATION' | 'INVALID_SELECT' | 'INVALID_SORT' | 'INVALID_AGGREGATE' | 'INVALID_GROUP_BY' | 'INVALID_DISTINCT' | 'INVALID_STREAM' | 'QUERY_ALREADY_CONSUMED' | 'QUERY_TRANSACTION_COMPLETED' | 'INVALID_MUTATION' | 'INVALID_STORED_VALUE' | 'INVALID_UNIQUE_SELECTOR' | 'VARIABLE_NOT_FOUND' | 'MUTATION_LIMIT_EXCEEDED' | 'RECORD_NOT_FOUND' | 'MULTIPLE_RECORDS_MATCHED' | 'RELATION_TARGET_NOT_FOUND' | 'MULTIPLE_RELATION_TARGETS_MATCHED' | 'RELATION_UPSERT_TARGET_OUTSIDE_SCOPE' | 'VERSION_CONFLICT' | 'INVALID_WRITE_POLICY' | 'INVALID_POLICY' | 'POLICY_REQUIRED' | 'READ_FORBIDDEN' | 'FIELD_READ_FORBIDDEN' | 'RELATION_READ_FORBIDDEN' | 'SCOPE_VIOLATION' | 'RECORD_OUTSIDE_SCOPE' | 'WRITE_FORBIDDEN' | 'FIELD_WRITE_FORBIDDEN' | 'RELATION_WRITE_FORBIDDEN' | 'RELATION_ACTION_NOT_ALLOWED' | 'RELATION_REASSIGNMENT_REQUIRED' | 'REPOSITORY_EVENT_RECURSION';\n/**\n * What kind of failure a Repository error is, named with Google's canonical error codes (AIP-193). These are the names\n * `ApiError.status` uses, so an HTTP layer maps a Repository error to its response without knowing any error code, and\n * a code added here cannot reach a caller with a status nobody chose for it.\n *\n * `INTERNAL` marks the server's own fault, such as a Policy the server built wrongly: the caller cannot repair the\n * request, so an HTTP layer answers it with an opaque 500 and reveals neither its message nor its details.\n */\nexport type RepositoryErrorStatus = 'INVALID_ARGUMENT' | 'PERMISSION_DENIED' | 'NOT_FOUND' | 'ABORTED' | 'INTERNAL';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/api-error.js",
+      "lines": [
+        10,
+        71
+      ],
+      "sha256": "c515b61600b91235e0749ec39c58ac05f836bbda512c303689cf371363016f3e",
+      "observation": "apiErrorStatusCodes 含 ALREADY_EXISTS:409；ApiError 携带 status/reason/domain/message/localizedMessage/metadata/fieldViolations 的标准错误体。",
+      "excerpt": "export const apiErrorStatusCodes = Object.freeze({\n    INVALID_ARGUMENT: 400,\n    FAILED_PRECONDITION: 400,\n    OUT_OF_RANGE: 400,\n    UNAUTHENTICATED: 401,\n    PERMISSION_DENIED: 403,\n    NOT_FOUND: 404,\n    ALREADY_EXISTS: 409,\n    ABORTED: 409,\n    RESOURCE_EXHAUSTED: 429,\n    INTERNAL: 500,\n    UNIMPLEMENTED: 501,\n    UNAVAILABLE: 503,\n    DEADLINE_EXCEEDED: 504,\n});\n/** The error reasons and domain the framework itself reports. Plugins use their own domain and reasons. */\nexport const appErrorDomain = 'app';\n/**\n * An error a route throws to answer with the standard `/api` error body.\n *\n * ```ts\n * throw new ApiError({ status: 'NOT_FOUND', reason: 'WORKFLOW_NOT_FOUND', domain: 'workflows', message: `Workflow ${id} was not found.` });\n * ```\n */\nexport class ApiError extends Error {\n    /** The HTTP status of the response. */\n    code;\n    status;\n    reason;\n    domain;\n    localizedMessage;\n    fieldViolations;\n    metadata;\n    constructor(options) {\n        super(options.message, options.cause === undefined ? undefined : { cause: options.cause });\n        this.name = 'ApiError';\n        this.code = options.httpStatus ?? apiErrorStatusCodes[options.status];\n        this.status = options.status;\n        this.reason = options.reason;\n        this.domain = options.domain;\n        this.localizedMessage = options.localizedMessage;\n        this.fieldViolations = options.fieldViolations;\n        this.metadata = options.metadata;\n    }\n    toPayload(requestId) {\n        return {\n            code: this.code,\n            status: this.status,\n            reason: this.reason,\n            domain: this.domain,\n            message: this.message,\n            ...(this.localizedMessage\n                ? { localizedMessage: this.localizedMessage }\n                : {}),\n            ...(this.fieldViolations?.length\n                ? { fieldViolations: this.fieldViolations }\n                : {}),\n            ...(this.metadata ? { metadata: this.metadata } : {}),\n            ...(requestId ? { requestId } : {}),\n        };\n    }\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/api-error.js",
+      "lines": [
+        95,
+        127
+      ],
+      "sha256": "c515b61600b91235e0749ec39c58ac05f836bbda512c303689cf371363016f3e",
+      "observation": "recognizeApiError 识别 ApiError、HTTPException、以及 status≠INTERNAL 的 RepositoryError（用其 code 作 reason、path/details 入 metadata）；不认识的错误原样上抛由外层兜底 500。",
+      "excerpt": " *   error kept too;\n * - a `RepositoryError` whose `status` is not `INTERNAL` (a refused write, a missing record, a version conflict), with\n *   that status, its code as `reason`, domain `app`, and its `path` and `details` as `metadata`. One that is the\n *   server's own fault, such as an invalid Policy, is not recognized.\n */\nexport function recognizeApiError(error) {\n    if (error instanceof ApiError)\n        return error;\n    if (error instanceof HTTPException) {\n        return new ApiError({\n            status: apiErrorStatusFromHttp(error.status),\n            reason: `HTTP_${error.status}`,\n            domain: appErrorDomain,\n            message: error.message || `Request failed with status ${error.status}.`,\n            httpStatus: error.status,\n            cause: error,\n        });\n    }\n    const repositoryError = repositoryApiError(error);\n    if (repositoryError)\n        return repositoryError;\n    const statusError = readStatusError(error);\n    if (statusError) {\n        return new ApiError({\n            status: apiErrorStatusFromHttp(statusError.status),\n            reason: statusError.reason ?? `HTTP_${statusError.status}`,\n            domain: statusError.domain ?? appErrorDomain,\n            message: statusError.message,\n            httpStatus: statusError.status,\n            cause: error,\n        });\n    }\n    return undefined;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E31"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/api-error.js",
+      "lines": [
+        169,
+        223
+      ],
+      "sha256": "c515b61600b91235e0749ec39c58ac05f836bbda512c303689cf371363016f3e",
+      "observation": "apiErrorHandler 把可识别错误统一成标准错误响应、其余再抛；invalidApiInputError 生成 400 INVALID_INPUT 并为每个 issue 输出 fieldViolations。",
+      "excerpt": " * The `onError` for a plugin's router: it answers every error `recognizeApiError` recognizes in the standard body and\n * rethrows the rest, so an enclosing router can still translate it and the application answers an unexpected failure\n * with an opaque 500. A router that translates its own domain errors does that first and then delegates here. Install\n * it even though the application renders the same errors: a router tested on a bare Hono has no `/api` handler.\n */\nexport function apiErrorHandler(error, context) {\n    const known = recognizeApiError(error);\n    if (known)\n        return apiErrorResponse(context, known);\n    throw error;\n}\nexport const apiNotFoundHandler = (context) => apiErrorResponse(context, new ApiError({\n    status: 'NOT_FOUND',\n    reason: 'ROUTE_NOT_FOUND',\n    domain: appErrorDomain,\n    message: `No API route matches ${context.req.method} ${context.req.path}.`,\n}));\n/**\n * Validate request input against a schema, returning the parsed value or throwing a 400 `INVALID_ARGUMENT` that names\n * every invalid field. Use it inside Hono's `validator()` so handlers read only `context.req.valid(...)`.\n *\n * Superseded by `apiValidator(target, schema)`, which answers the same error and also declares the schema in the API\n * document. Routes not yet migrated keep working with this.\n */\nexport function parseApiInput(schema, value) {\n    const result = schema.safeParse(value);\n    if (result.success)\n        return result.data;\n    throw invalidApiInputError(result.error.issues);\n}\n/**\n * The 400 `INVALID_ARGUMENT` with reason `INVALID_INPUT` and one field violation per issue that every input validator\n * answers. A path segment may be a key or a Standard Schema `{ key }` segment; a `code` on an issue, as zod sets one,\n * becomes the violation's `reason`.\n */\nexport function invalidApiInputError(issues) {\n    return new ApiError({\n        status: 'INVALID_ARGUMENT',\n        reason: 'INVALID_INPUT',\n        domain: appErrorDomain,\n        message: 'The request contains invalid fields.',\n        fieldViolations: issues.map((issue) => {\n            const code = issue.code;\n            return {\n                field: (issue.path ?? [])\n                    .map((segment) => typeof segment === 'object' && segment !== null\n                    ? String(segment.key)\n                    : String(segment))\n                    .join('.'),\n                description: issue.message,\n                ...(typeof code === 'string' && code ? { reason: code } : {}),\n            };\n        }),\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E32"
+      },
+      "kind": "code",
+      "path": "app/server/providers/devices.ts",
+      "lines": [
+        172,
+        193
+      ],
+      "sha256": "4b7549a2eea6c698d872865e60348fabcae71142f4d56c81662c9ea44116b805",
+      "observation": "应用在 create 前先 exists 预检查重复编号，并在插入 catch 里再次 exists 判断是否竞态冲突——这正是缺少可判定唯一冲突类型的绕行成本。",
+      "excerpt": "    async create(input) {\n      if (await devices.exists({ filter: { code: input.code } })) {\n        throw new DeviceCodeTakenError(input.code);\n      }\n\n      try {\n        const { record } = await devices.createOne({\n          values: {\n            code: input.code,\n            name: input.name,\n            status: input.status,\n          },\n        });\n        return toDevice(record);\n      } catch (error) {\n        // The unique constraint is the backstop for a race between the check above and this insert: report the\n        // same domain error instead of leaking the database's constraint error.\n        if (await devices.exists({ filter: { code: input.code } })) {\n          throw new DeviceCodeTakenError(input.code);\n        }\n        throw error;\n      }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E33"
+      },
+      "kind": "code",
+      "path": "app/server/routes/devices.ts",
+      "lines": [
+        42,
+        58
+      ],
+      "sha256": "fa4e1637dada2ca921489143229adea87b63e358cdb441b99571defe26cf7300",
+      "observation": "应用把领域错误 DeviceCodeTakenError 映射成 ApiError{status:'ALREADY_EXISTS', reason:'DEVICE_CODE_TAKEN', fieldViolations:[code]}，前端按 reason 本地化。",
+      "excerpt": "  if (error instanceof DeviceCodeTakenError) {\n    throw new ApiError({\n      status: 'ALREADY_EXISTS',\n      reason: 'DEVICE_CODE_TAKEN',\n      domain: 'devices',\n      message: `A device with code \"${error.deviceCode}\" already exists.`,\n      // Points the client at the field to explain, so a form can show the message next to \"code\".\n      fieldViolations: [\n        {\n          field: 'code',\n          description: `The code \"${error.deviceCode}\" is already in use.`,\n          reason: 'DEVICE_CODE_TAKEN',\n        },\n      ],\n    });\n  }\n  throw error;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E34"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0047.txt",
+      "lines": [
+        99,
+        101
+      ],
+      "sha256": "2ed8faab5fac06be837b11afc4278c69a47be59aab9947ea18a9cf8737d581ad",
+      "observation": "Agent 在本轮主动读取 nocobase-app-plugin-i18n/SKILL.md 全文，说明该 Skill 可被发现、被使用。",
+      "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":769,\"output\":266,\"cacheRead\":75008,\"cacheWrite\":0,\"reasoning\":162,\"totalTokens\":76043,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_ox7xNflK51SqZZpCoPnx5271\",\"name\":\"read\",\"arguments\":{\"limit\":200,\"offset\":1,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-plugin-i18n/SKILL.md\"}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The language persisted by the i18n plugin. Let me check how `useAppLocale` persists (localStorage) and whether it's per-user. The i18n plugin's client is `@nocobase/app-plugin-i18n`. Let me check the storage key. If it uses `localStorage` without user scoping, then two users on the same browser share it. The requirement explicitly says \\\"per-user (one colleague switching must not change another's)\\\". Hmm.\\n\\nThe template's own guidance (in root AGENTS.md): \\\"The account menu language control ...\\\" and the i18n Skill. Let me check the i18n Skill for how locale persistence works and whether it's per-user. Let me read the `nocobase-app-plugin-i18n` skill.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"The language persisted by the i18n plugin. Let me check how `useAppLocale` persists (localStorage) and whether it's per-user. The i18n plugin's client is `@nocobase/app-plugin-i18n`. Let me check the storage key. If it uses `localStorage` without user scoping, then two users on the same browser share it. The requirement explicitly says \\\\\\\"per-user (one colleague switching must not change another's)\\\\\\\". Hmm.\\\\n\\\\nThe template's own guidance (in root AGENTS.md): \\\\\\\"The account menu language control ...\\\\\\\" and the i18n Skill. Let me check the i18n Skill for how locale persistence works and whether it's per-user. Let me read the `nocobase-app-plugin-i18n` skill.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_ox7xNflK51SqZZpCoPnx5271\",\"name\":\"read\",\"arguments\":{\"limit\":200,\"offset\":1,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-plugin-i18n/SKILL.md\"}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":769,\"output\":266,\"cacheRead\":75008,\"cacheWrite\":0,\"reasoning\":162,\"totalTokens\":76043,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791689458845,\"responseId\":\"gen_01M4MG71F0775EZAEF0VPD2FA3\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_ox7xNflK51SqZZpCoPnx5271\",\"toolName\":\"read\",\"args\":{\"limit\":200,\"offset\":1,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-plugin-i18n/SKILL.md\"}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E35"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0047.txt",
+      "lines": [
+        1073,
+        1073
+      ],
+      "sha256": "2ed8faab5fac06be837b11afc4278c69a47be59aab9947ea18a9cf8737d581ad",
+      "observation": "Agent 的推理明确意识到“writeStoredLocale 按浏览器存储、服务端按会话存储”，并判断这是框架提供的机制、决定不改造，印证语言偏好作用域问题存在于框架默认行为。",
+      "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"`writeStoredLocale` stores in browser storage (per browser). The server is notified via `PUT i18n/locale` and presumably stores per-session/user. So when the browser switches language, the server session's locale is updated (per user session). On a fresh browser/refresh, `writeStoredLocale` restores from browser storage, and `useSyncServerLocale` notifies the server. This is per-browser but the server stores per session (cookie), so two users on different browsers are independent. If two users share the same browser and log in as different users, the stored locale would be shared — but the server session locale would be per user, and on login the session's locale would be applied? Hmm.\\n\\nThe requirement: \\\"Language switch must not lose data, persist across refresh per browser, and be per-user (one colleague switching must not change another's)\\\". The template mechanism satisfies per-browser persistence and per-user server session. Since the task says keep existing login/settings and don't redesign, this is the provided mechanism. Good enough. I shouldn't modify it.\\n\\nWait — the requirement is explicitly called out in the issue and might be a tested behavior. The current mechanism: language choice stored in the browser's localStorage; server session updated. That's per-user because each user has their own browser/session. On a shared browser with different logins, `useSyncServerLocale` runs at startup with the stored locale and pushes it to the new session, which would override the new user's server locale. But that's an edge case unlikely tested, and it's template behavior.\\n\\nActually, let me re-read: \\\"persist across refresh per browser, and be per-user (one colleague switching must not change another's)\\\". The natural implementation: persist locally. Since two colleagues use two browsers, this is satisfied. No change needed.\\n\\nNow, there's one more requirement: \\\"switching must localize navigation\\\". The navigation title uses `navigation.devices` which is in the app locale. Good.\\n\\nBut here's a subtlety: the app locale coverage test scans `client/**` for `t('...')` keys. The routes file uses `navigation: { title: 'navigation.devices' }` — the test recognizes `title:` named keys and checks both locales have `navigation.devices`. Since `navigation` is spread from system and extended, the runtime resolves. Good (test passed).\\n\\nNow, one more: the requirement mentions \\\"two ordinary test users\\\". The environment provides test users. Not our concern.\\n\\nLet me now double check the `new.tsx` and `edit.tsx` for the overlay pattern and no bugs. Let me read them.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"`writeStoredLocale` stores in browser storage (per browser). The server is notified via `PUT i18n/locale` and presumably stores per-session/user. So when the browser switches language, the server session's locale is updated (per user session). On a fresh browser/refresh, `writeStoredLocale` restores from browser storage, and `useSyncServerLocale` notifies the server. This is per-browser but the server stores per session (cookie), so two users on different browsers are independent. If two users share the same browser and log in as different users, the stored locale would be shared — but the server session locale would be per user, and on login the session's locale would be applied? Hmm.\\\\n\\\\nThe requirement: \\\\\\\"Language switch must not lose data, persist across refresh per browser, and be per-user (one colleague switching must not change another's)\\\\\\\". The template mechanism satisfies per-browser persistence and per-user server session. Since the task says keep existing login/settings and don't redesign, this is the provided mechanism. Good enough. I shouldn't modify it.\\\\n\\\\nWait — the requirement is explicitly called out in the issue and might be a tested behavior. The current mechanism: language choice stored in the browser's localStorage; server session updated. That's per-user because each user has their own browser/session. On a shared browser with different logins, `useSyncServerLocale` runs at startup with the stored locale and pushes it to the new session, which would override the new user's server locale. But that's an edge case unlikely tested, and it's template behavior.\\\\n\\\\nActually, let me re-read: \\\\\\\"persist across refresh per browser, and be per-user (one colleague switching must not change another's)\\\\\\\". The natural implementation: persist locally. Since two colleagues use two browsers, this is satisfied. No change needed.\\\\n\\\\nNow, there's one more requirement: \\\\\\\"switching must localize navigation\\\\\\\". The navigation title uses `navigation.devices` which is in the app locale. Good.\\\\n\\\\nBut here's a subtlety: the app locale coverage test scans `client/**` for `t('...')` keys. The routes file uses `navigation: { title: 'navigation.devices' }` — the test recognizes `title:` named keys and checks both locales have `navigation.devices`. Since `navigation` is spread from system and extended, the runtime resolves. Good (test passed).\\\\n\\\\nNow, one more: the requirement mentions \\\\\\\"two ordinary test users\\\\\\\". The environment provides test users. Not our concern.\\\\n\\\\nLet me now double check the `new.tsx` and `edit.tsx` for the overlay pattern and no bugs. Let me read them.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_mV4iIklGQ6mQP3MKz9zT4014\",\"name\":\"read\",\"arguments\":{\"limit\":250,\"offset\":1,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/pages/devices/new.tsx\"}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":771,\"output\":647,\"cacheRead\":79232,\"cacheWrite\":0,\"reasoning\":553,\"totalTokens\":80650,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791689466977,\"responseId\":\"gen_01M4MG79CYY4YYKTTY90W09S3X\",\"rawStopReason\":\"tool_calls\"}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E36"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0016.txt",
+      "lines": [
+        1946,
+        1948
+      ],
+      "sha256": "06b018e8c895a2ca48e52336b4ef918f2566358b721e69be4eb0c4315a337bd6",
+      "observation": "探索性 bash：grep/sed 读取不存在的 node_modules/@nocobase/db/dist/index.d.ts，退出码 2；随后改用真实 dist 路径继续，属路径探索噪声。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_BtE0Z9ySbiakKbLse3mu9845\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"=== databaseManagerToken / exports ===\\ngrep: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n--- db index exports ---\\nsed: can't read node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_BtE0Z9ySbiakKbLse3mu9845\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== databaseManagerToken / exports ===\\ngrep: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n--- db index exports ---\\nsed: can't read node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688019355}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_BtE0Z9ySbiakKbLse3mu9845\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== databaseManagerToken / exports ===\\ngrep: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n--- db index exports ---\\nsed: can't read node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688019355}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E37"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0018.txt",
+      "lines": [
+        1430,
+        1432
+      ],
+      "sha256": "42bd19a637f0e467ce267ce156fa939cf558e6030e03041df7a4cd45f5bfed7e",
+      "observation": "探索性 bash：ls/cat 组合末尾读取不存在的 implement.md，退出码 2；前面的目录与 packages 列表正常返回。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_sl3JFQBteKTHOjsIEfWF3634\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\".\\n..\\n.agents\\n.claude\\n.cursor\\n.git\\n.github\\n.gitignore\\n.mcp.json\\n.npmrc\\n.prettierignore\\n.vscode\\nAGENTS.md\\nCLAUDE.md\\nDockerfile\\nDockerfile.dockerignore\\nREADME.MD\\ncli\\nclient\\ncomponents.json\\nconfig.example.yml\\ndatabase\\ndocs\\necosystem.config.js\\neslint.config.js\\nfactory-template.json\\nindex.html\\nnode_modules\\npackage.json\\nplaywright.config.ts\\npnpm-lock.yaml\\npnpm-workspace.yaml\\npublic\\nserver\\ntailwind.config.mjs\\ntests\\ntsconfig.json\\ntsconfig.node.json\\ntsconfig.server.json\\nvite.config.ts\\nvitest.config.ts\\n=== .env ===\\n=== .env.local ===\\n=== factory-template.json ===\\n{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.61\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.30\\\",\\n  \\\"controlSha\\\": \\\"eba969f039eb5f2af5e6de293f093e14ea2078a7\\\",\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"generatedAt\\\": \\\"2026-10-11T02:19:47.504Z\\\",\\n  \\\"guidance\\\": {\\n    \\\"AGENTS.md\\\": \\\"03b54a8d615f57144db20921ce6657030440a6577f498fc1c4a21b170d266774\\\",\\n    \\\"CLAUDE.md\\\": \\\"0a3798fc75a7f79a4eee0bc9ea99d4bb60fb542770e67fbfad8614878937c809\\\"\\n  },\\n  \\\"releaseChannel\\\": \\\"beta\\\",\\n  \\\"registry\\\": \\\"https://registry.npmjs.org/\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-api-keys\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authentication\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.4\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authorization\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.26\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-default-access\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-restriction-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-sharing-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-database-explorer\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.12\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-file\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.22\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-i18n\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.25\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-in-app\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-providers\\\",\\n      \\\"version\\\": \\\"0.2.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-scheduler\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.16\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-users\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.2\\\"\\n    }\\n  ]\\n}\\n=== implement.md ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_sl3JFQBteKTHOjsIEfWF3634\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\".\\n..\\n.agents\\n.claude\\n.cursor\\n.git\\n.github\\n.gitignore\\n.mcp.json\\n.npmrc\\n.prettierignore\\n.vscode\\nAGENTS.md\\nCLAUDE.md\\nDockerfile\\nDockerfile.dockerignore\\nREADME.MD\\ncli\\nclient\\ncomponents.json\\nconfig.example.yml\\ndatabase\\ndocs\\necosystem.config.js\\neslint.config.js\\nfactory-template.json\\nindex.html\\nnode_modules\\npackage.json\\nplaywright.config.ts\\npnpm-lock.yaml\\npnpm-workspace.yaml\\npublic\\nserver\\ntailwind.config.mjs\\ntests\\ntsconfig.json\\ntsconfig.node.json\\ntsconfig.server.json\\nvite.config.ts\\nvitest.config.ts\\n=== .env ===\\n=== .env.local ===\\n=== factory-template.json ===\\n{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.61\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.30\\\",\\n  \\\"controlSha\\\": \\\"eba969f039eb5f2af5e6de293f093e14ea2078a7\\\",\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"generatedAt\\\": \\\"2026-10-11T02:19:47.504Z\\\",\\n  \\\"guidance\\\": {\\n    \\\"AGENTS.md\\\": \\\"03b54a8d615f57144db20921ce6657030440a6577f498fc1c4a21b170d266774\\\",\\n    \\\"CLAUDE.md\\\": \\\"0a3798fc75a7f79a4eee0bc9ea99d4bb60fb542770e67fbfad8614878937c809\\\"\\n  },\\n  \\\"releaseChannel\\\": \\\"beta\\\",\\n  \\\"registry\\\": \\\"https://registry.npmjs.org/\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-api-keys\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authentication\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.4\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authorization\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.26\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-default-access\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-restriction-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-sharing-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-database-explorer\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.12\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-file\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.22\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-i18n\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.25\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-in-app\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-providers\\\",\\n      \\\"version\\\": \\\"0.2.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-scheduler\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.16\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-users\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.2\\\"\\n    }\\n  ]\\n}\\n=== implement.md ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688171781}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_sl3JFQBteKTHOjsIEfWF3634\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\".\\n..\\n.agents\\n.claude\\n.cursor\\n.git\\n.github\\n.gitignore\\n.mcp.json\\n.npmrc\\n.prettierignore\\n.vscode\\nAGENTS.md\\nCLAUDE.md\\nDockerfile\\nDockerfile.dockerignore\\nREADME.MD\\ncli\\nclient\\ncomponents.json\\nconfig.example.yml\\ndatabase\\ndocs\\necosystem.config.js\\neslint.config.js\\nfactory-template.json\\nindex.html\\nnode_modules\\npackage.json\\nplaywright.config.ts\\npnpm-lock.yaml\\npnpm-workspace.yaml\\npublic\\nserver\\ntailwind.config.mjs\\ntests\\ntsconfig.json\\ntsconfig.node.json\\ntsconfig.server.json\\nvite.config.ts\\nvitest.config.ts\\n=== .env ===\\n=== .env.local ===\\n=== factory-template.json ===\\n{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.61\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.30\\\",\\n  \\\"controlSha\\\": \\\"eba969f039eb5f2af5e6de293f093e14ea2078a7\\\",\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"generatedAt\\\": \\\"2026-10-11T02:19:47.504Z\\\",\\n  \\\"guidance\\\": {\\n    \\\"AGENTS.md\\\": \\\"03b54a8d615f57144db20921ce6657030440a6577f498fc1c4a21b170d266774\\\",\\n    \\\"CLAUDE.md\\\": \\\"0a3798fc75a7f79a4eee0bc9ea99d4bb60fb542770e67fbfad8614878937c809\\\"\\n  },\\n  \\\"releaseChannel\\\": \\\"beta\\\",\\n  \\\"registry\\\": \\\"https://registry.npmjs.org/\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-api-keys\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authentication\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.4\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authorization\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.26\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-default-access\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-restriction-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-authz-sharing-rules\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.11\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-database-explorer\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.12\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-file\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.22\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-i18n\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.14\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.25\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-in-app\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-notification-providers\\\",\\n      \\\"version\\\": \\\"0.2.0-beta.10\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-scheduler\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.16\\\"\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-users\\\",\\n      \\\"version\\\": \\\"2.0.0-beta.2\\\"\\n    }\\n  ]\\n}\\n=== implement.md ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688171781}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E38"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0020.txt",
+      "lines": [
+        2859,
+        2861
+      ],
+      "sha256": "26bfb33df4df159f37adb5b36d7fccedb907c3e8e226160a4d4f41deb4a5a079",
+      "observation": "探索性 grep 查找 SortExpression 无匹配（退出码 1），未找到符号而非实现报错。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_5pIBkd3ufQWUBF8v7HcA8447\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"=== SortExpression ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_5pIBkd3ufQWUBF8v7HcA8447\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== SortExpression ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688544649}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_5pIBkd3ufQWUBF8v7HcA8447\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== SortExpression ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791688544649}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E39"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0040.txt",
+      "lines": [
+        801,
+        803
+      ],
+      "sha256": "32dd1fa50608bc1d1335ffcc276c5000812d5f9c701d0210884cae33a24ad40b",
+      "observation": "探索性 bash：查看 .env/.env.example 时文件不存在，退出码 2；同批次的 config 内容正常输出。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_VJDoIqr8caOZnGifJIUO1507\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"import type { AppConfigFactory } from '@nocobase/app-server/config';\\nimport {\\n  defineUsersConfig,\\n  type UsersConfig,\\n} from '@nocobase/app-plugin-users/server/config';\\n\\n// The initial administrator comes from config.yml (users.initialAdmin) or INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL\\n// and INITIAL_ADMIN_PASSWORD, read once while the user table is empty.\\nconst users: AppConfigFactory<UsersConfig> = defineUsersConfig();\\n\\nexport default users;\\n=== env ===\\n=== .env ===\\n=== .env.example ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_VJDoIqr8caOZnGifJIUO1507\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import type { AppConfigFactory } from '@nocobase/app-server/config';\\nimport {\\n  defineUsersConfig,\\n  type UsersConfig,\\n} from '@nocobase/app-plugin-users/server/config';\\n\\n// The initial administrator comes from config.yml (users.initialAdmin) or INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL\\n// and INITIAL_ADMIN_PASSWORD, read once while the user table is empty.\\nconst users: AppConfigFactory<UsersConfig> = defineUsersConfig();\\n\\nexport default users;\\n=== env ===\\n=== .env ===\\n=== .env.example ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791689123617}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_VJDoIqr8caOZnGifJIUO1507\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import type { AppConfigFactory } from '@nocobase/app-server/config';\\nimport {\\n  defineUsersConfig,\\n  type UsersConfig,\\n} from '@nocobase/app-plugin-users/server/config';\\n\\n// The initial administrator comes from config.yml (users.initialAdmin) or INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL\\n// and INITIAL_ADMIN_PASSWORD, read once while the user table is empty.\\nconst users: AppConfigFactory<UsersConfig> = defineUsersConfig();\\n\\nexport default users;\\n=== env ===\\n=== .env ===\\n=== .env.example ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791689123617}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E40"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0042.txt",
+      "lines": [
+        1172,
+        1174
+      ],
+      "sha256": "0c8fdece76333f507ffe65d394fe1b08853557653dec90ecf561dcbfa6cf5ccc",
+      "observation": "探索性 sed：pnpm 虚拟目录中 app-plugin-authentication 的 server/config.ts 路径不存在，退出码 2；属路径猜测失败。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_IwAQa8oeLuFXdVCqNVs18472\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/.pnpm/@nocobase+app-plugin-authentication@2.0.0-beta.4_3470c5aa9aced94479584ba799a7d963/node_modules/@nocobase/app-plugin-authentication/server/config.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_IwAQa8oeLuFXdVCqNVs18472\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/.pnpm/@nocobase+app-plugin-authentication@2.0.0-beta.4_3470c5aa9aced94479584ba799a7d963/node_modules/@nocobase/app-plugin-authentication/server/config.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791689176033}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_IwAQa8oeLuFXdVCqNVs18472\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/.pnpm/@nocobase+app-plugin-authentication@2.0.0-beta.4_3470c5aa9aced94479584ba799a7d963/node_modules/@nocobase/app-plugin-authentication/server/config.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791689176033}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E41"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        374,
+        378
+      ],
+      "sha256": "f9bb2148ab73f9b875d2f80419c7c5a51a64c02ba83389bb0396cfbfb61f311a",
+      "observation": "环境探测：$FACTORY_BROWSER_SHOWCASE 未设置导致 showcase 段为空、命令退出 1；preset JSON 本身正常，属工厂/环境准备问题。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_01_XtInZx1rHwfASTkTpOLO4730\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"schemaVersion\\\": 1,\\n  \\\"preset\\\": {\\n    \\\"sourceIssueNumber\\\": 347,\\n    \\\"sourceIssueUrl\\\": \\\"https://github.com/gchust/nb3-factory/issues/347\\\",\\n    \\\"capturedAt\\\": \\\"2026-10-11T02:56:47.597Z\\\",\\n    \\\"inputHash\\\": \\\"32a7b902abf50095515190ed3e608b060e2e2bf02e9dc623d5d49c38438706f3\\\",\\n    \\\"humanCommentCount\\\": 1,\\n    \\\"reviewHash\\\": \\\"ba44df8c7cda4e6a6fde3609c372a14e0c7af92d47ee3f00edfa58ff44b84771\\\",\\n    \\\"reviewCommentCount\\\": 1\\n  },\\n  \\\"repository\\\": \\\"gchust/nb3-factory\\\",\\n  \\\"owner\\\": \\\"gchust\\\",\\n  \\\"defaultBranch\\\": \\\"develop\\\",\\n  \\\"issue\\\": {\\n    \\\"number\\\": 701,\\n    \\\"title\\\": \\\"中英文设备台账\\\",\\n    \\\"url\\\": \\\"https://github.com/gchust/nb3-factory/issues/701\\\",\\n    \\\"author\\\": \\\"github-actions[bot]\\\"\\n  },\\n  \\\"task\\\": {\\n    \\\"targetBranch\\\": \\\"develop\\\",\\n    \\\"taskType\\\": \\\"创建新系统\\\",\\n    \\\"requirements\\\": \\\"我是一个中英文混合办公团队的行政人员，希望同事都能使用同一套设备台账，而不是为英文同事另做一个系统。\\\\n\\\\n设备只记录编号、名称和状态，编号与名称必填，编号不能重复，状态为“可借用、已借出”。登录后可以查看、新增、编辑设备，按状态筛选。先准备两台虚构设备即可，不需要借还审批或预约日历。\\\\n\\\\n同事能选择中文或英文。语言切换后，导航、列表标题、字段、按钮、状态、空列表提示、保存提示和错误说明都应使用所选语言，不能只有菜单翻译了。\\\\n\\\\n例如英文界面里漏填名称，或者提交一个别人刚登记过的设备编号，都应出现英文说明；切回中文后，同样的问题应能用中文说明。不能直接显示看不懂的内部错误代码。\\\\n\\\\n设备名称和备注等用户录入的内容不需要自动翻译。例如同事输入“会议室投影仪”，切成英文后这个名字仍保持原文；但“已借出”这样的系统状态应显示英文。切换语言不能造成数据丢失。\\\\n\\\\n同一个浏览器刷新后应保留刚选择的语言；一位同事切换语言，不应把另一个正在使用系统的同事也切过去。保留原有登录和个人设置。\\\\n\\\\n仅支持中文、英文，两名普通测试使用者，两台设备。不做第三种语言、自动翻译业务数据、邮件、附件、复杂组织权限或全站页面改版。\\\",\\n    \\\"acceptanceCriteria\\\": \\\"B01. 从中文切到英文，设备页的导航、表头、表单、主要按钮和系统状态随之变化，没有直接显示翻译代码。\\\\n\\\\nB02. 在英文界面漏填必填信息，出现可理解的英文提示；更正后可保存，并显示英文成功反馈。\\\\n\\\\nB03. 在一个页面填写尚未保存的设备编号，另一个页面先保存同编号设备；回到前一个页面提交，真正被拒绝且显示英文重复编号提示，不生成第二台同编号设备。\\\\n\\\\nB04. 切回中文后再次提交重复编号，显示中文提示；筛选到没有结果的状态时，空列表说明也使用中文。\\\\n\\\\nB05. 保存名称为“会议室投影仪”的设备，切成英文并刷新，语言仍为英文，设备名称保持原文，已保存数据不丢失。\\\\n\\\\nB06. 两个独立登录会话分别选择中英文，其中一个切换语言，不改变另一个会话的显示语言。\\\",\\n    \\\"sampleData\\\": \\\"是\\\",\\n    \\\"reviewCriteria\\\": \\\"## 案例评审评论 #5842501715（gchust）\\\\n\\\\n## 多语言完整链路独立评审\\\\n\\\\n案例版本：bilingual-assets-v1（2026-09-26）。本评论只进入 task.reviewCriteria，不进入业务需求或浏览器验收。\\\\n\\\\n主要对象：@nocobase/i18n、@nocobase/app-plugin-i18n 及应用前后端语言资源接入。对照实际安装的 i18n Skill，不要求用户在正文指定 namespace、hooks 或 locale 文件。\\\\n\\\\nR01. 追踪既有语言选择、应用和插件命名空间、导航与动态状态文案的实际加载；没有另建语言状态或混用已退役的 Portal i18n 实例。包清单或 import 本身不等于运行接入正确。\\\\n\\\\nR02. 区分前端必填校验与服务端真实拒绝。B03 的重复编号应确实经过业务请求被拒绝，并能以当前用户选择的语言反馈；只在前端假造同文案不构成该链路的证据。核对服务端资源与错误语义/参数，不把未知异常一律伪装成重复编号。\\\\n\\\\nR03. 系统状态和用户录入文本分别处理：显示状态可翻译，存储值应稳定，设备名称不可被语言切换改写。检查语言刷新持久性与两个独立会话的隔离，不能使用全局进程语言影响其他用户。\\\\n\\\\nR04. UI 结果、语言资源形状的静态检查与运行证据分别记录。只评中文和英文这一页，不扩展全插件/全语种矩阵；资源文件存在或类型检查通过不能代替浏览器切换与服务端反馈。\\\\n\\\\n测试准备：两个独立账号/浏览器会话，两台设备；用不同页面产生真实重复编号。空列表场景先使两台设备处于同一状态，再筛选另一状态，避免依赖偶然数据。该案例无需模型、邮箱或翻译外部服务。\\\\n\\\\n记录固定应用/控制 SHA、输入/评审哈希和实际包/Skill 版本。独立评审只读上游证据；未执行记 not_run，普通业务表单代码不作为 i18n 框架得分对象。\\\"\\n  },\\n  \\\"evaluation\\\": {\\n    \\\"requiredChecks\\\": [],\\n    \\\"version\\\": 1,\\n    \\\"runKey\\\": \\\"gchust/nb3-factory/issues/701/initial\\\",\\n    \\\"kind\\\": \\\"initial\\\"\\n  },\\n  \\\"workBranch\\\": \\\"agent/issue-701\\\",\\n  \\\"targetCreated\\\": false,\\n  \\\"existingPullRequest\\\": null,\\n  \\\"controlSha\\\": \\\"2c89ed9810a3468fa3efa87459c26f04da5b639f\\\",\\n  \\\"entrySha\\\": \\\"2c89ed9810a3468fa3efa87459c26f04da5b639f\\\",\\n  \\\"run\\\": {\\n    \\\"id\\\": 38106776639,\\n    \\\"attempt\\\": 1\\n  },\\n  \\\"applicationBase\\\": {\\n    \\\"ref\\\": \\\"develop\\\",\\n    \\\"sha\\\": \\\"2c89ed9810a3468fa3efa87459c26f04da5b639f\\\"\\n  }\\n}\\n--- evidence dir ---\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 11 03:37 .\\ndrwxr-xr-x 3 runner runner 4096 Oct 11 03:37 ..\\n--- showcase ---\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_wy9Hcrxo1KDDd4KEkRNT8893\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"---\\nname: core\\ndescription: Core agent-browser usage guide. Read this before running any agent-browser commands. Covers the snapshot-and-ref workflow, navigating pages, interacting with elements (click, fill, type, select), extracting text and data, taking screenshots, managing tabs, handling forms and auth, waiting for content, running multiple browser sessions in parallel, and troubleshooting common failures. Use when the user asks to interact with a website, fill a form, click something, extract data, take a screenshot, log into a site, test a web app, or automate any browser task.\\nallowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*)\\n---\\n\\n# agent-browser core\\n\\nFast browser automation CLI for AI agents. Chrome/Chromium via CDP, no Playwright or Puppeteer dependency. Accessibility-tree snapshots with compact `@eN` refs let agents interact with pages in ~200-400 tokens instead of parsing raw HTML.\\n\\nMost normal web tasks (navigate, read, click, fill, extract, screenshot) are covered here. Load a specialized skill when the task falls outside browser web pages — see [When to load another skill](#when-to-load-another-skill).\\n\\n## The core loop\\n\\n```bash\\nagent-browser open <url>        # 1. Open a page\\nagent-browser snapshot -i       # 2. See what's on it (interactive elements only)\\nagent-browser click @e3         # 3. Act on refs from the snapshot\\nagent-browser snapshot -i       # 4. Re-snapshot after any page change\\n```\\n\\nRefs (`@e1`, `@e2`, ...) are assigned fresh on every snapshot. They become **stale the moment the page changes** — after clicks that navigate, form submits, dynamic re-renders, dialog opens. Always re-snapshot before your next ref interaction.\\n\\n## Always use your own session\\n\\nBefore your first command, set a named session for the whole task:\\n\\n```bash\\nexport AGENT_BROWSER_SESSION=\\\"$(agent-browser session id --scope worktree --prefix task)\\\"\\n```\\n\\nThe default (unnamed) session is a single shared browser: it is shared with every other agent on the machine and it persists across conversations, so working in it can hijack another agent's page mid-task or navigate away from something the human left open. Every example below assumes a named session is active. See [Run multiple browsers in parallel](#run-multiple-browsers-in-parallel) and `references/session-management.md`.\\n\\n## Quickstart\\n\\n```bash\\n# Install once\\nnpm i -g agent-browser && agent-browser install\\n\\n# Linux hosts can install required browser libraries too\\nagent-browser install --with-deps\\n\\n# Take a screenshot of a page\\nagent-browser open https://example.com\\nagent-browser screenshot home.png\\nagent-browser close\\n\\n# Search, click a result, and capture it\\nagent-browser open https://duckduckgo.com\\nagent-browser snapshot -i                      # find the search box ref\\nagent-browser fill @e1 \\\"agent-browser cli\\\"\\nagent-browser press Enter\\nagent-browser wait --load networkidle\\nagent-browser snapshot -i                      # refs now reflect results\\nagent-browser click @e5                        # click a result\\nagent-browser screenshot result.png\\n```\\n\\nThe browser stays running across commands so these feel like a single session. By default, an inactive daemon saves configured restore state, closes its headless browser, and exits after one hour; the next command starts it again. Without `--restore` or another restore key, shutdown discards transient browser state and open tabs. Dashboard mouse, keyboard, and touch input count as activity. Headed browsers, Safari and iOS WebDriver sessions, and user-attached browsers are exempt from the default; provider-owned cloud browsers are not. Use `--idle-timeout <time>` or `AGENT_BROWSER_IDLE_TIMEOUT_MS` to tune the timeout, and use `0` to disable it. Still run `agent-browser close` (or `close --all`) when you're done.\\n\\n## MCP integration\\n\\nFor tools that support Model Context Protocol servers, start the stdio server:\\n\\n```bash\\nagent-browser mcp\\nagent-browser mcp --tools all\\nagent-browser mcp --tools core,network,react\\n```\\n\\nConfigure the MCP client to launch `agent-browser` with `[\\\"mcp\\\"]`. The server defaults to MCP protocol 2025-11-25 and accepts older supported client protocol versions during initialization. The default tools profile is `core`, which keeps MCP context small for everyday browser automation. Use `--tools all` for the full typed CLI parity surface, or combine profiles with commas, such as `--tools core,network,react`. Profiles are `core`, `network`, `state`, `debug`, `tabs`, `react`, `mobile`, and `all`; the `debug` profile includes accessibility audits, plugin registry, and command.run tools. Each tool accepts typed arguments plus `extraArgs` for advanced CLI flags and exact CLI parity. The common `allowedDomains` array maps to `--allowed-domains` and activates the same WebRTC containment and launch-mode restrictions, while `idleTimeout` maps to `--idle-timeout`. Tool discovery is paginated and includes read-only/open-world annotations so modern MCP clients can load the large typed surface incrementally. Use the tool `session` argument or `AGENT_BROWSER_SESSION` to isolate browser sessions.\\n\\n## eve agent integration\\n\\nFor eve agents, mount the `@agent-browser/eve` extension instead of hand-writing browser tools. It adds namespaced tools such as `browser__navigate`, `browser__snapshot`, `browser__click`, `browser__fill`, `browser__find`, and `browser__screenshot`, all backed by agent-browser running inside the eve sandbox. The sandbox bootstrap helpers (`installAgentBrowser`, `agentBrowserRevalidationKey`) ship with the same package under `@agent-browser/eve/sandbox`, so `agent/sandbox.ts` needs no extra dependency.\\n\\n## Reading a page\\n\\n```bash\\nagent-browser snapshot                    # full tree (verbose)\\nagent-browser snapshot -i                 # interactive elements only (preferred)\\nagent-browser snapshot -i -u              # include href urls on links\\nagent-browser snapshot -i -c              # compact (no empty structural nodes)\\nagent-browser snapshot -i -d 3            # cap depth at 3 levels\\nagent-browser snapshot -s \\\"#main\\\"         # scope to a CSS selector\\nagent-browser snapshot -i --json          # machine-readable output\\n```\\n\\nSnapshot output looks like:\\n\\n```\\nPage: Example - Log in\\nURL: https://example.com/login\\n\\n@e1 [heading] \\\"Log in\\\"\\n@e2 [form]\\n  @e3 [input type=\\\"email\\\"] placeholder=\\\"Email\\\"\\n  @e4 [input type=\\\"password\\\"] placeholder=\\\"Password\\\"\\n  @e5 [button type=\\\"submit\\\"] \\\"Continue\\\"\\n  @e6 [link] \\\"Forgot password?\\\"\\n```\\n\\nFor unstructured reading (no refs needed):\\n\\n```bash\\nagent-browser read                         # read rendered active-tab DOM\\nagent-browser read https://docs.example.com/guide  # docs-friendly fetch, prefers markdown\\nagent-browser read https://docs.example.com/guide --filter auth  # one matching section\\nagent-browser read https://docs.example.com/guide --outline  # compact page headings\\nagent-browser read https://docs.example.com --llms index --filter auth  # compact llms.txt discovery\\nagent-browser get text @e1                # visible text of an element\\nagent-browser get html @e1                # innerHTML\\nagent-browser get attr @e1 href           # any attribute\\nagent-browser get value @e1               # input value\\nagent-browser get title                   # page title\\nagent-browser get url                     # current URL\\nagent-browser get count \\\".item\\\"           # count matching elements\\n```\\n\\nUse `read [url]` when you need to consume documentation or other text pages rather than interact with a rendered UI. Omit the URL to read the rendered DOM of the active tab in the current browser session, including browser auth state and client-side updates. Explicit URL reads send `Accept: text/markdown`, try the same URL with `.md` appended when the first response is not markdown, walk ancestor paths toward `/` to find the nearest `llms.txt` for a matching docs link, print markdown/plain text when available, and fall back to readable text extracted from HTML without launching Chrome. Add `--filter <text>` to narrow a page to matching heading sections, `--outline` for compact headings on one page, `--llms in",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E42",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E42"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0008.txt",
+      "lines": [
+        3294,
+        3296
+      ],
+      "sha256": "db874eef5b5915bad842a5ab815b9632e6fdde45a3db70de8db7bc3488c16129",
+      "observation": "浏览器工具命令 90 秒超时（Command timed out after 90 seconds），属工具/环境超时，非应用或框架缺陷。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_2he0NzyUE1dh1oetVEeg5914\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 90 seconds\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_2he0NzyUE1dh1oetVEeg5914\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 90 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1791690419396}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_2he0NzyUE1dh1oetVEeg5914\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 90 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1791690419396}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38106776639.1/v2-0b1c6bd43ffd/E43",
+      "origin": {
+        "kind": "review",
+        "key": "review/38106776639.1/v2-0b1c6bd43ffd",
+        "localId": "E43"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0008.txt",
+      "lines": [
+        3399,
+        3401
+      ],
+      "sha256": "db874eef5b5915bad842a5ab815b9632e6fdde45a3db70de8db7bc3488c16129",
+      "observation": "浏览器工具命令 60 秒超时（Command timed out after 60 seconds），后续重试后继续跑通 B01–B06。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_q2rQjRisTYgo8Xle46me8197\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_q2rQjRisTYgo8Xle46me8197\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1791690481609}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_q2rQjRisTYgo8Xle46me8197\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1791690481609}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/04-devices-zh-two.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "04-devices-zh-two.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/04-devices-zh-two.png",
+      "lines": null,
+      "sha256": "9668bf682356533e07f2316b0cfb86aa0af70246206c66507228983bfad9a9ba",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/04-devices-zh-two.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/05-devices-en-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "05-devices-en-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/05-devices-en-list.png",
+      "lines": null,
+      "sha256": "6a7590e84377754e2e4496c6550af0f127a6459568086b99d639e0c272f8c0dc",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/05-devices-en-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/06-device-form-en.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "06-device-form-en.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/06-device-form-en.png",
+      "lines": null,
+      "sha256": "66489c823d1d2c0a609f10d764f38dcfcd48c4ff910945ba7faf918e8b7b4978",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/06-device-form-en.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/07-b02-missing-name-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "07-b02-missing-name-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/07-b02-missing-name-error.png",
+      "lines": null,
+      "sha256": "13e8a9d60dd40e0f4f9c6d0571191c804f28fb76dc88a2f7be4a68f69a62bd92",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/07-b02-missing-name-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/08-b02-en-success.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "08-b02-en-success.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/08-b02-en-success.png",
+      "lines": null,
+      "sha256": "716be625fa171a2c4f510191c06e2091c7788715ca2ee7456edcc36f6b24de1b",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/08-b02-en-success.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/10-b03-session2-saved.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "10-b03-session2-saved.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/10-b03-session2-saved.png",
+      "lines": null,
+      "sha256": "244d0df2d7981e085fe4a8d60e3bb0d27102fe8ec16f6446dbf58b3562485c94",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/10-b03-session2-saved.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/11-b03-en-duplicate-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "11-b03-en-duplicate-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/11-b03-en-duplicate-error.png",
+      "lines": null,
+      "sha256": "b34ec6360f9eba7fe919a83ab98003e887e2a37a86eb0c231bbb711422edbc4f",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/11-b03-en-duplicate-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/18-b03-single-sb003.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "18-b03-single-sb003.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/18-b03-single-sb003.png",
+      "lines": null,
+      "sha256": "6b719923d465211cb1c7bafaf51b0ddd2707c8a353a5ab6c957017beb76fb548",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/18-b03-single-sb003.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/12-b04-zh-duplicate-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "12-b04-zh-duplicate-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/12-b04-zh-duplicate-error.png",
+      "lines": null,
+      "sha256": "d615e174b1bb3fc39bf605f73190bc6f19500c3b3f59da2a2ca5318bbe582f21",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/12-b04-zh-duplicate-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/13-b04-zh-empty-filter.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "13-b04-zh-empty-filter.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/13-b04-zh-empty-filter.png",
+      "lines": null,
+      "sha256": "7a6bab2746aae155be1cb197e66767df0537d4007ce39d618b40fcc3524bda00",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/13-b04-zh-empty-filter.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/14-b05-zh-saved.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "14-b05-zh-saved.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/14-b05-zh-saved.png",
+      "lines": null,
+      "sha256": "a34eb285d894e69cab3c83691a30d13e4a4b8a20576747b4ce15959323558611",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/14-b05-zh-saved.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/15-b05-en-after-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "15-b05-en-after-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/15-b05-en-after-refresh.png",
+      "lines": null,
+      "sha256": "d277ee05153e6f2253b6a99675e547761d0dcd35441c0751fceef50331d116bf",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/15-b05-en-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/16-b06-session1-en.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "16-b06-session1-en.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/16-b06-session1-en.png",
+      "lines": null,
+      "sha256": "d277ee05153e6f2253b6a99675e547761d0dcd35441c0751fceef50331d116bf",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/16-b06-session1-en.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/17-b06-session2-zh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "17-b06-session2-zh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/17-b06-session2-zh.png",
+      "lines": null,
+      "sha256": "6b719923d465211cb1c7bafaf51b0ddd2707c8a353a5ab6c957017beb76fb548",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/17-b06-session2-zh.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #701",
+      "url": "https://github.com/gchust/nb3-factory/issues/701",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 38106776639 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/38106776639/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #704",
+      "url": "https://github.com/gchust/nb3-factory/pull/704",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/701/runs/38106776639/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
