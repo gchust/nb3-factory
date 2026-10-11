@@ -1,0 +1,923 @@
+{
+  "version": 1,
+  "date": "2026-10-11",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "f1ea4d58f62b1166a5ea74b3",
+      "id": "688:38089375339:1:F1",
+      "issue": 688,
+      "runId": 38089375339,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "授权 Skill 的 seed 示例要求从共享 seed-data 模块导入，实际运行时报 ERR_MODULE_NOT_FOUND",
+      "summary": "code-and-seeds.md（第 36/69/97 行）把“共享 seed-data 模块 + .js 说明符导入”作为标准做法；而 @nocobase/db 的 importTaskDefinition 只用原生动态 import() 加载任务，且仅改写任务文件自身的扩展名，Node 原生 TS 加载器只按字面路径解析，故 seed 内部的 ../../seed-data/x.js 找不到实际存在的 .ts。该冲突还直接抵触 nocobase-db Skill 第 131 行的 Self-contained 规则。最终实现不得不把权限集与资源常量内联进各 seed 才通过。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "授权 Skill 把“共享 seed-data 模块 + 从 seed 以 .js 说明符跨文件导入”写成标准做法（E29/E30），而 @nocobase/db 的任务加载器只用原生动态 import()、只为任务文件自身改写扩展名（E24/E25），seed 内部的相对导入因此按字面解析。修复阶段真实产生与文档示例完全对应的 ERR_MODULE_NOT_FOUND（E31），最终实现只能改为自包含并内联常量（E75/E76），且与 nocobase-db 的 Self-contained 规则（E28）重新统一。契约、实际行为、应用侧、环境与现有能力均指向同一结论，故 guidance-gap 成立。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "code-and-seeds.md 第 34-42 行要求把声明放 server/sales-resources.ts、权限集放 database/seed-data/permission-sets.ts，并给出以 ../../server/sales-resources.js 导入的示例；第 60-97 行的 seed 示例从 ../../seed-data/permission-sets.js 导入，并写明 seed 位于 database/main/seeds/ 而导入 database/seed-data/permission-sets.ts（E29/E30）。同一仓库的 nocobase-db Skill 第 129-137 行又规定迁移/seed 必须 Self-contained、不得导入会演变的共享常量（E28）。两处具体承诺互相冲突，构成明确契约。",
+            "evidence": [
+              "E29",
+              "E30",
+              "E28"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "task-loader.js 的 __rewriteRelativeImportExtension 只匹配以 ./ 或 ../ 开头的路径，对 pathToFileURL 产生的 file:// 绝对 URL 实际是 no-op，importTaskDefinition 最终执行原生 import()（E24 第 1-14 行、E25 第 57-61 行）；seed/loader.js 的 loadSeedFile 与 app-server 的 seeder 都经 importTaskDefinition 加载（E26 第 52-67 行、E27 第 24 与 49-51 行）。所以 seed 内部的 ../../seed-data/x.js 不被改写，由 Node 原生 TS 加载器按字面路径解析。修复阶段实测应用启动失败：Database seeds failed for connection \"main\"，Caused by ERR_MODULE_NOT_FOUND: .../database/seed-data/library-accounts.js imported from .../database/main/seeds/202609210001_library_accounts.ts（E31 第 1269-1271 行），正是文档示例的相对位置。",
+            "evidence": [
+              "E24",
+              "E25",
+              "E26",
+              "E27",
+              "E31"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "本搭建按示例在 database/main/seeds/ 中建立 seed 并跨文件导入，应用启动即报错（E31）。最终实现放弃 database/seed-data 目录，把资源常量、权限集、规则常量内联进每个 seed，并注释说明 seed 是快照、只能在磁盘上字面存在（E75 第 14-19、53-69 行；E76 第 12-21 行）；当前仓库已无 database/seed-data 目录。应用侧没有其它前置条件可补救该导入，只能改自包含写法。",
+            "evidence": [
+              "E31",
+              "E75",
+              "E76"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "失败机制完全在框架源码内：importTaskDefinition 用原生 import()，且扩展名改写 helper 对 file:// 绝对 URL 不生效（E24/E25），报错路径与文档约定的相对位置逐一对应（E31）。不涉及外部服务、凭据或依赖安装；Node 原生 TypeScript 加载器是该产品既定运行环境，不能作为忽略文档冲突的理由。未发现任何环境材料更能解释现象。",
+            "evidence": [
+              "E24",
+              "E25",
+              "E31"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "冲突示例来自随应用分发的 Skill 文本本身（E29/E30），不是工厂注入提示、QA 脚本或模板覆盖；未发现相反指令。就本候选而言，直接来源是文档承诺与加载器实现不一致，工厂环节未被证明是原因。",
+            "evidence": [
+              "E29",
+              "E30"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已存在且可用的能力是自包含 seed：nocobase-db 本已规定 Self-contained（E28），最终实现的内联 seed 正常表达相同数据并注释了原因（E75/E76）。跨文件导入并非满足权限初始化需求的必要条件，因此文档应移除该示例并与之统一，而不是把它当作能力缺口。",
+            "evidence": [
+              "E28",
+              "E75",
+              "E76"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
+        "issues": 8,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/688/runs/38089375339/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "06375fad3f36964b5b6be762",
+      "id": "688:38089375339:1:F2",
+      "issue": 688,
+      "runId": 38089375339,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "规则 Skill 未说明 selection.records 只接受字符串 id",
+      "summary": "parseRecordSelection 要求 records 选择的每个 id 都是非空字符串，否则抛 Invalid record selection。共享/限制 Skill 的示例都用字符串 id，但没有说明这是硬约束；使用整数自增主键的集合将无法按单条记录共享，本搭建最初用 increments('id')，后改为 collection.string('id') 才能共享草稿 D。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "本条定向复核未通过校验：Supported feedback needs diagnosis and every counter-evidence check",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
+        "issues": 7,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/688/runs/38089375339/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "7fea001d39d9bdd4cea8283e",
+      "id": "689:38089377827:1:F1",
+      "issue": 689,
+      "runId": 38089377827,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "Registry 预览组件对损坏的位图/PDF/媒体没有加载失败状态",
+      "summary": "file-preview-content.tsx 与 file-thumbnail.tsx 对 image/pdf/audio/video 直接渲染 <img>/<iframe>/<audio>/<video>，没有 onError 或占位失败态；只有 office/OOXML 分支有失败回退。README 只承诺 OOXML 失败提示，因此损坏 PNG 在缺省 Registry 中只会显示浏览器破图，B06 依赖 Agent 修改已复制的 App 源（新增 ImagePreview/files.imageFailed）才给出明确提示。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "usability-improvement 成立：缺省 Registry 的 image/pdf/audio/video 分支直接渲染媒体元素且无 onError，FileThumbnail 亦为裸 <img>（E5,E6）；README 仅承诺 OOXML 失败提示（E9）。应用复制源并新增 ImagePreview/files.imageFailed 后才在 B06 给出明确提示（E35,E39）。属缺省组件的可用性改进空间，不是契约违约。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "README 承诺预览覆盖 raster/PDF/音视频，并只写明 OOXML failures show an error（E9）；组件以 error 属性接收调用方传入的读取错误（E5）。未承诺位图/媒体自身的加载失败态，故可作改进。",
+            "evidence": [
+              "E9",
+              "E5"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E5 中 image/pdf/audio/video 直接渲染 <img>/<iframe>/<audio>/<video>，无 onError；E6 FileThumbnail 为裸 <img> 无 onError；应用复制版新增 ImagePreview onError 与 files.imageFailed（E35）。",
+            "evidence": [
+              "E5",
+              "E6",
+              "E35"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "B06 依赖应用改动：复制 Registry 源并加 onError 后损坏图片显示明确提示（E35,E39），说明缺省组件本身不满足“可读失败提示”。",
+            "evidence": [
+              "E35",
+              "E39"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "损坏 PNG 的失败发生在浏览器解码，根因是组件缺少 onError，与外部服务、凭据、依赖安装无关（E5,E35）。",
+            "evidence": [
+              "E5",
+              "E35"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺省预览源与 README 由插件 Registry 交付、应用可复制编辑（E5,E6,E9）；缺口在交付源自身，未见工厂脚本或模板覆盖导致。",
+            "evidence": [
+              "E5",
+              "E6",
+              "E9"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "FilePreviewContent 已有 error 属性但只接调用方传入的读取错误（E5），媒体元素无自身 onError；App 可改复制源，但缺省 Registry 不提供该失败态（E9,E35）。",
+            "evidence": [
+              "E5",
+              "E9",
+              "E35"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 11,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/689/runs/38089377827/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "d789443c3d68894552be9f43",
+      "id": "689:38089377827:1:F2",
+      "issue": 689,
+      "runId": 38089377827,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "文件插件 Skill 未命名应用侧可按路径拦截插件路由的唯一公共钩子",
+      "summary": "file 插件的内容字节路由按设计公开且 Policy 不覆盖（E7/E1），Skill 要求“在每个贡献挂载前于其自有路径上注册 App 认证/授权”并禁止 use('*')，但没有说明该钩子是 @nocobase/app-server 的 defineHttpMiddleware + addHttpMiddleware，也没说明插件路由由 addServerPlugins 先于应用路由挂载。server-routes.md 只给了原则。Agent 需读编译产物才能发现唯一可行机制；这是隐私边界相关的文档缺口。",
+      "severity": "major",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "guidance-gap 成立：file Skill 要求为每个贡献自有路径注册 App 侧认证/授权并按路径限定、禁止 use('*')（E7,E16,E17），但 Skill 与 server-routes.md 都未点名 defineHttpMiddleware/addHttpMiddleware，也未说明插件路由由 addServerPlugins 先于 runtime 路由挂载。app-server 实际公开该钩子（E10,E12）且 registerRoutes 先执行 httpMiddleware 再挂载路由（E13）；/api 贡献在插件 routes 之后加入（E11）。应用只能自读 dist 发现并用 defineHttpMiddleware + addHttpMiddleware 实现守护（E30,E31）。属文档可发现性缺口，非契约违约。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "file Skill 第128行要求对每个贡献自有路径注册 App 认证/授权并禁止 use('*')，server-routes 只给“每个路由自保”与“限定自有路径”原则（E7,E16,E17）；内容路由公开且 Policy 不覆盖（E1）。约定本身成立。",
+            "evidence": [
+              "E7",
+              "E16",
+              "E17",
+              "E1"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "app-server 导出 defineHttpMiddleware 与 addHttpMiddleware（E10,E12）；registerRoutes 先执行 httpMiddleware.register 再构造/挂载路由（E13），而插件 routes 在 addServerPlugins 阶段、runtime routes 之前入列（E11）。钩子确实存在且可先于插件路由执行。",
+            "evidence": [
+              "E10",
+              "E11",
+              "E12",
+              "E13"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用以 defineHttpMiddleware 定义 materialAccessMiddleware（E30），并在 addRuntimeContributions 前 addHttpMiddleware（E31），正确按 /api/materialFiles/* 与内容路径守护，说明机制可用、只是未被指引点名。",
+            "evidence": [
+              "E30",
+              "E31"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "挂载顺序由 app.ts 的调用顺序与 registerRoutes 代码决定（E31,E13），与外部服务、凭据、依赖安装无关；环境不能解释该文档缺口。",
+            "evidence": [
+              "E31",
+              "E13"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺口位于工厂交付的 file Skill 与 app 开发 Skill 指引本身（E7,E16,E17），二者只写原则；未见工厂脚本或模板覆盖导致，故归因为指引缺口。",
+            "evidence": [
+              "E7",
+              "E16",
+              "E17"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "公开入口 defineHttpMiddleware/addHttpMiddleware 与正确的先挂载顺序已存在（E10,E11,E12,E13），正常组合即可满足“插件公开路径路由前鉴权”；缺的是指引而非能力。",
+            "evidence": [
+              "E10",
+              "E11",
+              "E12",
+              "E13"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "pkg:@nocobase/app-plugin-file",
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "文件 Skill 未命名 defineHttpMiddleware/addHttpMiddleware，保护 <accessPath>/* 内容路径缺少可执行机制",
+        "issues": 2,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/689/runs/38089377827/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "e369a61167e57f89319734f8",
+      "id": "689:38089377827:1:F5",
+      "issue": 689,
+      "runId": 38089377827,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "模板侧边栏折叠测试存在间歇性失败",
+      "summary": "retro 记录 client-shell.test.tsx 的侧边栏折叠断言在全量运行中偶发失败而在隔离运行/15 次重复中通过；useSidebarPreference 经自定义 DOM 事件同步更新，点击后的同步断言可能早于 React flush。作者已用 waitFor 包裹断言（不削弱断言）。快照不含 @nocobase/app-template-default 源，无法独立复现原始测试，故为 suspected。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "template",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "insufficient：仅 retro 自述全量运行偶发失败、隔离与 15 次重复通过（E43），以及应用复制测试已用 waitFor（E37）；快照不含 @nocobase/app-template-default 源与失败运行日志，无法独立核对模板原始断言或复现间歇失败，故原样保留待核实。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "retro 记录该侧边栏折叠测试 flaky（E43），useSidebarPreference 经自定义 DOM 事件同步更新（E36）是点击后同步断言可能早于 React flush 的机制；但模板测试契约不在快照，无法核对。",
+            "evidence": [
+              "E43",
+              "E36"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "快照中 app/tests/logic/client-shell.test.tsx 已将 data-state 断言包在 waitFor（E37），属补丁后状态；缺原始失败断言与运行输出证实模板确有此缺陷。",
+            "evidence": [
+              "E37",
+              "E43"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "缺全量测试运行环境与日志，无法排除测试顺序或环境造成的偶发；实现者自述不足以证明模板缺陷，也不能据此排除。",
+            "evidence": [
+              "E43"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "应用副本已用 waitFor（E37）；模板包源缺失，无法判断模板是否已有等价处理或仍需改动。",
+            "evidence": [
+              "E37"
+            ]
+          }
+        ]
+      },
+      "targets": [],
+      "subjectKeys": [],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "模板侧边栏折叠测试间歇性失败（证据不足待核实）",
+        "issues": 1,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/689/runs/38089377827/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "b466d9dac537dbfcdf3f3ff2",
+      "id": "690:38089380163:1:F4",
+      "issue": 690,
+      "runId": 38089380163,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "@nocobase/authorization 未导出 ./package.json",
+      "summary": "该包的 exports 只列出 ./、./core 与插件子路径，没有 \"./package.json\"；当脚本/工具按包名解析包元数据时会抛 ERR_PACKAGE_PATH_NOT_EXPORTED。同仓库的 @nocobase/app-plugin-ai-employee 导出 ./package.json，行为不一致。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "本条定向复核未通过校验：Supported feedback needs a captured framework contract or guidance",
+        "checks": []
+      },
+      "targets": [],
+      "subjectKeys": [],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "@nocobase/authorization 未从 exports 导出 ./package.json，按包名解析包元数据失败",
+        "issues": 1,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/690/runs/38089380163/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "39c5e98f2cfd72cc96249352",
+      "id": "690:38089380163:1:F5",
+      "issue": 690,
+      "runId": 38089380163,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "聊天 UI 以 registry 文件拷贝交付，生成应用缺一等安装命令",
+      "summary": "AI 员工聊天界面通过 123 个 registry 文件拷贝进应用（app/client/extensions/nocobase-ai 与插件 registry 一致）。Skill 的离线 Option 1 可完成安装，但 agent 先尝试 curl ui.nocobase.com/r/nocobase-ai.json 与 pnpm exec shadcn add @nocobase/nocobase-ai，因线上 registry 返回 SPA HTML 而失败，随后才找到离线 Option 1。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结的 registry item（E12）与 Skill 安装章节（E13）显示聊天 UI 以文件拷贝交付：生成应用中唯一标为 preferred 的路径是一段内联 node 脚本（Option 1），Option 2 仅适用于 NocoBase 源码工作区，Option 3 依赖托管 registry。应用 components.json 把 @nocobase 映射到 http://ui.nocobase.com/r/{name}.json（E65）；agent 执行 `pnpm exec shadcn add @nocobase/nocobase-ai` 报 \"Unexpected token '<'\"（E60），curl 该 URL 返回 SPA HTML（E66），随后才改用 Option 1 完成文件安装。因此“生成应用缺一等安装命令、线上 registry 易误装”的可用性改进主张有源码与日志支撑；需注意 Option 1 已标注 preferred，故“标为默认”部分已部分存在，但缺可直接执行的本地一等命令这一核心结论仍成立。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "聊天 UI 的交付契约是 shadcn registry item `nocobase-ai`，其 files 描述安装目标（E12）；Skill 明确规定生成 App 的安装方式：Option 1 内联脚本（preferred）、Option 2 仅源码工作区、Option 3 托管 registry 且需 HTTP(S) 服务（E13）。契约中没有生成 App 可直接运行的一等安装命令，这是建议所指的边界。",
+            "evidence": [
+              "E12",
+              "E13"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "运行记录显示 `yes n | pnpm exec shadcn add @nocobase/nocobase-ai` 因 registry 返回 HTML 而报 `Unexpected token '<'`（E60）；同一 URL 的 curl 直接返回 SPA HTML（E66）。安装最终通过 Option 1 的本地复制完成，registry item 以文件形式交付（E12），与“线上安装失败、改走离线拷贝”的描述一致。",
+            "evidence": [
+              "E60",
+              "E66",
+              "E12"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "失败发生在标准 @nocobase 安装路径而非应用误装配；应用的 components.json 正是按仓库约定把 @nocobase 指向托管 registry（E65），agent 的尝试符合既定用法。应用随后按 Option 1 正确安装，说明失败不能归因于应用侧误用。",
+            "evidence": [
+              "E65",
+              "E13"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "托管 registry 是外部服务，其对 nocobase-ai item JSON 返回 SPA HTML 是触发因素（E66），但离线 Option 1 明确面向“no network access”，可绕开该外部服务（E13）。环境解释了失败，却不能排除“缺少本地一等命令”的改进空间。",
+            "evidence": [
+              "E66",
+              "E13"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂/模板注入的 components.json 将 @nocobase 命名空间指向线上 registry（E65），使 agent 优先尝试线上安装；插件自身 Skill 才提供离线 Option 1（E13）。现象与注入配置相关，但修复落在插件交付的安装体验，不改变结论。",
+            "evidence": [
+              "E65",
+              "E13"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已存在的公开路径中，Option 1 的本地 JSON 拷贝确实能满足无网络安装，且已被标注 preferred（E13），这是最接近“现有能力已满足”的部分；但它是多行脚本而非命令，Option 2 不能用于生成 App，Option 3 依赖外部服务，故“缺可直接执行的一等安装命令”仍成立。",
+            "evidence": [
+              "E13",
+              "E12"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-ai-employee",
+        "packages/@nocobase/app-plugin-ai-employee/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-ai-employee/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md",
+        "pkg:@nocobase/app-plugin-ai-employee"
+      ],
+      "featurePoint": "应用搭建/AI 员工",
+      "candidates": [
+        "应用搭建/AI 员工"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "聊天 UI 仅有 registry 文件拷贝式安装，生成应用缺一等/本地安装命令",
+        "issues": 1,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/690/runs/38089380163/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "2f194956d2e706e674f930e6",
+      "id": "699:38106772246:1:F1",
+      "issue": 699,
+      "runId": 38106772246,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "授权种子示例的相对导入使用 .js，与运行时按源码解析的 .ts 不一致",
+      "summary": "code-and-seeds.md 第 36 行说明种子模块为 database/seed-data/permission-sets.ts，但第 40、69 行示例却以 ../../server/sales-resources.js、../../seed-data/permission-sets.js 导入。运行器 importTaskDefinition 只把任务文件自身的 .ts 说明符重写为 .js，嵌套的相对 .js 引用不会被改写到 .ts；照抄示例会在装载种子时因找不到 .js 模块而失败。db Skill 的迁移/种子示例不含相对导入，因此不触发该问题。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
+        "issues": 8,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/699/runs/38106772246/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "6acbd85299df9d7e42babf69",
+      "id": "699:38106772246:1:F2",
+      "issue": 699,
+      "runId": 38106772246,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "create 会回读新建行，但“需要 read 授权”的前置条件未在文档中说明",
+      "summary": "@nocobase/db 的 createOne 在写入后调用 readContext 回读该行，resolveReadNode 在策略 read 为 false 时抛 READ_FORBIDDEN，因此 create:true, read:false 的策略无法创建。repository-routes.md 的完整示例只声明 view/edit 两个动作，未展示 create 动作及其 read 前置条件；应用只能通过报错发现并在 create 授权上追加 .read('*')。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "写动作（create/update 及自定义 handler）回读需在同一权限声明 read，授权指引未说明",
+        "issues": 5,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/699/runs/38106772246/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "aa974f24f3d3307bbeb7cc60",
+      "id": "699:38106772246:1:F6",
+      "issue": 699,
+      "runId": 38106772246,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "FilterOperator 缺少 $in，成员集合需展开为逐 id $eq",
+      "summary": "@nocobase/app-plugin-authorization 的 idsScope 因 FilterOperator 没有 $in（$includes 是子串匹配）而把 id 集合展开为多个 $eq。语义正确，但大集合会产生较长的过滤条件。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "FilterOperator 缺少 $in，idsScope 无法用单个成员判断表达 id 集合，只能展开为逐 id $eq",
+        "issues": 1,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/699/runs/38106772246/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "950160587a758c0f2e253aa9",
+      "id": "700:38106774507:1:F3",
+      "issue": 700,
+      "runId": 38106774507,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "逻辑字段名到物理列名的 snake_case 映射未在 Skill 明示",
+      "summary": "DefaultNamingStrategy 默认 underscored=true，dueAt 的物理列为 due_at；nocobase-db Skill 的命名章节说明各 API 命名的对象，但未点明绕过 Repository 使用 query()/原生 SQL 时必须写 snake_case。构建过程中 Agent 的原生 SQL 校验因此报 no such column: dueAt。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "contradicted",
+        "reason": "候选主张 Skill 未明示逻辑字段名到物理列名的 snake_case 映射，且 query()/原生 SQL 必须写 snake_case，并被 E15 的 dueAt 报错佐证。但冻结 Skill 已在正面示例中写明该映射：SKILL.md:280 明确说 createdAt 字段位于 created_at 列并经双向转换、写迁移中的 camelCase 名（E59），178 行说明物理表列名由 underscored/tablePrefix 确定性生成（E62），366-375 行的命名表说明 query 使用 connection-level 查询标识符（E33）；实现层 query() 对每个标识符调用 naming.fieldToColumnName（E60），即以 fieldToColumnName('createdAt')==='created_at' 判定默认 underscoring（E61），所以 query() 会自动把 camelCase 逻辑名转为 snake_case，并非必须写 snake_case。E15 的 no such column: dueAt 来自临时 better-sqlite3 直连库文件的原生 SQL，绕过了 NocoBase query 层，且该模块在 workspace 根解析失败（E13），不能证明 Skill 缺少映射说明。应用自身迁移声明 dueAt 逻辑字段（E36）、服务用 repository 与 filter.date('dueAt') 逻辑名（E38），可正常组合。因此该明确主张被反证推翻，而非仅缺材料。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill 契约已写明映射：280 行给出 createdAt→created_at 的具体转换并指示写迁移中的 camelCase 名，178 行说明物理表列名由 underscored/tablePrefix 生成，命名表列出各 API 的命名对象；DefaultNamingStrategy 默认 underscored=true 并以 snakeCase 归一。候选所谓“未在 Skill 明示”不成立。",
+            "evidence": [
+              "E59",
+              "E62",
+              "E33",
+              "E29"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实际行为是 query() 的标识符映射统一走 naming.fieldToColumnName，camelCase 逻辑名被自动转成 snake_case 物理列名（E60/E61），故 query() 无需手写 snake_case；E15 的 dueAt 报错只出现在绕过框架、直接用 better-sqlite3 执行原生 SQL 的场景；应用内经 Repository/FilterBuilder 用逻辑名一切正常（E38）。",
+            "evidence": [
+              "E60",
+              "E61",
+              "E15",
+              "E38"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用没有误装配或误用：迁移以 defineMigration/createCollection 声明 dueAt 逻辑字段，服务经 repository<TodoRow> 和 filter.date('dueAt') 使用逻辑名，均符合 Skill 约定，未出现候选所述的列名问题。",
+            "evidence": [
+              "E36",
+              "E38"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "E15 的错误发生在临时 node -e 直连 storage/database.sqlite 的 better-sqlite3 探针中，该模块从 workspace 根 require 先报 MODULE_NOT_FOUND、改用 pnpm 绝对路径后才是 SQL 错误（E13/E15）。这是框架外的一次性环境探针，不是应用或 Skill 契约的运行缺陷，也不能反证 Skill 存在文档缺口。",
+            "evidence": [
+              "E13",
+              "E15"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂交付的 Skill 自身已包含映射说明与命名表，未发现工厂提示、注入配置或模板覆盖导致该误判；E15 的探针属 Agent 自行绕过框架的检索行为。无证据表明工厂材料造成该问题。",
+            "evidence": [
+              "E33",
+              "E59",
+              "E62"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "既有公开文档与实现已能满足需求：Skill 正面示例说明 camelCase/物理列转换，query() 实现自动归一标识符，Repository/FilterBuilder 全程使用逻辑名。候选建议“给出 query() 使用物理标识符的示例”与既有契约相反，会误导使用者。",
+            "evidence": [
+              "E33",
+              "E59",
+              "E60"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "指引未说明逻辑名与物理表/列名的映射，Agent 绕过框架用原始 SQL 驱动并以逻辑名查询失败",
+        "issues": 3,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/700/runs/38106774507/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "a608ea25226b6f0cebab7c58",
+      "id": "701:38106776639:1:F3",
+      "issue": 701,
+      "runId": 38106776639,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "@nocobase/db 未公开可判定的唯一约束冲突错误",
+      "summary": "isUniqueConstraintViolation 已在 database/internal 实现并能跨驱动识别 23505/ER_DUP_ENTRY/SQLITE_CONSTRAINT 等，但未从包导出；RepositoryErrorCode 与 RepositoryErrorStatus 也没有唯一冲突 / ALREADY_EXISTS 项。因此应用无法用类型化错误区分重复键，只能捕获后二次查询（app/server/providers/devices.ts:186-193）。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结包证据支持这条能力缺口：@nocobase/db 内部已有 isUniqueConstraintViolation（E26），但公开导出不含它（E27）；repository-input 的 RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项（E28）。recognizeApiError 虽能把 ApiError 或状态非 INTERNAL 的 RepositoryError 映射为标准响应（E29/E30），create 路径却不产生该类型化错误，应用只能在 devices.ts 里先 exists 预检查、再在 catch 里二次 exists 兜底（E32），路由再手动映射 ALREADY_EXISTS（E33）。替代解释不适用：检测函数已覆盖 Postgres/MySQL/SQLite 多驱动（E26），缺口在公开错误类型而非某环境或驱动特例，也不是工厂产物。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "@nocobase/db 公开导出清单没有 isUniqueConstraintViolation，也没有任何唯一冲突错误类型（E27）；repository-input 的 RepositoryErrorCode 是封闭联合、无 ALREADY_EXISTS/UNIQUE 项，RepositoryErrorStatus 只有 INVALID_ARGUMENT/PERMISSION_DENIED/NOT_FOUND/ABORTED/INTERNAL（E28）。api-error 侧确实冻结了 ALREADY_EXISTS:409，且 recognizeApiError 只识别 ApiError/HTTPException/非 INTERNAL 的 RepositoryError（E29/E30）。故框架承诺了 409 响应映射，却没有可达的唯一冲突错误类型，改进空间成立。",
+            "evidence": [
+              "E27",
+              "E28",
+              "E29",
+              "E30"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现实际只在内部使用该判定：unique-constraint.js 遍历 cause/originalError 链识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT、errno 1/1062/2601/2627 等（E26）；但公开 create 路径没有把它转成类型化错误，devices.ts 的 create 只能在插入 catch 中再次 exists 判断竞态并把数据库约束错误改写为领域错误（E32），与候选描述一致。",
+            "evidence": [
+              "E26",
+              "E32"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用并未错误装配：它按现有 Repository/ApiError 契约，在 create 前 exists 预检查、catch 内二次 exists 兜底后抛 DeviceCodeTakenError（E32），路由再映射为 status:'ALREADY_EXISTS'、reason:'DEVICE_CODE_TAKEN'、fieldViolations 指向 code 的 ApiError（E33）。绕行成功只说明应用自行补齐了缺失的错误类型，不能反证缺口不存在。",
+            "evidence": [
+              "E32",
+              "E33"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "外部服务/驱动不足以解释：判定函数已覆盖 Postgres 23505、MySQL ER_DUP_ENTRY/1062、SQLite SQLITE_CONSTRAINT/1、2601/2627 及 errCode -6602（E26），缺口在各驱动一致存在，并非某个外部服务或依赖安装问题；无需额外环境材料即可排除环境解释。",
+            "evidence": [
+              "E26"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该结论落在冻结框架包的公开 API 边界（E27 导出清单与 E26 内部实现），未见工厂提示、注入配置、QA/构建脚本或模板覆盖参与其中；现有工厂材料没有指向本缺口，故不保留工厂归因。",
+            "evidence": [
+              "E26",
+              "E27"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有能力只覆盖一半：recognizeApiError 能把 ALREADY_EXISTS 映射为 409，并把非 INTERNAL 的 RepositoryError 转为标准响应（E29/E30），但 repository-input 没有可用的唯一冲突 code/status（E28），db 也未导出判定函数（E27），正常组合下 create 无法产出该类型化错误；应用只能如 E32/E33 自行补映射。公开入口的改进空间由源码证实。",
+            "evidence": [
+              "E27",
+              "E28",
+              "E29",
+              "E30"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 2,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/701/runs/38106776639/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "bb475f8bf02caba214a69f9e",
+      "id": "701:38106776639:1:F4",
+      "issue": 701,
+      "runId": 38106776639,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-11",
+      "archivedAt": "2026-10-11T23:38:32.458Z",
+      "title": "语言偏好按浏览器存储、未按用户作用域",
+      "summary": "浏览器侧把语言保存在固定单键 localStorage（nocobase.locale），服务端保存在会话。因此同一浏览器 profile 内不同账号会共享语言选择；需求中的“按用户隔离、互不影响”只在独立浏览器会话下成立。Agent 在读取源码与 Skill 后也识别到该点并判断为框架既定机制、未改造。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "源码与指引证实这项可用性改进空间：app-client 以固定单键 'nocobase.locale' 读写 localStorage，无用户维度（E5）；useAppLocale 切换时先 writeStoredLocale 再 notifyServerLocale（E6），服务端语言按请求会话保存（E8/E11/E12）；Skill 也写明启动语言取 localStorage、切换写 localStorage 与会话（E21）。因此同一浏览器 profile 内不同账号会共享该键的选择，只有独立浏览器/会话才互不影响。需说明的是既有验收只要求跨会话不互相影响，并未明文要求同 profile 按账号隔离，故这是超出原文的改进建议而非违约；但固定键确无用户作用域，改进空间客观存在。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill/指引给出的边界：启动语言按 localStorage 中保存的选择 → defaultLocale → en-US 解析，切换语言写 localStorage 与服务端会话、且被描述为 'user-level choice'，不改 defaultLocale（E21）；前端指引要求复用模板 language-switcher、用 useAppLocale 切换、shell 调 useSyncServerLocale（E18）；框架实现以固定键持久化（E5）。契约未承诺按账号命名空间隔离，故候选陈述的是改进建议而非违约。",
+            "evidence": [
+              "E21",
+              "E18",
+              "E5"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实际行为：LOCALE_STORAGE_KEY 固定为 'nocobase.locale'，readStoredLocale/writeStoredLocale 直接读写该单键（E5）；useAppLocale 的切换顺序为 setLocale→writeStoredLocale→notifyServerLocale（E6）；服务端中间件与会话按请求读取/保存语言（E8/E11），PUT /i18n/locale 把语言写入会话（E12）。同一 profile 下换账号不更换该键，故共享选择；E7 的注释也把“另一个标签页的切换”列为存储与服务端会话漂移的常见来源。",
+            "evidence": [
+              "E5",
+              "E6",
+              "E7",
+              "E8",
+              "E11",
+              "E12"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按指引正确装配：复用框架语言选择器与 useAppLocale，不自建语言存储，也没有按用户命名空间的接入点（E14/E18/E21）。现象来自框架默认持久化作用域，而非应用误用 API 或漏接业务逻辑。",
+            "evidence": [
+              "E14",
+              "E18",
+              "E21"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "环境维度不改变结论：localStorage 可用性已用 try/catch 兜底（E5），服务端无会话时降级到 Accept-Language、不可读会话也降级（E8/E11）。共享与否取决于浏览器 profile 是否隔离；不存在足以解释该固定键作用域的外部服务或依赖因素。",
+            "evidence": [
+              "E5",
+              "E8",
+              "E11"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "持久化作用域由冻结的 app-client 固定键与 Skill 指引决定（E5/E21），未见工厂提示、注入配置、QA/构建脚本或模板覆盖造成该行为；无需保留工厂归因。",
+            "evidence": [
+              "E5",
+              "E21"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有公开入口只有固定键的 readStoredLocale/writeStoredLocale（E5）以及 useAppLocale/useSyncServerLocale（E6/E7），没有按用户或登录态命名的存储键，也没有文档化的按用户隔离接入方式（E21）。正常组合下无法满足同 profile 多账号隔离，指引亦未提示该限制，改进空间由源码与文档证实。",
+            "evidence": [
+              "E5",
+              "E6",
+              "E7",
+              "E21"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-client",
+        "@nocobase/app-plugin-i18n",
+        "app/.agents/skills/nocobase-app-development/references/i18n.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-client",
+        "pkg:@nocobase/app-plugin-i18n",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/多语言",
+      "candidates": [
+        "应用搭建/多语言"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "语言偏好写入固定单键 localStorage，同一浏览器 profile 内不同账号共享，且指引未说明该作用域限制",
+        "issues": 1,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/701/runs/38106776639/attempt-1/index.html#review-finding-F4"
+    }
+  ]
+}
