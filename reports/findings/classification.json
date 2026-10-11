@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7bc7d24d143e70d6e11a9fbf1797d956aea457ef5db1cd67a891749aa2d97f37",
+  "inputHash": "54469ce4f5647b515c9effd9291a59bce6d88f0a02754648a653174865e7350d",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -908,6 +908,21 @@
       "fingerprint": "cf7fccc06934f604682f80a860958246996bf084e889091eabe2b62689d0fa92"
     },
     {
+      "id": "689:38089377827:1:F1",
+      "report": "689:38089377827:1",
+      "fingerprint": "980937ee18b96e6d68fd89b708b897496dbfb7743ad37a1cede8aa969da804d6"
+    },
+    {
+      "id": "689:38089377827:1:F2",
+      "report": "689:38089377827:1",
+      "fingerprint": "3bc8a0339f281ab7b3e0bf2fe771b546fac18cc5f7279612ed0a2dc278e4ceef"
+    },
+    {
+      "id": "689:38089377827:1:F5",
+      "report": "689:38089377827:1",
+      "fingerprint": "19c8eab532460fade6c25c3b2565b88580272085e08663dc277c2c3aa4e43e7f"
+    },
+    {
       "id": "690:38089380163:1:F4",
       "report": "690:38089380163:1",
       "fingerprint": "b16895a8c363ae1d4ed60d5eceae5a73babd32749c9ac626cdcc6a92c38132c7"
@@ -933,7 +948,7 @@
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 681:F5（E4/E5/E32）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 case 'image' 直接渲染裸 <img>、无 onError/失败回退，而同文件 OfficePreview 具备 DownloadFallback/officeFailed 失败路径，应用只能 fork 组件补 ImagePreview.onError，触发条件、公开缺口与修复方向与既有成员一致。",
+      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 681:F5（E4/E5/E32）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 case 'image' 直接渲染裸 <img>、无 onError/失败回退，而同文件 OfficePreview 具备 DownloadFallback/officeFailed 失败路径，应用只能 fork 组件补 ImagePreview.onError，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 689:F1（E5/E6/E9/E35/E39）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 image/pdf/audio/video 分支直接渲染 <img>/<iframe>/<audio>/<video> 且无 onError，file-thumbnail.tsx 亦为裸 <img>，README 只承诺 OOXML 失败提示；应用复制 Registry 源新增 ImagePreview(onError)/files.imageFailed 后才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
@@ -944,7 +959,8 @@
         "555:37238852759:1:F2",
         "578:37394457519:1:F2",
         "664:37700959785:1:F2",
-        "681:38001009392:1:F5"
+        "681:38001009392:1:F5",
+        "689:38089377827:1:F1"
       ]
     },
     {
@@ -1301,10 +1317,11 @@
       ]
     },
     {
-      "title": "文件 Skill 要求保护 <accessPath>/* 内容路径，却未给出可执行机制与示例",
-      "reason": "单条保留：531:F3 的 E40/E44/E43 显示 Skill 未点名 defineHttpMiddleware/addHttpMiddleware，属独立文档缺口。",
+      "title": "文件 Skill 未命名 defineHttpMiddleware/addHttpMiddleware，保护 <accessPath>/* 内容路径缺少可执行机制",
+      "reason": "跨报告合并。531:F3（E40/E44/E43）与 689:F2（E7/E1/E16/E17/E10/E11/E12/E13/E30/E31）指向同一指引缺口：file 插件 Skill 要求应用在每个贡献自有路径上注册认证/授权并禁止 use('*')，却未点名 @nocobase/app-server 公开的 defineHttpMiddleware + addHttpMiddleware，也未说明插件路由由 addServerPlugins 先于应用路由挂载、应用 router 无法包住它；两者触发条件（保护 <accessPath>/* 或插件公开路径）与修复方向（在 file Skill 与 server-routes.md 写明该公共钩子与挂载顺序）一致。与 519:F3 的“指引互相冲突”属错误说明、519:F4 属能力缺口不同，故分别保留。",
       "members": [
-        "531:37074013613:1:F3"
+        "531:37074013613:1:F3",
+        "689:38089377827:1:F2"
       ]
     },
     {
@@ -1695,15 +1712,22 @@
       "members": [
         "690:38089380163:1:F5"
       ]
+    },
+    {
+      "title": "模板侧边栏折叠测试间歇性失败（证据不足待核实）",
+      "reason": "单条保留：689:F5 仅凭 retro 自述全量运行偶发失败、隔离运行与 15 次重复通过（E43），应用副本的 client-shell.test.tsx 已将 data-state 断言包在 waitFor（E37），而模板原始断言与全量失败日志不在快照内，无法独立核对模板是否存在该 flaky 缺陷；证据 confidence=suspected，按规则不猜测、单独保留。",
+      "members": [
+        "689:38089377827:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38096996324",
+    "runId": "38099105199",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-11T00:03:03.808Z"
+    "completedAt": "2026-10-11T00:39:56.881Z"
   }
 }
