@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "6531ebd1c4ba299626d81621bd153c94dc237d0cbf03b20b4562707a54ac2d83",
+  "inputHash": "4aa1060383d6ef1aaabe0c3af118f7404d89e2b1f4e44bbf4b5d0a483c27edf6",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -963,6 +963,21 @@
       "fingerprint": "84497fe36dc58e2ea9deb3d24bdbf5dfa7a06bbfbbbef1072bf09e1690a226f7"
     },
     {
+      "id": "707:38179331777:1:F1",
+      "report": "707:38179331777:1",
+      "fingerprint": "4be84d1a1fa1b34401586bdde0b6b79785175b2eaf6278e9eb9a3c041cb0bf20"
+    },
+    {
+      "id": "707:38179331777:1:F2",
+      "report": "707:38179331777:1",
+      "fingerprint": "40a8daf466144811e0a60f95e44b3b0359b26b3709e606055ecded9fa3c22cb2"
+    },
+    {
+      "id": "707:38179331777:1:F3",
+      "report": "707:38179331777:1",
+      "fingerprint": "6aeb4572f2bda4e1203d798303252daa52cfe28fab3a86e2fa9bc4b6532d872a"
+    },
+    {
       "id": "708:38179335515:1:F2",
       "report": "708:38179335515:1",
       "fingerprint": "73aa71dd1b7c667543f5ee7ed4a24896eecd30194d04f2ff599c29525a738b88"
@@ -1058,7 +1073,7 @@
     },
     {
       "title": "allScopes/idsScope/databaseGrant 等组合子已在包内实现但未从 @nocobase/app-plugin-authorization/server 公开导出",
-      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。 577:F2（E30/E31/E34/E65）同样确认 scope.js 已实现 allScopes 而 server 入口 index.d.ts 只再导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠；同一导出缺口与同一修复方向。 674:F5（E8/E9/E10/E14）在 1.0.0-beta.55 复现同一导出面不一致：server/index.d.ts 导出 anyScope/condition/scopeAst/recordAccess，却遗漏实现中存在且语义清晰的 allScopes、idsScope、databaseGrant，应用在 service-authorization.ts 手写 databaseGrant 形状与 allOf，期望与修复方向（从 server 入口补导出）与既有成员一致。",
+      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。 577:F2（E30/E31/E34/E65）同样确认 scope.js 已实现 allScopes 而 server 入口 index.d.ts 只再导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠；同一导出缺口与同一修复方向。 674:F5（E8/E9/E10/E14）在 1.0.0-beta.55 复现同一导出面不一致：server/index.d.ts 导出 anyScope/condition/scopeAst/recordAccess，却遗漏实现中存在且语义清晰的 allScopes、idsScope、databaseGrant，应用在 service-authorization.ts 手写 databaseGrant 形状与 allOf，期望与修复方向（从 server 入口补导出）与既有成员一致。 707:F1（E1/E2/E28）在 1.0.0-beta.61 再次确认同一公开缺口：scope.d.ts 声明 allScopes 且 authorizer 内部使用，dist/server/index.js 只再导出 anyScope/condition/scopeAst，应用在 record-access.ts 自行实现 allOf；同一根因与同一修复方向。",
       "members": [
         "462:36434301919:1:F2",
         "494:36641592184:1:F3",
@@ -1066,7 +1081,8 @@
         "530:37074009060:1:F2",
         "554:37258077945:1:F2",
         "577:37394452688:1:F2",
-        "674:37879768670:1:F5"
+        "674:37879768670:1:F5",
+        "707:38179331777:1:F1"
       ]
     },
     {
@@ -1809,15 +1825,29 @@
       "members": [
         "708:38179335515:1:F2"
       ]
+    },
+    {
+      "title": "delete 授权 builder 无法附加 Record Access，且指引未说明该限制",
+      "reason": "单独保留。DatabasePermissionBuilder.delete() 只返回 operation(\"delete\", {})，不接受 recordAccess 参数，operation 又为私有（E3）；ReadPermissionBuilder 有 recordAccess(...) 而 delete 没有对应方法（E4），authorizer 对未配置任何正 scope 的 grant 以 NO_RECORD_ACCESS 拒绝（E5/E7），README 亦如此说明，指引 fluent-registration.md 仅写 delete() takes no fields，应用只能手写 grant JSON（E30）。这是 delete builder 的能力缺口与对应文档缺口，其他成员均未涉及 delete 附加 Record Access 的路径，故单独保留。",
+      "members": [
+        "707:38179331777:1:F2"
+      ]
+    },
+    {
+      "title": "模板 app/AGENTS.md 声称内置 Users 管理页面，与 users 插件实际能力不符",
+      "reason": "单独保留。模板 app/AGENTS.md 的 Default template scope 段称唯一内置 provider 会在 Users 页面把 Authorization Permission Sets 暴露为直接角色（E24），但 users Skill 明确没有用户管理页面、client 仅贡献邀请页，应用因此改用 UsersClient 自建 Staff 页（E23）。这是模板文档对框架能力的错误说明，与其他指引/能力缺口的根因不同，故单独保留。",
+      "members": [
+        "707:38179331777:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38183832705",
+    "runId": "38188410849",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-11T23:21:00.590Z"
+    "completedAt": "2026-10-12T00:34:27.349Z"
   }
 }
