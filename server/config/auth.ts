@@ -30,6 +30,18 @@ const auth: AppConfigFactory<AuthConfig> = defineAuthConfig({
     emailAndPassword: { enabled: true, autoSignIn: false },
     session: { storeSessionInDatabase: true },
     account: { encryptOAuthTokens: true },
+    // `Auth.required()` refuses a cookie-bearing write whose Origin is not trusted. A directly served application is
+    // its own origin, so trust the origin this request arrived at when no `app.publicOrigin` is configured; the check
+    // still compares the Origin header against that origin, so a cross-site post is refused. Behind a reverse proxy
+    // set `APP_PUBLIC_ORIGIN` (or add the frontend origin here) so the public origin is trusted instead.
+    trustedOrigins: (request) => {
+      if (!request) return [];
+      try {
+        return [new URL(request.url).origin];
+      } catch {
+        return [];
+      }
+    },
   },
 });
 
