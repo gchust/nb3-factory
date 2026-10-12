@@ -26,6 +26,14 @@ export interface FileUploadFieldProps {
   readonly accept?: readonly string[];
   readonly maxSize?: number;
   readonly maxFiles?: number;
+  /**
+   * Last check before a file is uploaded. Return `null` to accept it, or a message to reject it. The caller owns
+   * the wording, because only the caller knows why the content is unacceptable; a rejected file is reported through
+   * `onError` and never uploaded.
+   */
+  readonly validateFile?: (
+    file: File,
+  ) => Promise<string | null> | string | null;
   readonly disabled?: boolean;
   /** Deletes metadata only; false removes the selection without deleting a record. */
   readonly removeOnDelete?: boolean;

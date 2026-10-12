@@ -51,6 +51,7 @@ export function FileUploadField(
     accept = [],
     maxSize,
     maxFiles,
+    validateFile,
     disabled = false,
     removeOnDelete = false,
     labels,
@@ -165,18 +166,7 @@ export function FileUploadField(
     }
   };
 
-  const addFiles = (files: readonly File[]): void => {
-    if (disabled) return;
-    if (files.length + (multiple ? value.length : 0) + items.length > maximum) {
-      onError?.(
-        new Error(
-          t('fileLimitReached', {
-            defaultValue: 'The maximum number of files has been reached.',
-          }),
-        ),
-      );
-      return;
-    }
+  const acceptChecked = (files: readonly File[]): File[] => {
     const selected = (multiple ? files : files.slice(0, 1)).filter((file) => {
       if (maxSize !== undefined && file.size > maxSize) {
         onError?.(
@@ -200,13 +190,49 @@ export function FileUploadField(
       }
       return true;
     });
-    const nextItems = selected.map((file): UploadItem => ({
-      key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
-      file,
-      status: 'pending',
-    }));
-    setItems((current) => [...current, ...nextItems]);
-    nextItems.forEach((item) => void upload(item));
+    return selected;
+  };
+
+  const addFiles = (files: readonly File[]): void => {
+    if (disabled) return;
+    if (files.length + (multiple ? value.length : 0) + items.length > maximum) {
+      onError?.(
+        new Error(
+          t('fileLimitReached', {
+            defaultValue: 'The maximum number of files has been reached.',
+          }),
+        ),
+      );
+      return;
+    }
+    const selected = acceptChecked(files);
+    const nextItems: UploadItem[] = [];
+    void (async () => {
+      for (const file of selected) {
+        if (validateFile) {
+          let message: string | null;
+          try {
+            message = await validateFile(file);
+          } catch {
+            message = t('uploadFailed', {
+              defaultValue: 'File upload failed.',
+            });
+          }
+          if (message) {
+            onError?.(new Error(message));
+            continue;
+          }
+        }
+        nextItems.push({
+          key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
+          file,
+          status: 'pending',
+        });
+      }
+      if (nextItems.length === 0) return;
+      setItems((current) => [...current, ...nextItems]);
+      nextItems.forEach((item) => void upload(item));
+    })();
   };
 
   const removeRecord = async (record: FileRecord): Promise<void> => {

@@ -1,190 +1,294 @@
-import { useTranslation } from '@nocobase/i18n/client';
+import { ApiClientError, useApiClient } from '@nocobase/app-client';
+import { useLocale, useTranslation } from '@nocobase/i18n/client';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  CopyIcon,
-  MessageSquareTextIcon,
-  SparklesIcon,
+  AlertCircleIcon,
+  ClipboardListIcon,
+  ClockIcon,
+  FilePlus2Icon,
+  InboxIcon,
+  UsersIcon,
 } from 'lucide-react';
-import { type ReactElement, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
+import { Link } from 'react-router';
 
+import { Loading } from '#components/loading';
 import { PageContainer } from '#components/page-container';
+import { PageHeader } from '#components/page-header';
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from '#components/ui/alert';
+import { buttonVariants } from '#components/ui/button';
 import { Button } from '#components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '#components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '#components/ui/empty';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#components/ui/table';
 
-import { CAPABILITIES, type Capability } from './capabilities.js';
-import { PromptDialog } from './prompt-dialog.js';
-import { useCopy } from './use-copy.js';
-
-const STEPS = ['describe', 'build', 'review'] as const;
+import {
+  TicketPriorityBadge,
+  TicketStatusBadge,
+} from '../tickets/ticket-badges.js';
+import type { TicketOverview } from '../tickets/types.js';
 
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Capability>();
-  const [open, setOpen] = useState(false);
-  // Changes on every opening, so the dialog remounts and drops the edits of the previous one.
-  const [openCount, setOpenCount] = useState(0);
+  const api = useApiClient();
+  const [reloadCount, setReloadCount] = useState(0);
+  const [overview, setOverview] = useState<TicketOverview>();
+  const [error, setError] = useState<unknown>();
 
-  const openCapability = (capability: Capability): void => {
-    setSelected(capability);
-    setOpenCount((count) => count + 1);
-    setOpen(true);
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .request<{ data: TicketOverview }>({
+        path: 'helpdesk/overview',
+        signal: controller.signal,
+      })
+      .then(
+        ({ data }) => {
+          if (!controller.signal.aborted) {
+            setOverview(data);
+            setError(undefined);
+          }
+        },
+        (cause: unknown) => {
+          if (!controller.signal.aborted) setError(cause);
+        },
+      );
+    return () => controller.abort();
+  }, [api, reloadCount]);
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
-      <AgentIntro />
-      <section
-        aria-labelledby='home-capabilities'
-        className='flex flex-col gap-4'
-      >
-        <div className='flex flex-col gap-1'>
-          <h2 id='home-capabilities' className='text-base font-medium'>
-            {t('home.capabilitiesTitle')}
-          </h2>
-          <p className='text-sm text-muted-foreground'>
-            {t('home.capabilitiesDescription')}
-          </p>
-        </div>
-        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {CAPABILITIES.map((capability) => (
-            <li key={capability.id} className='flex'>
-              <CapabilityCard
-                capability={capability}
-                onOpen={() => openCapability(capability)}
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected ? (
-        <PromptDialog
-          key={openCount}
-          capability={selected}
-          open={open}
-          onOpenChange={setOpen}
-        />
-      ) : null}
+      <PageHeader
+        title={t('helpdesk.dashboard.title')}
+        description={t('helpdesk.dashboard.description')}
+        actions={
+          <Link className={buttonVariants()} to='/tickets/new'>
+            <FilePlus2Icon />
+            {t('helpdesk.tickets.new')}
+          </Link>
+        }
+      />
+      {error ? (
+        <LoadError error={error} onRetry={() => setReloadCount((n) => n + 1)} />
+      ) : overview === undefined ? (
+        <Loading label={t('status.loading')} />
+      ) : (
+        <Dashboard overview={overview} />
+      )}
     </PageContainer>
   );
 }
 
-/** The first part of the page: development here happens by asking a coding agent, which the steps and sample show. */
-function AgentIntro(): ReactElement {
+function Dashboard({
+  overview,
+}: {
+  readonly overview: TicketOverview;
+}): ReactElement {
   const { t } = useTranslation();
-  const { copied, copy } = useCopy();
-  const example = t('home.example.text');
+  const { locale } = useLocale();
+  const dateFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [locale],
+  );
+
+  const stats = [
+    {
+      key: 'pending',
+      icon: InboxIcon,
+      value: overview.stats.pending,
+    },
+    {
+      key: 'overdue',
+      icon: ClockIcon,
+      value: overview.stats.overdue,
+    },
+    {
+      key: 'open',
+      icon: ClipboardListIcon,
+      value: overview.stats.open,
+    },
+    {
+      key: 'resolved',
+      icon: ClipboardListIcon,
+      value: overview.stats.resolved,
+    },
+    {
+      key: 'total',
+      icon: ClipboardListIcon,
+      value: overview.stats.total,
+    },
+  ] as const;
 
   return (
-    <section className='grid gap-8 rounded-2xl border border-border bg-linear-to-br from-primary/5 via-card to-card p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center'>
-      <div className='flex flex-col gap-6'>
-        <div className='flex flex-col gap-4'>
-          <p className='flex items-center gap-2 text-sm font-medium text-primary'>
-            <SparklesIcon className='size-4' aria-hidden />
-            {t('home.platform')}
-          </p>
-          <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em] text-balance md:text-4xl'>
-            {t('home.title')}
-          </h1>
-          <p className='text-base leading-7 text-muted-foreground'>
-            {t('home.description')}
-          </p>
-        </div>
-        <ol className='flex flex-col gap-3'>
-          {STEPS.map((step, index) => (
-            <li key={step} className='flex gap-3'>
-              <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>
-                {index + 1}
-              </span>
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-sm font-medium'>
-                  {t(`home.steps.${step}.title`)}
-                </span>
-                <span className='text-sm text-muted-foreground'>
-                  {t(`home.steps.${step}.description`)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <figure className='flex flex-col overflow-hidden rounded-xl border border-primary/10 bg-card shadow-sm'>
-        <figcaption className='flex items-center justify-between gap-2 border-b border-primary/10 px-4 py-2.5'>
-          <span className='flex items-center gap-2 text-sm font-medium'>
-            <MessageSquareTextIcon
-              className='size-4 text-primary'
-              aria-hidden
-            />
-            {t('home.example.title')}
-          </span>
-          <Button variant='ghost' size='sm' onClick={() => void copy(example)}>
-            {copied ? (
-              <CheckIcon data-icon='inline-start' />
+    <div className='flex flex-col gap-6'>
+      <ul className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
+        {stats.map(({ key, icon: Icon, value }) => (
+          <li key={key}>
+            <Card>
+              <CardHeader>
+                <CardDescription className='flex items-center gap-2'>
+                  <Icon className='size-4' aria-hidden />
+                  {t(`helpdesk.dashboard.stats.${key}`)}
+                </CardDescription>
+                <CardTitle className='text-3xl tabular-nums'>{value}</CardTitle>
+              </CardHeader>
+            </Card>
+          </li>
+        ))}
+      </ul>
+
+      {overview.role === 'service-desk' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <UsersIcon className='size-4' aria-hidden />
+              {t('helpdesk.dashboard.workload.title')}
+            </CardTitle>
+            <CardDescription>
+              {t('helpdesk.dashboard.workload.description')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {overview.workload.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>
+                {t('helpdesk.dashboard.workload.empty')}
+              </p>
             ) : (
-              <CopyIcon data-icon='inline-start' />
+              <ul className='flex flex-col gap-2'>
+                {overview.workload.map((engineer) => (
+                  <li
+                    key={engineer.id}
+                    className='flex items-center justify-between gap-4 rounded-lg border border-border px-3 py-2'
+                  >
+                    <span className='text-sm font-medium'>{engineer.name}</span>
+                    <span className='text-sm text-muted-foreground tabular-nums'>
+                      {t('helpdesk.dashboard.workload.count', {
+                        tickets: engineer.count,
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
-            {copied ? t('home.prompt.copiedShort') : t('home.prompt.copy')}
-          </Button>
-        </figcaption>
-        <p className='bg-primary/5 px-4 py-4 text-sm leading-7 whitespace-pre-line'>
-          {example}
-        </p>
-        <p className='border-t border-primary/10 px-4 py-2.5 text-xs text-muted-foreground'>
-          {t('home.example.hint')}
-        </p>
-      </figure>
-    </section>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('helpdesk.dashboard.recent.title')}</CardTitle>
+          <CardDescription>
+            {t('helpdesk.dashboard.recent.description')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {overview.recent.length === 0 ? (
+            <Empty className='min-h-40 border border-dashed'>
+              <EmptyHeader>
+                <EmptyTitle>{t('helpdesk.tickets.empty.title')}</EmptyTitle>
+                <EmptyDescription>
+                  {t('helpdesk.tickets.empty.description')}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('helpdesk.fields.title')}</TableHead>
+                  <TableHead>{t('helpdesk.fields.status')}</TableHead>
+                  <TableHead>{t('helpdesk.fields.priority')}</TableHead>
+                  <TableHead>{t('helpdesk.fields.assignee')}</TableHead>
+                  <TableHead>{t('helpdesk.fields.updatedAt')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {overview.recent.map((ticket) => (
+                  <TableRow key={ticket.id}>
+                    <TableCell className='max-w-72 truncate'>
+                      <Link
+                        className='font-medium hover:underline'
+                        to={`/tickets/${ticket.id}`}
+                      >
+                        {ticket.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <TicketStatusBadge status={ticket.status} />
+                    </TableCell>
+                    <TableCell>
+                      <TicketPriorityBadge priority={ticket.priority} />
+                    </TableCell>
+                    <TableCell className='text-muted-foreground'>
+                      {ticket.assigneeName ?? t('helpdesk.unassigned')}
+                    </TableCell>
+                    <TableCell className='whitespace-nowrap text-muted-foreground'>
+                      {dateFormat.format(new Date(ticket.updatedAt))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-function CapabilityCard({
-  capability,
-  onOpen,
+function LoadError({
+  error,
+  onRetry,
 }: {
-  readonly capability: Capability;
-  readonly onOpen: () => void;
+  readonly error: unknown;
+  readonly onRetry: () => void;
 }): ReactElement {
   const { t } = useTranslation();
-  const prefix = `home.capabilities.${capability.id}`;
-  const Icon = capability.icon;
-
+  const status = error instanceof ApiClientError ? error.status : undefined;
   return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='group flex w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-    >
-      <Card className='w-full transition-[translate,box-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-foreground/20 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0'>
-        <CardHeader className='gap-3'>
-          {/* The chip only deepens its tint on hover rather than inverting: swapping a light background and a dark icon
-              passes both through the same color halfway, where the icon vanishes for a moment and reads as a flicker. */}
-          <span className='flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 ease-out group-hover:bg-primary/10 group-hover:ring-primary/20 motion-reduce:transition-none'>
-            <Icon
-              className='size-4 transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none'
-              aria-hidden
-            />
-          </span>
-          <div className='flex flex-col gap-1'>
-            <CardTitle>{t(`${prefix}.title`)}</CardTitle>
-            <CardDescription className='leading-6'>
-              {t(`${prefix}.description`)}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardFooter className='mt-auto justify-between text-sm text-muted-foreground transition-colors duration-200 ease-out group-hover:text-foreground'>
-          {t('home.viewPrompts', { count: capability.prompts.length })}
-          <ArrowRightIcon
-            className='size-4 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none'
-            aria-hidden
-          />
-        </CardFooter>
-      </Card>
-    </button>
+    <Alert variant='destructive'>
+      <AlertCircleIcon />
+      <AlertTitle>{t('helpdesk.dashboard.error.title')}</AlertTitle>
+      <AlertDescription>
+        {status === 401
+          ? t('helpdesk.dashboard.error.unauthorized')
+          : status === 403
+            ? t('helpdesk.dashboard.error.forbidden')
+            : t('helpdesk.dashboard.error.requestFailed')}
+      </AlertDescription>
+      {status === 401 || status === 403 ? null : (
+        <AlertAction>
+          <Button size='sm' variant='outline' onClick={onRetry}>
+            {t('status.retry')}
+          </Button>
+        </AlertAction>
+      )}
+    </Alert>
   );
 }
