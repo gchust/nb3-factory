@@ -50,10 +50,22 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user,
+    // and so did the ticket pages: what a caller may see and do is decided by the server from the application's own
+    // role table and the lifecycle's guards, which a page grant cannot express. The staff page keeps a page grant,
+    // because managing the service desk is a job somebody has to be given.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'tickets', authorizedAs: null },
+      { name: 'ticket-new', authorizedAs: null },
+      { name: 'ticket-detail', authorizedAs: null },
+      { name: 'ticket-assign', authorizedAs: null },
+      { name: 'ticket-reassign', authorizedAs: null },
+      { name: 'ticket-resolve', authorizedAs: null },
+      { name: 'ticket-return', authorizedAs: null },
+      { name: 'ticket-cancel', authorizedAs: null },
+      { name: 'service-desk-settings', authorizedAs: 'service-desk-settings' },
     ]);
   });
 
