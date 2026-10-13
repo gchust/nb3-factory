@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "4aa1060383d6ef1aaabe0c3af118f7404d89e2b1f4e44bbf4b5d0a483c27edf6",
+  "inputHash": "b1d4b74facb37c0035a5c46add31867c724cc542630c21d8e438f7edf240f355",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1001,6 +1001,16 @@
       "id": "709:38179339282:1:F3",
       "report": "709:38179339282:1",
       "fingerprint": "c53fb9448f188ca47dadb71d4dd0fe4bb6ac5f1a496815ba58a6ecef49c963a9"
+    },
+    {
+      "id": "716:38329379899:1:F3",
+      "report": "716:38329379899:1",
+      "fingerprint": "90ca29e3a6025d250c89e9e9ef6b3d55c17a29268428bf36cf86f13346865c2e"
+    },
+    {
+      "id": "716:38329379899:1:F4",
+      "report": "716:38329379899:1",
+      "fingerprint": "acb86d386752dafd955239f7cd60f131388ef902f61b25c244053be177d30459"
     }
   ],
   "groups": [
@@ -1839,15 +1849,29 @@
       "members": [
         "707:38179331777:1:F3"
       ]
+    },
+    {
+      "title": "无 config.yml 时 secrets 前置说明未覆盖 CLI 与 createTestApp",
+      "reason": "单条保留。该发现为文档指引缺口：database-connections.md 只对 pnpm dev/pnpm start 说明 secrets 前置，未覆盖同样会启动完整 provider 注册表的 CLI（如 pnpm nocobase db sample）与 createTestApp，testing.md 亦未提及，导致与命令无关的认证错误被误判（E37/E38/E39）。它与 649:F2 的“测试库不注入 auth.secret”属不同根因（框架默认 vs 文档说明），也与 CSRF/Origin 等指引缺口无关；反馈复核为 insufficient，证据不足以外推合并，故单独保留。",
+      "members": [
+        "716:38329379899:1:F3"
+      ]
+    },
+    {
+      "title": "SeedContext.repository 声明为方法，解构写法触发 unbound-method lint",
+      "reason": "单条保留。该发现是 @nocobase/db 的类型/易用性改进：SeedContext.repository 以方法声明，惯用的 async run({ repository }) 解构在 --max-warnings 0 下触发 @typescript-eslint/unbound-method（E42），修复方向为改声明或补文档。它与种子数据落点（group 3）、种子导入说明符（group 2）、typed seed 与 RepositoryRecord 索引签名摩擦（673:F6）等发现的根因均不同；反馈复核为 insufficient，故单独保留。",
+      "members": [
+        "716:38329379899:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38188410849",
+    "runId": "38334241830",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-12T00:34:27.349Z"
+    "completedAt": "2026-10-13T01:55:23.173Z"
   }
 }
