@@ -1,0 +1,594 @@
+{
+  "version": 1,
+  "date": "2026-10-12",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "4e315b41beacf170742de66c",
+      "id": "707:38179331777:1:F1",
+      "issue": 707,
+      "runId": 38179331777,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "allScopes 已声明且内部使用，但未从 @nocobase/app-plugin-authorization 公共入口再导出",
+      "summary": "scope.d.ts 公开声明 allScopes，authorizer.js 也用它组合有效范围，但 dist/server/index.js 只再导出 anyScope/condition/scopeAst。需要把多个 scope 做 and 组合时，业务只能自行实现或引用内部模块路径。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "allScopes/idsScope/databaseGrant 等组合子已在包内实现但未从 @nocobase/app-plugin-authorization/server 公开导出",
+        "issues": 8,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/707/runs/38179331777/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "4413e546a77d02da1270af7c",
+      "id": "707:38179331777:1:F2",
+      "issue": 707,
+      "runId": 38179331777,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "delete 授权无法通过 builder 附加 Record Access，指引也未说明",
+      "summary": "DatabasePermissionBuilder.delete() 只返回 operation(\"delete\", {})，没有 recordAccess 参数，而 operation 为私有方法；read/create/update 均可挂 Record Access。authorizer 对未配置任何选择的 grant 直接以 NO_RECORD_ACCESS 拒绝，README 亦如此说明。指引 fluent-registration.md 仅写“delete() takes no fields”，未提示该限制。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "delete 授权 builder 无法附加 Record Access，且指引未说明该限制",
+        "issues": 1,
+        "first": "2026-10-12"
+      },
+      "report": "reports/issues/707/runs/38179331777/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "9bd6fe51ec699c767468bfb5",
+      "id": "707:38179331777:1:F3",
+      "issue": 707,
+      "runId": 38179331777,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "模板 app/AGENTS.md 声称内置 Users 管理页面，与插件实际能力不符",
+      "summary": "app/AGENTS.md 的 Default template scope 段称“唯一内置应用 provider 会在 Users 页面把 Authorization Permission Sets 暴露为直接角色”，但 app-plugin-users 的 client 仅贡献邀请页，没有用户管理页面；应用因此自建 Staff 页面。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "template",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-users",
+        "app/AGENTS.md"
+      ],
+      "subjectKeys": [
+        "guide:app/AGENTS.md",
+        "skill:nocobase-app-plugin-users"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "模板 app/AGENTS.md 声称内置 Users 管理页面，与 users 插件实际能力不符",
+        "issues": 1,
+        "first": "2026-10-12"
+      },
+      "report": "reports/issues/707/runs/38179331777/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "f1ddbd6369e06890adaff727",
+      "id": "708:38179335515:1:F2",
+      "issue": 708,
+      "runId": 38179335515,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "Scheduler 授权目录注册的是 settings 项，而路由校验 page 资源，按插件目录授权仍会 403",
+      "summary": "authorization.js 只向 settings 目录注册 scheduler.schedules/read；routes/index.js 在全部 schedule API 前要求 {type:\"page\",id:\"scheduler.schedules\"}/access，否则 403 SCHEDULE_ACCESS_REQUIRED。operations.md:11-13 也确认插件不贡献页面、由应用自建并加 page 授权。二者资源类型不一致，应用只能改用 authz:\"skip\" + API 自检。",
+      "severity": "minor",
+      "type": "runtime-defect",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "源码与授权模型一致支持该结论。authorization.js 只注册 settings 项 scheduler.schedules/read(E4,E6)，routes/index.js 在全部 schedule API 前要求 page:scheduler.schedules/access 并返回 403 SCHEDULE_ACCESS_REQUIRED(E5,E28)。授权核心 grantBacked 按 request.resource.type:id 匹配 grants(E66)，而 settings.grant 产出 type 'settings'(E64)、page.grant 产出 type 'page'(E65)，二者无跨类型映射，故仅授予插件目录的 settings 项无法满足路由的 page 校验，触发条件成立。应用侧已改用 authz:'skip'+API 403 兜底(E46,E63)，与该结论一致。替代解释“应用可自行声明 page 资源”只提供另一条路径，并不能否定“按插件自身授权目录授权仍会 403”这一具体触发。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "插件授权目录只声明 settings:scheduler.schedules/read(E4,E6,E64)，而插件文档与路由声明的访问条件是 page:scheduler.schedules/access(E5,E28)；授权核心把 settings 与 page 当独立资源类型(E65,E66)。",
+            "evidence": [
+              "E4",
+              "E5",
+              "E6",
+              "E28",
+              "E64",
+              "E65",
+              "E66"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "routes/index.js 在查找 schedule 前调用 authz.can({type:'page',id:'scheduler.schedules'},'access')，不通过即 403 SCHEDULE_ACCESS_REQUIRED(E5)；authorization.js 只登记 settings 项(E4)；应用因此以 authz:'skip' 绕开客户端规则、依赖 API 403(E46,E63)。",
+            "evidence": [
+              "E4",
+              "E5",
+              "E28",
+              "E46",
+              "E63"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按插件文档自建调度页，却以 authz:'skip' 退出客户端资源守卫并在页面渲染 SCHEDULE_ACCESS_REQUIRED(E46,E63)，未自行注册可被目录授予的 page 资源，沿用了插件 settings 项无法生效的现状。",
+            "evidence": [
+              "E46",
+              "E63"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该现象不依赖外部服务或凭据：settings/page 类型由框架注册(E64,E65)，授权匹配在进程内完成(E66)，无需运行环境即可判定授权目录与路由资源类型不一致。",
+            "evidence": [
+              "E64",
+              "E65",
+              "E66"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "问题根在冻结的 Scheduler 插件把授权目录注册为 settings、而路由校验 page(E4,E5)；未见到工厂提示、注入配置或模板改写该插件注册代码的材料，工厂侧不足以归因，保留未知。",
+            "evidence": [
+              "E4",
+              "E5"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "框架已提供 page 资源类型及 pages.grant(E65)，应用本可自行声明 page:scheduler.schedules 资源；但候选结论限定“按插件授权目录授权”，该场景下现有 settings 项不构成匹配的可用入口(E4,E64)。",
+            "evidence": [
+              "E4",
+              "E64",
+              "E65"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "Scheduler 授权目录只注册 settings 项，路由却校验 page 资源，按插件目录授权访问 API 仍 403",
+        "issues": 1,
+        "first": "2026-10-12"
+      },
+      "report": "reports/issues/708/runs/38179335515/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "cba98a957ad15b6892e0b7fb",
+      "id": "708:38179335515:1:F3",
+      "issue": 708,
+      "runId": 38179335515,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "应用开发 Skill 的路由指引未提及 cookie 写入的来源校验，Agent 需跨 Skill 才发现",
+      "summary": "server-routes.md 的“每条路由自负安全”只说明 auth.required() 401，未提 cookie 非安全方法的 Origin/Referer 校验；app/AGENTS.md 的“加 HTTP 端点”路由表也未指向 authentication 插件 Skill。该规则实际只写在 authentication Skill(protecting-routes.md:44、user-lifecycle-and-deployment.md:120-126)。实现 Agent 从未读取 authentication Skill，首轮用 cookie PATCH 测试即得 403 INVALID_CSRF_ORIGIN，随后自行配置 trustedOrigins + origin 头并写入 server/AGENTS.md。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "server-routes.md 的“每条路由自负安全”只写 auth.required() 的 401，未提 cookie 写入的 Origin/Referer 校验，也未交叉引用 authentication Skill(E33)；该 CSRF 规则确实只写在 authentication Skill 的 protecting-routes.md:44 与 user-lifecycle-and-deployment.md:120-126(E36,E37)；app/AGENTS.md 的“加 HTTP 端点”路由表也只指向 app-development 参考(E38)。实现日志显示首轮 cookie PATCH 得到 403 INVALID_CSRF_ORIGIN(E68)，随后应用配 trustedOrigins 并补写 server/AGENTS.md(E69,E47)。这是可证实的指引缺口，属改进项，不要求运行时失败。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "app-development 主路由指引承诺覆盖认证(E33)，但只说明 401、未提 cookie 写入校验；authentication Skill 明确写入需受信 Origin 否则 403 INVALID_CSRF_ORIGIN 及 trustedOrigins 配置(E36,E37)。",
+            "evidence": [
+              "E33",
+              "E36",
+              "E37"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现阶段 cookie PATCH 首测得到 403 PERMISSION_DENIED/INVALID_CSRF_ORIGIN(E68)，随后以 trustedOrigins+origin 头通过并把该规则写入 server/AGENTS.md(E47,E69)。",
+            "evidence": [
+              "E47",
+              "E68",
+              "E69"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按 server-routes.md 的路由模式实现(E42)，未从主指引获知 CSRF 规则，只能自行补全测试配置与文档说明(E47,E69)。",
+            "evidence": [
+              "E42",
+              "E47",
+              "E69"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该行为由认证插件在进程内实现(E17,E18)，不依赖外部服务或凭据；环境不是解释，缺的是主路由指引对既有规则的引用。",
+            "evidence": [
+              "E17",
+              "E18"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "现有材料无法确认工厂提示是否只把 Agent 导向 server-routes.md 而未导向 authentication Skill(E38)；工厂侧材料不足，保留未知，不据此归因。",
+            "evidence": [
+              "E38"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "app/AGENTS.md 另有插件 Skill 路由表，已把 Sign-in/registration/sessions/password reset 指向 authentication 插件(E67)，但未覆盖 cookie 写入 CSRF，且“加 HTTP 端点”表仍未指向该 Skill(E38)，故缺口成立。",
+            "evidence": [
+              "E38",
+              "E67"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development",
+        "app/.agents/skills/nocobase-app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 10,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/708/runs/38179335515/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "a82983c0e99dd37bf0823201",
+      "id": "709:38179339282:1:F1",
+      "issue": 709,
+      "runId": 38179339282,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "signIn() 测试助手返回的 fetch 不带 Origin，按文档写请求会被 CSRF 保护拒绝",
+      "summary": "signIn() 构造的会话 fetch 只设置 cookie 头（testing.js:41-47），不带 Origin；而 auth.js 的 checkCookieWriteOrigin 对带 cookie 的非 GET/HEAD/OPTIONS 请求要求 Origin（或 Referer）匹配可信原点，否则返回 403 INVALID_CSRF_ORIGIN。createTestApp() 默认以 http://localhost 作为 apiRoot，却不设置 APP_PUBLIC_ORIGIN，因此应用的 publicOrigin 与助手原点默认不一致。结果是按 testing.md/README 的 signIn(...).fetch(...) 示例对写接口发请求会失败；本案例中 Agent 设置 APP_PUBLIC_ORIGIN=http://localhost 并在写请求上带 origin 头后才通过（app/tests/logic/devices-routes.test.ts:19-30；原始日志 part-0043:1053-1057 与 part-0044:779-784）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "源码与原始日志一致支持该可用性改进：signIn() 返回的 fetch 只写 cookie（E29），而 auth.js 对带 cookie 的非安全写要求可信 Origin，否则 403 INVALID_CSRF_ORIGIN（E30,E31）；createTestApp 只额外传 APP_STORAGE_DIR，不设 APP_PUBLIC_ORIGIN（E32）；testing.md/README 只示范 GET（E33,E34）。原始日志显示按该写法 POST /devices 得到 STATUS=403 reason INVALID_CSRF_ORIGIN（E44），Agent 随后用 APP_PUBLIC_ORIGIN 加 origin 头绕过（E37,E45）。反证检查：fetch 已转发调用方 headers（E29），故并非无法绕过；且缺 Origin 本身即被拒，publicOrigin 不匹配只是叠加前提，不改变结论。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "文档把 signIn(...).fetch 作为以登录用户访问应用的方式，示例仅 GET（E33,E34）；助手契约是通用 fetch（E29）。认证契约规定带 cookie 的写请求需 Origin/Referer 匹配 publicOrigin/trustedOrigins，否则 403 INVALID_CSRF_ORIGIN（E30,E31,E35）。按文档模式发写请求与契约冲突。",
+            "evidence": [
+              "E29",
+              "E30",
+              "E31",
+              "E33",
+              "E34",
+              "E35"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "testing.js 的 fetch 仅合并 init.headers 后 set('cookie')，从不设置 Origin（E29）；checkCookieWriteOrigin 对带 cookie 的非 GET/HEAD/OPTIONS 在无 Origin/Referer 时返回 invalidCsrfOrigin（E30）。原始日志实际返回 403 PERMISSION_DENIED reason INVALID_CSRF_ORIGIN（E44）。",
+            "evidence": [
+              "E29",
+              "E30",
+              "E44"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用测试自行设置 APP_PUBLIC_ORIGIN=http://localhost 并在写请求带 origin，说明应用按框架要求正确装配而非误用 API（E37）；该绕行由 Agent 应用（E45）。",
+            "evidence": [
+              "E37",
+              "E45"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "403 出现在登录成功后的 CSRF 校验，不是凭据或运行环境缺失；原始日志显示会话已建立且写请求被 INVALID_CSRF_ORIGIN 拒绝（E44），Agent 的环境配置即为修复（E45）。",
+            "evidence": [
+              "E44",
+              "E45"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该默认行为位于冻结的插件包（E29,E30），无工厂提示、注入配置或构建脚本证据表明由工厂造成；应用侧绕行由 Agent 自行加入（E37,E45）。",
+            "evidence": [
+              "E29",
+              "E30",
+              "E37",
+              "E45"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有入口 signIn(app,credentials).fetch 已转发调用方提供的 headers（E29），所以调用方可自行加 Origin；但默认不带且文档未提示，createTestApp 也不提供 origin 默认（E32），故现有能力未覆盖按文档写法。",
+            "evidence": [
+              "E29",
+              "E32"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "测试请求助手（app-testing request / authentication signIn）未注入可信 Origin，cookie 写测试被 CSRF 拒绝",
+        "issues": 3,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/709/runs/38179339282/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "cad0d8f4c587ea56ccd40ae2",
+      "id": "709:38179339282:1:F2",
+      "issue": 709,
+      "runId": 38179339282,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "整应用测试指引只示范 GET，未说明 cookie 会话写请求的 Origin/APP_PUBLIC_ORIGIN 要求",
+      "summary": "app/.agents/skills/nocobase-app-development/references/testing.md 的整应用测试示例使用 signIn(...).fetch('/orders') 读取数据，未提及写请求；@nocobase/app-testing/README.md 的示例同样是 GET。二者都没有指向 cookie 认证写请求需要可信 Origin 的说明。该规则只写在 @nocobase/app-plugin-authentication 的 references/user-lifecycle-and-deployment.md 第126行。Agent 因此必须跨文档反查才能定位 403 INVALID_CSRF_ORIGIN。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "testing.md 的整应用示例只调用 admin.fetch('/orders') 的 GET，该节未提及写请求或 Origin/APP_PUBLIC_ORIGIN（E34）；app-testing README 同样只有 admin.fetch('/users') 的 GET（E33）；CSRF 前置条件只存在于认证插件参考（E35）与代码（E30）。应用测试必须自加 env 与 origin 才能写（E37），证实按指引写写接口测试会先失败。反证检查：相同规则也见于 authentication 插件的 protecting-routes.md，故原候选“只写在 user-lifecycle-and-deployment.md”表述不精确，但“整应用测试指引未说明该要求”的核心结论成立。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "整应用指引把 signIn(...).fetch 作为验证鉴权/权限边界的方式（E34），但认证契约要求 cookie 写请求携带可信 Origin/Referer（E30,E35）；指引未给出该前提。",
+            "evidence": [
+              "E30",
+              "E34",
+              "E35"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "testing.md 的整应用示例只做 GET /orders（E34）；app-testing README 只做 GET /users（E33），确实没有写请求示例或 Origin 说明。",
+            "evidence": [
+              "E33",
+              "E34"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用测试为通过写接口被迫设置 APP_PUBLIC_ORIGIN 并附带 origin（E37），说明该缺漏会在真实应用中触发（E44）。",
+            "evidence": [
+              "E37",
+              "E44"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该前置条件是框架 CSRF 规则而非外部环境问题，代码（E30）与认证插件文档（E35）均未以环境为由免除。",
+            "evidence": [
+              "E30",
+              "E35"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺漏存在于工厂随附的 skill/README 文本本身（E33,E34），未见注入配置或脚本覆盖；QA 通过绕行完成，未补文档（E37）。",
+            "evidence": [
+              "E33",
+              "E34",
+              "E37"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "CSRF 规则已在认证插件 skill（E35）与代码（E30）中存在，本可被 testing 指引引用或复述，但整应用测试文档未链接；能力存在而指引未暴露。",
+            "evidence": [
+              "E30",
+              "E35"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-testing",
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        "pkg:@nocobase/app-testing",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 10,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/709/runs/38179339282/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "c922e0cc2c8116e50d06cb90",
+      "id": "709:38179339282:1:F3",
+      "issue": 709,
+      "runId": 38179339282,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-12",
+      "archivedAt": "2026-10-13T02:00:23.402Z",
+      "title": "@nocobase/db/Repository 错误枚举缺少唯一约束冲突类型",
+      "summary": "@nocobase/db 的 Repository 错误类型全部来自 @nocobase/repository-input：RepositoryErrorCode 含 VERSION_CONFLICT、RECORD_NOT_FOUND 等，但没有重复/唯一约束冲突码；RepositoryErrorStatus 仅 INVALID_ARGUMENT|PERMISSION_DENIED|NOT_FOUND|ABORTED|INTERNAL，没有 ALREADY_EXISTS。因此唯一约束冲突无法作为类型化 Repository 错误暴露，@nocobase/app-server 的 recognizeApiError 也无法把它映射为 409。应用只能用 query 适配器先查后插并 catch 后重查，自行抛出 DeviceCodeTakenError；若漏掉 catch，驱动错误会变成不透明的 500。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "公开 Repository 错误词汇无重复/唯一冲突码且状态缺 ALREADY_EXISTS（E23,E24），而框架公开提供 unique 约束（E21,E22）并在迁移中使用（E27）；recognizeApiError 只按 RepositoryError.status 映射（E16），未识别错误被 toApiError 落为不透明 500（E57）。唯一冲突仅由内部 isUniqueConstraintViolation 在 upsert 重试路径识别（E56），不会转成类型化 RepositoryError。应用只能用 query 先查后插并 catch 后重查抛 DeviceCodeTakenError（E28），路由再映射为 ALREADY_EXISTS 409（E20）。反证：内部确有检测函数，但其非公开且仅服务 upsert，故未推翻能力缺口，只说明存在可行改进。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "框架公开的集合构建器提供 unique（E21,E22），应用迁移声明 uq_devices_code（E27）；Repository 是公开写入 API，但其错误码联合缺重复冲突码、状态联合无 ALREADY_EXISTS（E23,E24）。",
+            "evidence": [
+              "E21",
+              "E22",
+              "E23",
+              "E24",
+              "E27"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "recognizeApiError 只把非 INTERNAL 的 RepositoryError 按 status 映射（E16），其余落到 toApiError 的 INTERNAL 500（E57）；唯一冲突仅在 upsert 的 savepoint 重试中被内部 isUniqueConstraintViolation 捕获并重抛（E56），create 路径不产生类型化错误。",
+            "evidence": [
+              "E16",
+              "E56",
+              "E57"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用以 query 适配器先 findByCode 预查、insert 失败后再查并抛 DeviceCodeTakenError（E28），路由把 DEVICE_CODE_TAKEN 映射为 ALREADY_EXISTS 409（E20），证明业务层需自行补偿。",
+            "evidence": [
+              "E20",
+              "E28"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "唯一性由迁移声明的数据库唯一约束强制（E27），冲突可稳定复现，不依赖外部服务或凭据；缺口在于框架错误类型而非环境（E24）。",
+            "evidence": [
+              "E24",
+              "E27"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺口位于冻结的 @nocobase/db / @nocobase/repository-input 类型（E23,E24），无工厂提示、注入配置或构建脚本证据；应用侧补偿由实现者编写（E28）。",
+            "evidence": [
+              "E23",
+              "E24",
+              "E28"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已有公开 unique 构建器（E22）与内部检测器 isUniqueConstraintViolation（E56），但公开错误类型（E23,E24）与 recognizeApiError（E16,E57）无法将其映射为 409；现有能力覆盖约束声明而不覆盖错误语义。",
+            "evidence": [
+              "E22",
+              "E56",
+              "E16",
+              "E57"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 2,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/709/runs/38179339282/attempt-1/index.html#review-finding-F3"
+    }
+  ]
+}
