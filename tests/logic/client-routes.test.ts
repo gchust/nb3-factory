@@ -50,10 +50,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the inbox and the equipment ledger opted out of page authorization, so they are reachable
+    // by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'equipment', authorizedAs: null },
+      // The create and edit dialogs are child routes; they are signed-in pages too and inherit `skip`.
+      { name: 'equipment-new', authorizedAs: null },
+      { name: 'equipment-edit', authorizedAs: null },
     ]);
   });
 
