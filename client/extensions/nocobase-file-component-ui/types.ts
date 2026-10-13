@@ -21,6 +21,15 @@ export interface FileUploadFieldProps {
   readonly value: readonly FileRecord[];
   readonly onChange: (value: readonly FileRecord[]) => void;
   readonly onError?: (error: Error) => void;
+  /**
+   * Optional content check for a chosen file before it is uploaded. Return a user-facing message to reject the
+   * file, or `null`/`undefined` to accept it. It runs after the `accept` rules and the size limit, so it is where
+   * a screenshot whose bytes do not match its extension can be caught — the browser's `accept` filter only looks
+   * at the name. A rejected file stays in the list marked as failed, with its message.
+   */
+  readonly validate?: (
+    file: File,
+  ) => Promise<string | null | undefined> | string | null | undefined;
   readonly onStatusChange?: (status: FileUploadStatus) => void;
   readonly multiple?: boolean;
   readonly accept?: readonly string[];

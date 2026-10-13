@@ -1,190 +1,279 @@
 import { useTranslation } from '@nocobase/i18n/client';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  CopyIcon,
-  MessageSquareTextIcon,
-  SparklesIcon,
+  AlarmClockIcon,
+  CircleCheckIcon,
+  InboxIcon,
+  ListTodoIcon,
+  PlusIcon,
+  SearchIcon,
+  UsersIcon,
 } from 'lucide-react';
-import { type ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
+import { Link } from 'react-router';
 
+import { Loading } from '#components/loading';
 import { PageContainer } from '#components/page-container';
+import { PageHeader } from '#components/page-header';
+import { RequestFailed } from '#components/request-failed';
+import { StatusBadge } from '#components/status-badge';
 import { Button } from '#components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '#components/ui/card';
+import { Empty, EmptyDescription, EmptyTitle } from '#components/ui/empty';
+import {
+  useServiceDeskOverview,
+  type ServiceDeskOverview,
+  type TicketState,
+} from '#hooks/service-desk';
 
-import { CAPABILITIES, type Capability } from './capabilities.js';
-import { PromptDialog } from './prompt-dialog.js';
-import { useCopy } from './use-copy.js';
+import { TicketStateBadge } from '../tickets/shared.js';
 
-const STEPS = ['describe', 'build', 'review'] as const;
+const SUMMARY_STATES: readonly TicketState[] = [
+  'submitted',
+  'assigned',
+  'processing',
+  'resolved',
+];
 
+/**
+ * The landing page: what is waiting for the person looking at it, what is waiting for the whole service desk, and
+ * how the engineers are loaded. It links to the ticket list rather than opening a record, so there is one page that
+ * opens tickets and the list keeps its filters.
+ */
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Capability>();
-  const [open, setOpen] = useState(false);
-  // Changes on every opening, so the dialog remounts and drops the edits of the previous one.
-  const [openCount, setOpenCount] = useState(0);
-
-  const openCapability = (capability: Capability): void => {
-    setSelected(capability);
-    setOpenCount((count) => count + 1);
-    setOpen(true);
-  };
+  const overview = useServiceDeskOverview();
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
-      <AgentIntro />
-      <section
-        aria-labelledby='home-capabilities'
-        className='flex flex-col gap-4'
-      >
-        <div className='flex flex-col gap-1'>
-          <h2 id='home-capabilities' className='text-base font-medium'>
-            {t('home.capabilitiesTitle')}
-          </h2>
-          <p className='text-sm text-muted-foreground'>
-            {t('home.capabilitiesDescription')}
-          </p>
-        </div>
-        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {CAPABILITIES.map((capability) => (
-            <li key={capability.id} className='flex'>
-              <CapabilityCard
-                capability={capability}
-                onOpen={() => openCapability(capability)}
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected ? (
-        <PromptDialog
-          key={openCount}
-          capability={selected}
-          open={open}
-          onOpenChange={setOpen}
+      <PageHeader
+        title={t('serviceDesk.home.title')}
+        description={t('serviceDesk.home.description')}
+        actions={
+          <Button nativeButton={false} render={<Link to='/tickets/new' />}>
+            <PlusIcon data-icon='inline-start' />
+            {t('serviceDesk.tickets.new')}
+          </Button>
+        }
+      />
+
+      {overview.error ? (
+        <RequestFailed
+          error={overview.error}
+          title={t('serviceDesk.home.error.title')}
+          description={t('serviceDesk.home.error.requestFailed')}
+          onRetry={overview.reload}
         />
-      ) : null}
+      ) : !overview.data ? (
+        <Loading />
+      ) : (
+        <Overview overview={overview.data} />
+      )}
     </PageContainer>
   );
 }
 
-/** The first part of the page: development here happens by asking a coding agent, which the steps and sample show. */
-function AgentIntro(): ReactElement {
+function Overview({
+  overview,
+}: {
+  readonly overview: ServiceDeskOverview;
+}): ReactElement {
   const { t } = useTranslation();
-  const { copied, copy } = useCopy();
-  const example = t('home.example.text');
+  const { me, counts, pendingAssignment, overdue, open, workload } = overview;
 
   return (
-    <section className='grid gap-8 rounded-2xl border border-border bg-linear-to-br from-primary/5 via-card to-card p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center'>
-      <div className='flex flex-col gap-6'>
-        <div className='flex flex-col gap-4'>
-          <p className='flex items-center gap-2 text-sm font-medium text-primary'>
-            <SparklesIcon className='size-4' aria-hidden />
-            {t('home.platform')}
-          </p>
-          <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em] text-balance md:text-4xl'>
-            {t('home.title')}
-          </h1>
-          <p className='text-base leading-7 text-muted-foreground'>
-            {t('home.description')}
-          </p>
-        </div>
-        <ol className='flex flex-col gap-3'>
-          {STEPS.map((step, index) => (
-            <li key={step} className='flex gap-3'>
-              <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>
-                {index + 1}
-              </span>
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-sm font-medium'>
-                  {t(`home.steps.${step}.title`)}
+    <div className='flex flex-col gap-6'>
+      <section
+        aria-label={t('serviceDesk.home.summaryLabel')}
+        className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'
+      >
+        <SummaryCard
+          icon={<InboxIcon aria-hidden />}
+          label={t('serviceDesk.home.pendingAssignment')}
+          value={pendingAssignment}
+          to='/tickets?status=submitted'
+          tone={pendingAssignment > 0 ? 'warning' : 'neutral'}
+        />
+        <SummaryCard
+          icon={<AlarmClockIcon aria-hidden />}
+          label={t('serviceDesk.home.overdue')}
+          value={overdue}
+          to='/tickets?overdue=true'
+          tone={overdue > 0 ? 'warning' : 'neutral'}
+        />
+        <SummaryCard
+          icon={<ListTodoIcon aria-hidden />}
+          label={t('serviceDesk.home.open')}
+          value={open}
+          to='/tickets'
+        />
+        <SummaryCard
+          icon={<CircleCheckIcon aria-hidden />}
+          label={t('serviceDesk.home.resolved')}
+          value={counts.resolved}
+          to='/tickets?status=resolved'
+          tone='success'
+        />
+      </section>
+
+      <div className='grid gap-6 lg:grid-cols-2'>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('serviceDesk.home.byStatus')}</CardTitle>
+            <CardDescription>
+              {t('serviceDesk.home.byStatusDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='flex flex-col gap-2'>
+            {SUMMARY_STATES.map((state) => (
+              <Link
+                key={state}
+                to={`/tickets?status=${state}`}
+                className='flex items-center justify-between rounded-lg border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-border hover:bg-muted/50'
+              >
+                <span className='flex items-center gap-2'>
+                  <TicketStateBadge state={state} />
                 </span>
-                <span className='text-sm text-muted-foreground'>
-                  {t(`home.steps.${step}.description`)}
+                <span className='font-medium tabular-nums'>
+                  {counts[state] ?? 0}
                 </span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <figure className='flex flex-col overflow-hidden rounded-xl border border-primary/10 bg-card shadow-sm'>
-        <figcaption className='flex items-center justify-between gap-2 border-b border-primary/10 px-4 py-2.5'>
-          <span className='flex items-center gap-2 text-sm font-medium'>
-            <MessageSquareTextIcon
-              className='size-4 text-primary'
-              aria-hidden
-            />
-            {t('home.example.title')}
-          </span>
-          <Button variant='ghost' size='sm' onClick={() => void copy(example)}>
-            {copied ? (
-              <CheckIcon data-icon='inline-start' />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('serviceDesk.home.workload')}</CardTitle>
+            <CardDescription>
+              {me.helpdesk
+                ? t('serviceDesk.home.workloadDescription')
+                : t('serviceDesk.home.workloadMineDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {workload.length === 0 ? (
+              <Empty className='border-none'>
+                <EmptyTitle>{t('serviceDesk.home.noWorkload')}</EmptyTitle>
+                <EmptyDescription>
+                  {t('serviceDesk.home.noWorkloadDescription')}
+                </EmptyDescription>
+              </Empty>
             ) : (
-              <CopyIcon data-icon='inline-start' />
+              <ul className='flex flex-col gap-2'>
+                {workload.map((item) => (
+                  <li
+                    key={item.engineerId}
+                    className='flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2'
+                  >
+                    <span className='flex min-w-0 items-center gap-2'>
+                      <UsersIcon
+                        className='size-4 shrink-0 text-muted-foreground'
+                        aria-hidden
+                      />
+                      <span className='truncate text-sm font-medium'>
+                        {item.name}
+                      </span>
+                    </span>
+                    <span className='flex shrink-0 items-center gap-2 text-sm text-muted-foreground'>
+                      <span className='tabular-nums'>
+                        {t('serviceDesk.home.workloadOpen', {
+                          count: item.open,
+                        })}
+                      </span>
+                      {item.overdue > 0 ? (
+                        <StatusBadge tone='warning'>
+                          {t('serviceDesk.home.workloadOverdue', {
+                            count: item.overdue,
+                          })}
+                        </StatusBadge>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
-            {copied ? t('home.prompt.copiedShort') : t('home.prompt.copy')}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('serviceDesk.home.shortcuts')}</CardTitle>
+        </CardHeader>
+        <CardContent className='flex flex-wrap gap-2'>
+          <Button
+            nativeButton={false}
+            variant='outline'
+            render={<Link to='/tickets' />}
+          >
+            <ListTodoIcon data-icon='inline-start' />
+            {t('serviceDesk.home.allTickets')}
           </Button>
-        </figcaption>
-        <p className='bg-primary/5 px-4 py-4 text-sm leading-7 whitespace-pre-line'>
-          {example}
-        </p>
-        <p className='border-t border-primary/10 px-4 py-2.5 text-xs text-muted-foreground'>
-          {t('home.example.hint')}
-        </p>
-      </figure>
-    </section>
+          <Button
+            nativeButton={false}
+            variant='outline'
+            render={<Link to='/tickets?scope=mine' />}
+          >
+            <SearchIcon data-icon='inline-start' />
+            {t('serviceDesk.home.myTickets')}
+          </Button>
+          {me.helpdesk ? (
+            <Button
+              nativeButton={false}
+              variant='outline'
+              render={<Link to='/settings/service-desk' />}
+            >
+              <UsersIcon data-icon='inline-start' />
+              {t('serviceDesk.settings.title')}
+            </Button>
+          ) : null}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-function CapabilityCard({
-  capability,
-  onOpen,
+function SummaryCard({
+  icon,
+  label,
+  value,
+  to,
+  tone = 'neutral',
 }: {
-  readonly capability: Capability;
-  readonly onOpen: () => void;
+  readonly icon: ReactElement;
+  readonly label: string;
+  readonly value: number;
+  readonly to: string;
+  readonly tone?: 'neutral' | 'warning' | 'success';
 }): ReactElement {
-  const { t } = useTranslation();
-  const prefix = `home.capabilities.${capability.id}`;
-  const Icon = capability.icon;
-
   return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='group flex w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+    <Link
+      to={to}
+      className='rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
     >
-      <Card className='w-full transition-[translate,box-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-foreground/20 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0'>
-        <CardHeader className='gap-3'>
-          {/* The chip only deepens its tint on hover rather than inverting: swapping a light background and a dark icon
-              passes both through the same color halfway, where the icon vanishes for a moment and reads as a flicker. */}
-          <span className='flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 ease-out group-hover:bg-primary/10 group-hover:ring-primary/20 motion-reduce:transition-none'>
-            <Icon
-              className='size-4 transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none'
-              aria-hidden
-            />
-          </span>
-          <div className='flex flex-col gap-1'>
-            <CardTitle>{t(`${prefix}.title`)}</CardTitle>
-            <CardDescription className='leading-6'>
-              {t(`${prefix}.description`)}
-            </CardDescription>
-          </div>
+      <Card className='h-full transition-shadow hover:shadow-md motion-reduce:transition-none'>
+        <CardHeader className='gap-2'>
+          <CardDescription className='flex items-center gap-2'>
+            <span className='text-muted-foreground'>{icon}</span>
+            {label}
+          </CardDescription>
+          <CardTitle
+            className={
+              tone === 'warning' && value > 0
+                ? 'text-2xl text-(--status-warning) tabular-nums'
+                : 'text-2xl tabular-nums'
+            }
+          >
+            {value}
+          </CardTitle>
         </CardHeader>
-        <CardFooter className='mt-auto justify-between text-sm text-muted-foreground transition-colors duration-200 ease-out group-hover:text-foreground'>
-          {t('home.viewPrompts', { count: capability.prompts.length })}
-          <ArrowRightIcon
-            className='size-4 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none'
-            aria-hidden
-          />
-        </CardFooter>
       </Card>
-    </button>
+    </Link>
   );
 }

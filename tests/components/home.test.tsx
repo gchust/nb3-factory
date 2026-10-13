@@ -1,3 +1,7 @@
+// The landing page, which is the service desk's overview: what is waiting for the person looking at it, what is
+// waiting for the whole desk, and how the engineers are loaded. It loads through `useApiClient`, so the module is
+// mocked rather than a network layer.
+import { ApiClientError } from '@nocobase/app-client';
 import {
   TestI18nProvider,
   createTestI18nRuntime,
@@ -5,20 +9,20 @@ import {
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { ServiceDeskOverview } from '../../client/hooks/service-desk.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
-}));
+// `vi.mock` factories run before this file's imports and code, so everything a factory uses is created here.
+const { api } = vi.hoisted(() => ({ api: { request: vi.fn() } }));
 
 vi.mock('@nocobase/app-client', async (original) => ({
+  // Keep the real module, so `ApiClientError` stays the class the page checks with `instanceof`.
   ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+  useApiClient: () => api,
 }));
 
 // Strict: a key the locale lacks fails the test instead of rendering as text.
@@ -33,142 +37,142 @@ function I18n({ children }: { readonly children: ReactNode }): ReactElement {
   return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
 }
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
+/** The page links into the ticket list and the staff page, so it needs a router to render in. */
+function renderHome(): { unmount: () => void } {
+  const router = createMemoryRouter(
+    [
+      { path: '/', element: <HomePage /> },
+      { path: '/tickets', element: <div /> },
+      { path: '/tickets/new', element: <div /> },
+      { path: '/settings/service-desk', element: <div /> },
+    ],
+    { initialEntries: ['/'] },
+  );
+  return render(<RouterProvider router={router} />, { wrapper: I18n });
+}
 
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
-  });
-  return user;
+function overviewOf(
+  overrides: Partial<ServiceDeskOverview> = {},
+): ServiceDeskOverview {
+  return {
+    me: { userId: 'u1', helpdesk: true, engineer: false },
+    counts: {
+      submitted: 2,
+      assigned: 1,
+      processing: 3,
+      resolved: 4,
+      returned: 0,
+      closed: 5,
+      cancelled: 1,
+    },
+    pendingAssignment: 2,
+    overdue: 1,
+    open: 6,
+    workload: [{ engineerId: 'e1', name: 'Dana', open: 3, overdue: 1 }],
+    ...overrides,
+  };
 }
 
 describe('home page', () => {
   beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
+    api.request.mockReset();
   });
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows what is waiting for the service desk', async () => {
+    api.request.mockResolvedValue({ data: overviewOf() });
+    renderHome();
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
+      screen.getByRole('heading', {
+        level: 1,
+        name: enUS.serviceDesk.home.title,
+      }),
+    ).toBeVisible();
+    // Every card links to the list already filtered to what it counts. The summary section is scoped, because the
+    // same state appears again in the by-state list below.
+    const summary = (
+      await screen.findByLabelText(enUS.serviceDesk.home.summaryLabel)
+    ).closest('section');
+    expect(summary).not.toBeNull();
+    expect(
+      await within(summary as HTMLElement).findByRole('link', {
+        name: /Awaiting assignment/,
+      }),
+    ).toHaveAttribute('href', '/tickets?status=submitted');
+    expect(
+      within(summary as HTMLElement).getByRole('link', {
+        name: /Open over 24 hours/,
+      }),
+    ).toHaveAttribute('href', '/tickets?overdue=true');
+    expect(
+      within(summary as HTMLElement).getByRole('link', {
+        name: /Awaiting confirmation 4/,
+      }),
+    ).toHaveAttribute('href', '/tickets?status=resolved');
   });
 
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows each engineer’s load and how much of it is overdue', async () => {
+    api.request.mockResolvedValue({ data: overviewOf() });
+    renderHome();
 
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
+    const row = (await screen.findByText('Dana')).closest('li');
+    expect(row).not.toBeNull();
+    expect(within(row as HTMLElement).getByText('3 open')).toBeVisible();
+    expect(within(row as HTMLElement).getByText('1 overdue')).toBeVisible();
   });
 
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
+  it('says so when nobody is carrying anything', async () => {
+    api.request.mockResolvedValue({ data: overviewOf({ workload: [] }) });
+    renderHome();
 
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
-    });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
+    expect(
+      await screen.findByText(enUS.serviceDesk.home.noWorkload),
+    ).toBeVisible();
+  });
 
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
+  it('reports a failed overview and retries it', async () => {
+    const user = userEvent.setup();
+    api.request.mockRejectedValue(
+      new ApiClientError('boom', {
+        status: 500,
+        method: 'get',
+        url: '/api/serviceDesk/overview',
       }),
     );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
+    renderHome();
 
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
     expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
-  });
-
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-
+      await screen.findByText(enUS.serviceDesk.home.error.title),
+    ).toBeVisible();
+    const calls = api.request.mock.calls.length;
     await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
+      screen.getByRole('button', { name: enUS['status.retry'] }),
     );
-
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
+    await waitFor(() =>
+      expect(api.request.mock.calls.length).toBeGreaterThan(calls),
+    );
   });
-});
 
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
+  it('offers the staff page to the service desk only', async () => {
+    api.request.mockResolvedValue({ data: overviewOf() });
+    const first = renderHome();
+    expect(
+      await screen.findByRole('button', {
+        name: enUS.serviceDesk.settings.title,
+      }),
+    ).toBeVisible();
+    first.unmount();
+
+    api.request.mockReset();
+    api.request.mockResolvedValue({
+      data: overviewOf({
+        me: { userId: 'u2', helpdesk: false, engineer: false },
+      }),
+    });
+    renderHome();
+    await screen.findByText('Dana');
+    expect(
+      screen.queryByRole('button', { name: enUS.serviceDesk.settings.title }),
+    ).not.toBeInTheDocument();
   });
 });
