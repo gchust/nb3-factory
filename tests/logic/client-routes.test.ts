@@ -50,9 +50,12 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the todo table and the inbox opted out of page authorization, so they are reachable by every
+    // signed-in user. The Scheduler management page checks the plugin's own `scheduler.schedules` grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      { name: 'schedules', authorizedAs: 'scheduler.schedules' },
       { name: 'inbox', authorizedAs: null },
     ]);
   });
