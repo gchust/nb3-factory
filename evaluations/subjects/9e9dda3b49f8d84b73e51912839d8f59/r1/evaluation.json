@@ -1,0 +1,2413 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 2,
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "runId": 38334093268,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/716/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 716,
+      "buildCommentId": null,
+      "title": "调度专项：过期待办标记"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 205,
+      "capturedAt": "2026-10-13T00:52:37Z",
+      "inputHash": "ad44ea5a66b4344c2dcd57905459af3b6390098a920ab4ec6050cd631373758e",
+      "reviewHash": "81f9bfcb5b2e29945574ef27a80e16470c927103dce9b032cdefc49d40dda12e"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-13T01:51:52Z",
+  "precedence": {
+    "producer": {
+      "runId": 38329379899,
+      "attempt": 1,
+      "startedAt": "2026-10-13T00:52:25Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-10-13T00:52:25Z",
+      "runId": 38329379899,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "candidate": {
+        "patchSha256": "7f21408a9d60c783a5d269c6c0c13572ec99e2d7012242afc51ddfa5927f57c4",
+        "headSha": "9355f43402eb570b0b05df729dd292dbab93961c"
+      }
+    },
+    "factory": {
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "entrySha": "2c89ed9810a3468fa3efa87459c26f04da5b639f"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.30",
+      "templateVersion": "1.0.0-beta.61"
+    },
+    "dependencies": {
+      "lockfileSha256": "ef965c7d86ce8d2d48780106ad2a8f526eb46c334833a4889dc92de3d8b2b0be",
+      "baselineFingerprint": "c569eef8a588b9f774f505edcbee26a9f719dfa5b63f521cf79f38f3149b1d78",
+      "packages": [
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "3.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "2.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "1.0.0-beta.25"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "2.0.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "2.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-testing",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.21"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/jobs",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/lifecycle",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "756fb9281fd6240db271251435ca54c9adae1f1d7b530b107c51cdfa8cc8dbb5",
+      "files": 136
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "ad44ea5a66b4344c2dcd57905459af3b6390098a920ab4ec6050cd631373758e",
+      "pipelineInputHash": "4430c94985a97457e5096f6d92b4d8768f1d007cf6402a84efedb134112afeb4",
+      "reviewHash": "81f9bfcb5b2e29945574ef27a80e16470c927103dce9b032cdefc49d40dda12e",
+      "reviewCriteriaHash": "81f9bfcb5b2e29945574ef27a80e16470c927103dce9b032cdefc49d40dda12e",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "14078115e4d33051b56c3fc7eb49f7cca1d1918ae163afe390400654c05ba78c"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "1c834e4e0aa623b0bedd0a27adfe385afcec365e6c57301f7b0c42fa959c48a4"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "adbcd02723c857c006d4391992223fd08fc31d0b22318c11c8b569aaa0cb9f29"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/38329379899/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 38329379899,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "failed",
+      "startedAt": "2026-10-13T00:52:25Z",
+      "endedAt": "2026-10-13T01:49:21Z",
+      "jobSeconds": 3411,
+      "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+      "patchSha256": "7f21408a9d60c783a5d269c6c0c13572ec99e2d7012242afc51ddfa5927f57c4",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "blocked",
+    "acceptance": "blocked",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 719,
+      "headSha": "9355f43402eb570b0b05df729dd292dbab93961c"
+    },
+    "detail": "执行因环境或前置条件受阻，不视为业务缺陷。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/38329379899/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "启用计划并观察一次真实调度，执行记录显示结果；只有过期且未完成的记录被标记。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b01-schedules-enabled.png",
+              "qa/1/b01-execution-results.png",
+              "qa/1/b01-todos-empty.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "再执行同一目标一次，待办总数不增加，状态仍正确。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b02-execution-results.png",
+              "qa/1/b02-todos-empty.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "在既有设置页停用计划并刷新，启用状态正确保存；本项只评价配置持久化，不冒称已验证长期停用。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b03-disabled-before-reload.png",
+              "qa/1/b03-disabled-after-reload.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "blocked",
+      "round": 1,
+      "executionKey": "run/38329379899/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "blocked",
+      "round": 1,
+      "executionKey": "run/38329379899/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "启用计划并观察一次真实调度，执行记录显示结果；只有过期且未完成的记录被标记。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B02",
+        "text": "再执行同一目标一次，待办总数不增加，状态仍正确。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B03",
+        "text": "在既有设置页停用计划并刷新，启用状态正确保存；本项只评价配置持久化，不冒称已验证长期停用。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "no",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 38329379899,
+        "attempt": 1,
+        "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+        "replay": false
+      },
+      "producer": {
+        "runId": 38329379899,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "67c9a5c0fc7a591ecc998d3cef4da3d47c5d12bef6d11ce91ff6865b696e7839",
+        "patchSha256": "7f21408a9d60c783a5d269c6c0c13572ec99e2d7012242afc51ddfa5927f57c4",
+        "baseSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
+        "lockfileSha256": "ef965c7d86ce8d2d48780106ad2a8f526eb46c334833a4889dc92de3d8b2b0be",
+        "reviewCriteriaHash": "81f9bfcb5b2e29945574ef27a80e16470c927103dce9b032cdefc49d40dda12e",
+        "artifactHash": "17854821b33a497124fe1f7405bb2f324d2b81dd9411c0225ef22d51b86a8a58"
+      },
+      "buildReviewMode": "full",
+      "summary": "独立评审 NocoBase3 基础框架（库/插件/指引），不评审业务代码。围绕四个能力单元取证并打分：Scheduler 计划定义与真实调度、数据库迁移与样本种子、应用装配与服务/路由、客户端页面与页面授权。框架侧核心 API 齐备、设计自洽：defineSchedule/registerTarget、occurrence 以 jobId 幂等、启停持久化（B03 通过）、defineMigration/defineSeed、ServiceProvider/defineApiRoutes、defineAppRoutes/useApiClient 与页面授权均可支撑本任务。QA 轮次 passed=false：验收运行库未加载样本待办导致 B01/B02 blocked，归因为工厂/环境前置缺失而非框架缺陷（实现侧已用 sqlite 证明标记规则正确）。另记录 2 条改进建议：无 config.yml 时 secrets 前置说明、SeedContext.repository 的 lint 易用性。评分为评审者主观判断，不替代 QA 结论。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/38329379899.1/v2-67c9a5c0fc7a/M1",
+          "name": "Scheduler 计划定义与真实调度",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-scheduler",
+            "skill:nocobase-app-plugin-scheduler"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-scheduler",
+              "subjectKey": "pkg:@nocobase/app-plugin-scheduler",
+              "entrypoints": [
+                "defineSchedule（计划声明与校验，输出 definitionHash）",
+                "schedulerServiceToken.registerTarget / defineSchedule（目标与计划注册）",
+                "ScheduleOccurrenceStore.start（occurrence 幂等）",
+                "GET /schedules、/schedules/:id/occurrences、POST /schedules/:id/enable|disable",
+                "schedule_definitions.enabled / nextRunAt 持久化"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E1",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E3",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E4",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E5",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E6"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-scheduler",
+              "subjectKey": "skill:nocobase-app-plugin-scheduler",
+              "entrypoints": [
+                "SKILL.md：何时用 Scheduler、何时改用 JobExecutor",
+                "references/operations.md：管理 API、页面授权与启用/停用语义"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E7",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E8"
+              ]
+            }
+          ],
+          "scope": "框架侧 Scheduler 插件的计划声明与校验、目标注册、cron 真实调度、occurrence 幂等与启停持久化，以及对应 Skill 指引。业务规则本身（哪些待办算过期）不计入本模块评分。",
+          "limitations": "occurrence/dispatch 属 dist 内部实现，本次通过阅读编译产物取证；未在真实多实例并发下压测幂等，仅依据实现逻辑与单实例 QA 观察判断。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "blocked",
+            "finalFull": "blocked"
+          },
+          "requirements": [
+            {
+              "need": "计划能以稳定 key、标题、cron 与时区声明，并被管理界面列出。",
+              "responsibility": "Scheduler 插件定义、校验并同步计划清单。",
+              "support": "direct",
+              "recommendedUsage": "在服务提供者的 boot() 中调用 defineSchedule({ key, title, schedule, target })，key 稳定、cron 为 5 或 6 段。",
+              "actualUsage": "app 在 TodoProvider.boot() 用 defineSchedule 声明 todos.mark-overdue，cron '* * * * *'、UTC。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E1",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E7"
+              ]
+            },
+            {
+              "need": "到点触发真实调度并留下执行记录，而不是 setInterval 或直接写库。",
+              "responsibility": "插件以 cron 规则驱动 executor，并写入 schedule_occurrences。",
+              "support": "direct",
+              "recommendedUsage": "把工作放进 registerTarget 的 start()，由 occurrence 记录结果。",
+              "actualUsage": "QA 观察到计划 Enabled、按分钟真实触发，运行/成功次数由 6/6 增至 8/8，记录全部 Succeeded。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E3",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E4",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23"
+              ]
+            },
+            {
+              "need": "同一 firing 重复投递或重复执行不重复生效。",
+              "responsibility": "插件以 occurrenceId=jobId 去重；业务侧仍应写幂等规则。",
+              "support": "composition",
+              "recommendedUsage": "目标 start() 做原地更新，不新增行。",
+              "actualUsage": "TodoService.markOverdue 原地 updateMany；occurrence 重复投递返回 noop。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E3",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E27"
+              ]
+            },
+            {
+              "need": "停用计划后状态持久保存。",
+              "responsibility": "store.setEnabled 持久化 enabled 与 nextRunAt。",
+              "support": "direct",
+              "recommendedUsage": "走 enable/disable 路由而非直接改库。",
+              "actualUsage": "QA B03：停用后完整刷新仍为 Disabled、Next run 为 Not planned。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E5",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23"
+              ]
+            },
+            {
+              "need": "本任务条件项：如本轮提供‘立即执行一次’入口。",
+              "responsibility": "Scheduler 刻意不提供 run-now 路由，立即型任务由 JobExecutor 承担。",
+              "support": "out-of-scope",
+              "recommendedUsage": "需要立即执行时解析 jobExecutorServiceToken 并使用 JobExecutor。",
+              "actualUsage": "app 未提供立即执行入口，任务描述为条件项，故不构成缺口。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E7"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 84,
+              "reason": "框架提供了本任务所需的全部调度原语，计划定义、真实调度、firing 幂等与启停持久化都在框架内闭环；扣分仅在‘立即执行一次’需改用 JobExecutor 的间接路径。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E1",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E5",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23"
+              ]
+            },
+            "usability": {
+              "score": 80,
+              "reason": "defineSchedule/registerTarget 与 Skill、operations.md 说明清晰，管理 API 与页面授权明确；但 occurrence 与 dispatch 属 dist 内部实现，缺少面向使用者的公开文档。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E6",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E7",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E8"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 86,
+              "reason": "SKILL.md 明确‘无需 UI 的任务用 JobExecutor、需要管理界面用 Scheduler’，operations.md 给出路由与授权与错误原因码，命名与类型稳定；可复制示例偏少。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E7",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E8"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "计划定义与执行分离，occurrence 以 jobId 幂等，register-then-setup 避免到期 firing 先于 handler，target 未就绪时 skip，设计自洽。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E3",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E4"
+              ]
+            },
+            "reliability": {
+              "score": 85,
+              "reason": "校验、并发插入去重、终态判定、停用后重启用时 re-read 与 limit 续算等实现完整；QA 中每分钟真实调度与停用持久化均通过。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E1",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E4",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E5"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38329379899.1/v2-67c9a5c0fc7a/M2",
+          "name": "数据库迁移与样本数据",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration + builder.createCollection/createIndex",
+                "defineSeed（sample 语义）",
+                "Seeder.run / runSamples（sample.enabled 门控）",
+                "Repository.updateMany"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E10",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E11"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-db",
+              "subjectKey": "skill:nocobase-db",
+              "entrypoints": [
+                "SKILL.md：迁移、种子、Repository 与事务章节"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E12"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "references/migrations.md：迁移与种子/样本语义"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E13"
+              ]
+            }
+          ],
+          "scope": "框架 @nocobase/db 的迁移/种子机制与 nocobase-db、migrations 指引，以及本任务要求的样本待办数据能否在验收环境就绪。",
+          "limitations": "样本数据未加载属验收环境前置缺失，本模块对框架能力的评分基于其迁移/种子实现与文档；未据此推断业务逻辑失败。",
+          "criteria": [
+            "B01",
+            "B02"
+          ],
+          "qa": {
+            "firstFull": "blocked",
+            "finalFull": "blocked"
+          },
+          "requirements": [
+            {
+              "need": "建立 todoItems 表、dueAt 索引与 title 唯一约束。",
+              "responsibility": "@nocobase/db 迁移 API。",
+              "support": "direct",
+              "recommendedUsage": "defineMigration + builder.createCollection/createIndex。",
+              "actualUsage": "app 迁移创建集合、dueAt 索引与 title 唯一约束。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E10",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E40"
+              ]
+            },
+            {
+              "need": "准备过期待办、未来待办、已完成待办各一条并真实持久化。",
+              "responsibility": "db 提供 seed 机制；运行环境需启用 sample 或执行 db sample。",
+              "support": "composition",
+              "recommendedUsage": "演示数据用 sample:true；必须始终存在的数据用普通 seed。",
+              "actualUsage": "app 用 sample:true 声明 3 条；QA 运行库未设 APP_SAMPLE_DATA 且安装早于 seed，故 total=0。",
+              "gapOwner": "factory",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E26"
+              ]
+            },
+            {
+              "need": "重复执行不覆盖人工修改。",
+              "responsibility": "seed 幂等与 Repository 更新语义。",
+              "support": "direct",
+              "recommendedUsage": "按唯一键先查后插；批量标记用 updateMany 原地更新。",
+              "actualUsage": "seed 以 title 先查后插；markOverdue 原地更新，不新增行。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E11",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E26",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E27"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 70,
+              "reason": "迁移与种子原语齐备，业务规则在实现侧被验证；但本任务‘样本数据就绪’在验收环境未满足，导致 B01/B02 blocked，属流程/环境而非框架能力缺陷。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E26"
+              ]
+            },
+            "usability": {
+              "score": 78,
+              "reason": "defineSeed/defineMigration/Repository 接口简洁，SKILL 对 sample 语义与 pnpm nocobase db sample 命令有说明。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E12",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E13"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 80,
+              "reason": "nocobase-db SKILL 按 6 个领域给出入口，migrations.md 明确‘样本数据不是必需数据’及 freshInstall/skippedSamples 报告；样本在验收链路的前置条件说明偏弱。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E12",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E13"
+              ]
+            },
+            "design": {
+              "score": 84,
+              "reason": "迁移与种子分离、sample 显式门控、幂等按唯一键实现，设计与文档一致。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E26"
+              ]
+            },
+            "reliability": {
+              "score": 80,
+              "reason": "sample 门控与幂等实现明确；本任务验收未加载样本数据，暴露‘依赖 sample 的数据在 CI/验收环境可能缺席’的运行风险。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E10",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E11"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38329379899.1/v2-67c9a5c0fc7a/M3",
+          "name": "应用装配、服务注册与 HTTP 路由",
+          "subjectKeys": [
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-server",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/service-provider",
+              "subjectKey": "pkg:@nocobase/service-provider",
+              "entrypoints": [
+                "ServiceProvider 生命周期 register/boot/start",
+                "createServiceToken",
+                "ServiceContainer.singleton/instance/resolveIfCreated"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E15"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "defineApiRoutes",
+                "defineServerPlugin（serviceProviders/routes/database/queue 贡献）"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E16",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E17"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "references/services-and-jobs.md",
+                "references/server-routes.md",
+                "references/database-connections.md"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E18",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E38"
+              ]
+            }
+          ],
+          "scope": "框架 @nocobase/service-provider 与 @nocobase/app-server 的服务提供者、服务令牌、路由贡献与鉴权，以及 app-development Skill 的服务/路由/连接指引。",
+          "limitations": "路由运行期鉴权行为未逐一压测，依据实现与 QA 登录后 API 可用性判断；无 config.yml 场景仅依据 retro 记录与文档核对。",
+          "criteria": [
+            "B01"
+          ],
+          "qa": {
+            "firstFull": "blocked",
+            "finalFull": "blocked"
+          },
+          "requirements": [
+            {
+              "need": "业务服务以令牌注入，Provider 在正确生命周期注册/启动。",
+              "responsibility": "service-provider 提供生命周期与容器。",
+              "support": "direct",
+              "recommendedUsage": "register() 绑定令牌，boot/start 做依赖启动，令牌按对象身份匹配。",
+              "actualUsage": "TodoProvider.register 绑定 todoServiceToken；boot 注册 target 与计划。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E15",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E27"
+              ]
+            },
+            {
+              "need": "HTTP API 以声明式路由贡献并做输入校验。",
+              "responsibility": "app-server defineApiRoutes 与 apiValidator。",
+              "support": "direct",
+              "recommendedUsage": "server/routes 导出 defineApiRoutes 贡献，每条 /api 路由带 describeRoute 与 apiValidator。",
+              "actualUsage": "app 定义 /todos 与 /schedules 相关路由并接入鉴权。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E16",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E17",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E18"
+              ]
+            },
+            {
+              "need": "无 config.yml 时启动应用或运行 CLI/测试需要 auth secret。",
+              "responsibility": "文档需说明 secrets.keys / SECRETS_KEYS 前置。",
+              "support": "workaround",
+              "recommendedUsage": "dev/start 需 SECRETS_KEYS 或 auth.secret；CLI 与 createTestApp 同理。",
+              "actualUsage": "retro 记录 db sample 与 createTestApp 因 secrets.keys 未设失败，用 SECRETS_KEYS / config.auth.secret 绕行。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E37",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E38",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E39"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 82,
+              "reason": "Provider 生命周期、服务令牌、路由贡献与鉴权钩子齐备，app 成功用其装配服务与 API。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E15",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E16",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E17"
+              ]
+            },
+            "usability": {
+              "score": 78,
+              "reason": "API 小而定型，Skill 明确各文件位置与职责；无 config.yml 场景的 secrets 前置说明不完整，导致 CLI/测试绕行。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E18",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E38"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 82,
+              "reason": "services-and-jobs.md/server-routes.md 给出可复制范式与‘令牌即身份’等关键规则，便于 agent 直接照做。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E18"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "Provider 与容器解耦、路由按 scope 贡献、生命周期与装配顺序清晰。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E15",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E16"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "singleton/resolveIfCreated、boot/start 分离与路由校验实现完整；无 config.yml 时 CLI 启动失败是文档/环境前置问题。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E15",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E17"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/38329379899.1/v2-67c9a5c0fc7a/M4",
+          "name": "客户端页面、路由与页面授权",
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/app-plugin-authorization",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "defineAppRoutes",
+                "useApiClient / useService",
+                "路由 authz 归一化",
+                "resolveAppBase / resolveAssetUrl"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E20"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-authorization",
+              "subjectKey": "pkg:@nocobase/app-plugin-authorization",
+              "entrypoints": [
+                "createAppAuthorization",
+                "pagesPlugin 与授权中间件",
+                "page:<id>/access 资源授权"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E22"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "references/frontend/references/page.md"
+              ],
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E21"
+              ]
+            }
+          ],
+          "scope": "框架 @nocobase/app-client 的 defineAppRoutes/useApiClient 与 @nocobase/app-plugin-authorization 的页面授权，以及 app-development 前端 Skill。",
+          "limitations": "仅覆盖本任务用到的路由贡献、API hook 与页面授权；未逐一评阅 app-client 全部组件与主题能力。",
+          "criteria": [
+            "B01",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "blocked",
+            "finalFull": "blocked"
+          },
+          "requirements": [
+            {
+              "need": "客户端页面挂到既有路由并声明授权。",
+              "responsibility": "app-client defineAppRoutes 与 authz。",
+              "support": "direct",
+              "recommendedUsage": "向现有 defineAppRoutes 数组追加条目，不覆盖整文件，authz 取 'skip' 或具体资源。",
+              "actualUsage": "app 增加 /todos 与 /schedules 页面路由。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E20",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E21"
+              ]
+            },
+            {
+              "need": "页面用统一 API 客户端与 toaster/i18n。",
+              "responsibility": "app-client hooks 提供 useApiClient/useService。",
+              "support": "direct",
+              "recommendedUsage": "从 @nocobase/app-client 取 hook，翻译用 @nocobase/i18n/client。",
+              "actualUsage": "schedules.tsx 使用 useApiClient/useToaster/useTranslation。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E28"
+              ]
+            },
+            {
+              "need": "页面级授权在服务端被强制。",
+              "responsibility": "authorization 中间件与插件路由页面授权。",
+              "support": "direct",
+              "recommendedUsage": "路由声明 page:<id>/access，服务端先鉴权后查询。",
+              "actualUsage": "scheduler 路由使用 scheduler.schedules 页面授权，未授权返回 403。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E6",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E22"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 84,
+              "reason": "页面路由、API 客户端、i18n 与页面授权均有框架入口，app 页面可正常渲染并执行停用操作（B03 通过）。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E20",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E21",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E22"
+              ]
+            },
+            "usability": {
+              "score": 82,
+              "reason": "hook 与路由贡献 API 简洁，前端 Skill 给出追加式改法与 authz 用法。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E21"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 84,
+              "reason": "page.md 明确不要覆盖既有路由、authz 取值与图标导入等易错点，降低 agent 出错率。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E21"
+              ]
+            },
+            "design": {
+              "score": 85,
+              "reason": "路由贡献冻结、authz 归一化、服务与 hook 分层清晰。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E20"
+              ]
+            },
+            "reliability": {
+              "score": 80,
+              "reason": "客户端 hook 与授权中间件实现完整；Todos 页在无数据时呈现规范空态，属数据前置而非 UI 缺陷。",
+              "evidence": [
+                "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E22",
+                "review/38329379899.1/v2-67c9a5c0fc7a/E23"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/38329379899.1/v2-67c9a5c0fc7a/F1",
+          "localId": "F1",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "not-applicable",
+          "title": "Scheduler 以 occurrenceId=jobId 实现 firing 级幂等",
+          "detail": "dispatch 用 executor 的 jobId 作为 occurrenceId，ScheduleOccurrenceStore.start 对已存在的 waiting/终态 occurrence 返回 noop，并发插入失败也返回 noop，从而同一 firing 重复投递只记录并执行一次。",
+          "impact": "为业务侧提供稳定的至多一次执行语义，配合目标 start() 的原地更新即可实现重复执行不产生副作用。",
+          "suggestedChange": "保持该设计，并在公开文档中补充 occurrence 幂等语义，便于业务侧对齐。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+            "review/38329379899.1/v2-67c9a5c0fc7a/E3"
+          ],
+          "moduleKeys": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-scheduler",
+            "skill:nocobase-app-plugin-scheduler"
+          ]
+        },
+        {
+          "id": "review/38329379899.1/v2-67c9a5c0fc7a/F2",
+          "localId": "F2",
+          "kind": "issue",
+          "owner": "factory",
+          "severity": "major",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "验收运行库未加载样本待办，B01/B02 被阻塞",
+          "detail": "任务要求准备过期待办、未来待办、已完成待办各一条。app 以 sample:true 声明种子，仅当安装时 APP_SAMPLE_DATA=true 或之后执行 pnpm nocobase db sample 才载入。QA 运行库在 seed 文件之前安装且未设置该变量，/main/api/todos 返回 total=0、data=[]，导致无法验证‘只有过期且未完成被标记’与‘重复执行总数不增加’。",
+          "impact": "B01/B02 记为 blocked，未执行不算通过；但实现侧已用 sqlite 证明标记规则正确，属环境/测试准备问题而非框架缺陷。",
+          "suggestedChange": "工厂在安装/启动前设置 APP_SAMPLE_DATA=true，或安装后执行 pnpm nocobase db sample；若数据为验收必需，应改用非 sample seed。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+            "review/38329379899.1/v2-67c9a5c0fc7a/E23",
+            "review/38329379899.1/v2-67c9a5c0fc7a/E26"
+          ],
+          "diagnosis": {
+            "category": "usability-improvement",
+            "trigger": "验收运行库在 sample seed 文件加入之前完成安装，且未设置 APP_SAMPLE_DATA 或执行 pnpm nocobase db sample。",
+            "expected": "按任务要求，验收环境应加载过期待办/未来待办/已完成待办各一条，使 B01/B02 可观察。",
+            "actual": "/main/api/todos 返回 total=0、data=[]，Todos 页显示 No todos yet，B01/B02 blocked；实现侧 sqlite 已证明标记规则正确。",
+            "workaround": "实现者此前用 SECRETS_KEYS 运行 db sample 在自建库验证；验收运行库未执行该步骤。",
+            "acceptance": "安装或启动前设置 APP_SAMPLE_DATA=true，或安装后执行 pnpm nocobase db sample，使 /main/api/todos 返回 3 条样本，B01/B02 可据此判定通过或失败。"
+          },
+          "moduleKeys": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/38329379899.1/v2-67c9a5c0fc7a/F3",
+          "localId": "F3",
+          "kind": "improvement",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "无 config.yml 时 secrets 前置说明未覆盖 CLI 与 createTestApp",
+          "detail": "database-connections.md 说明 pnpm dev/pnpm start 需要 SECRETS_KEYS 或 secrets.keys；但会启动完整 provider 注册表的 CLI 命令（如 db sample）与 createTestApp 同样需要，testing.md 未提及，失败表现为与命令无关的认证错误，易被误判为 seed 或测试问题。",
+          "impact": "agent 需自行推断并用 SECRETS_KEYS / config.auth.secret 绕行，增加试错成本。",
+          "suggestedChange": "在 app-development 的 testing 或 database-connections 参考中补一句：无 config.yml 时 CLI/测试启动应用需 SECRETS_KEYS 或 auth.secret。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/E37",
+            "review/38329379899.1/v2-67c9a5c0fc7a/E38",
+            "review/38329379899.1/v2-67c9a5c0fc7a/E39"
+          ],
+          "diagnosis": {
+            "category": "guidance-gap",
+            "trigger": "仓库无 config.yml/.env 时运行会启动完整 provider 注册表的命令，如 pnpm nocobase db sample 或调用 createTestApp。",
+            "expected": "app-development 的 testing/database-connections 参考应说明无 config.yml 时启动应用需 SECRETS_KEYS 或 auth.secret，测试可传 config.auth.secret。",
+            "actual": "database-connections.md 仅对 pnpm dev/pnpm start 说明 secrets 前置；testing.md 未提，失败表现为与命令无关的认证错误。",
+            "workaround": "实现者设 SECRETS_KEYS=1:<openssl rand -hex 32> 运行 CLI，并用 config.auth.secret 传入 createTestApp。",
+            "acceptance": "补文档后，在无 config.yml 的干净检出中按参考运行 db sample 与 createTestApp 不再出现 ApplicationNotConfiguredError。"
+          },
+          "feedbackReview": {
+            "status": "insufficient",
+            "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+            "checks": []
+          },
+          "moduleKeys": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/M3"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-server",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/38329379899.1/v2-67c9a5c0fc7a/F4",
+          "localId": "F4",
+          "kind": "improvement",
+          "owner": "framework",
+          "severity": "minor",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "SeedContext.repository 未绑定方法导致 lint 易用性问题",
+          "detail": "SeedContext.repository 声明为方法，种子中惯用的解构写法 async run({ repository }) 会在 --max-warnings 0 下触发 @typescript-eslint/unbound-method；可行写法为 async (context) => context.repository(...)，但从类型上并不直观。",
+          "impact": "轻微摩擦，agent 需额外绕行或调整写法。",
+          "suggestedChange": "将 SeedContext.repository 声明为 this: void 或函数属性，或在 migrations 参考中于 seed 示例旁说明 context.repository(...) 写法。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/38329379899.1/v2-67c9a5c0fc7a/E42"
+          ],
+          "diagnosis": {
+            "category": "usability-improvement",
+            "trigger": "在 seed 中按直觉解构 SeedContext.repository，如 async run({ repository }) { repository('todos') }。",
+            "expected": "解构写法应通过 --max-warnings 0 的 lint，或在类型/文档中明确应使用 context.repository(...)。",
+            "actual": "SeedContext.repository 声明为方法，解构触发 @typescript-eslint/unbound-method。",
+            "workaround": "改用 run: async (context) => context.repository('todos')。",
+            "acceptance": "将 repository 声明为 this: void 或函数属性，或补文档后，解构写法不再报 unbound-method。"
+          },
+          "feedbackReview": {
+            "status": "insufficient",
+            "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+            "checks": []
+          },
+          "moduleKeys": [],
+          "subjectKeys": []
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "本轮评审环境无法渲染 PNG（模型不支持图像），未能亲自查看截图，故不做跨页面视觉评分；截图内容仅依 QA 报告文字记录（Schedules 页展示计划状态/cron/执行记录，停用并刷新后为 Disabled、Next run Not planned）。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "QA 轮次 passed=false：B01/B02 因验收运行库未加载样本待办而 blocked，B03 通过；业务规则正确性来自实现侧 sqlite 证据，不等同于浏览器验收通过。",
+        "各维度评分为评审者对框架能力的主观判断，不替代 QA 结论；被 blocked 的检查项未执行，不推断通过。",
+        "UI 未做视觉评审：评审模型无法渲染 PNG，跨页面样式一致性与 ui 分数留空（not-reviewed），截图内容仅依 QA 报告文字描述。",
+        "本次仅评审 Scheduler、@nocobase/db、@nocobase/service-provider、@nocobase/app-server、@nocobase/app-client、@nocobase/app-plugin-authorization 及相关 Skill；快照内其他包与业务代码未逐一评阅。",
+        "搭建过程证据按原始 JSONL 显式错误信号逐条处置：8 个独立失败均为探索/工具/预期噪音，其中 1 个支持环境前置缺失结论；错误信号本身不代表框架缺陷。",
+        "快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "blocked",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "completed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [
+      {
+        "id": "notes/run/38329379899/attempt/1/B1",
+        "phase": "database-and-tests",
+        "title": "The application refuses to boot without auth secrets, so database tasks and app-level tests fail before doing anything",
+        "symptom": "`pnpm nocobase db sample` and every test that calls `createTestApp(...)` failed with `ApplicationNotConfiguredError: secrets.keys is not set.` (raised from the authentication provider's `resolveAuthSecrets`). `pnpm nocobase db apply` happened to succeed, which made the failure look seed-specific at first.",
+        "rootCause": "The repository has no committed `config.yml` and no `.env`, and the template's `server/config/secrets.ts` declares no default keys. The authentication provider derives Better Auth's signing keys from `secrets.keys` (or falls back to `auth.secret`) and refuses to build when neither is set, so any code path that boots the full provider registry — including the CLI's sample-seed command and `createTestApp` — stops there.",
+        "resolution": "Set a throwaway `SECRETS_KEYS=1:<openssl rand -hex 32>` in the environment for CLI runs, and pass `config: { auth: { secret: '...' } }` to `createTestApp` so the in-process test app has a secret without touching `config.yml`. Both were recorded in the feature's tests and in the app notes.",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/38329379899/attempt/1/I1",
+        "category": "template-docs",
+        "title": "Say how an agent should provide auth secrets when there is no `config.yml`",
+        "detail": "The development skill explains `config.yml` and `pnpm nocobase config init`, but not the case this sandbox and many CI checkouts are in: no config file at all. The failure surfaces as an authentication error from an unrelated command (`db sample`) and from `createTestApp`, which is easy to misattribute to the seed or the test rather than to missing secrets.",
+        "suggestedChange": "Add a short note to the app-development/testing references: with no `config.yml`, booting the application needs `SECRETS_KEYS` (or `auth.secret`); tests can pass `config.auth.secret` to `createTestApp`.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/38329379899/attempt/1/I2",
+        "category": "lint-ergonomics",
+        "title": "Destructuring `SeedContext.repository` trips `@typescript-eslint/unbound-method`",
+        "detail": "`SeedContext.repository` is declared as a method, so the idiomatic `async run({ repository }) { repository('todos') }` in a seed fails the repository's `--max-warnings 0` lint with an `unbound-method` error. The working pattern is `run: async (context) => context.repository('todos')`, which is not obvious from the type.",
+        "suggestedChange": "Declare `SeedContext.repository` with `this: void` (or make it a function-typed property) so the destructuring form lints cleanly, or document the `context.repository(...)` pattern next to the seed example in the migrations reference.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:115075479374",
+          "executionKey": "run/38329379899/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 1237741,
+              "output": 148558,
+              "cacheRead": 26055994,
+              "cacheWrite": 0,
+              "total": 27442293
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 373218,
+              "output": 48040,
+              "cacheRead": 3060800,
+              "cacheWrite": 0,
+              "total": 3482058
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 1240570,
+              "output": 79483,
+              "cacheRead": 5033228,
+              "cacheWrite": 0,
+              "total": 6353281
+            },
+            "compaction": {
+              "input": 353631,
+              "output": 55471,
+              "cacheRead": 1792,
+              "cacheWrite": 0,
+              "total": 410894
+            }
+          },
+          "records": 551,
+          "missing": 0,
+          "incomplete": 1,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 3205160,
+        "output": 331552,
+        "cacheRead": 34151814,
+        "cacheWrite": 0,
+        "total": 37688526,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 3411,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 3416,
+      "jobs": [
+        {
+          "id": 115075382054,
+          "name": "prepare",
+          "executionKey": "run/38329379899/attempt/1",
+          "seconds": 20
+        },
+        {
+          "id": 115075479374,
+          "name": "agent",
+          "executionKey": "run/38329379899/attempt/1",
+          "seconds": 3391
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/schedules/define.js",
+      "lines": [
+        11,
+        53
+      ],
+      "sha256": "00f0909276af5cc847ca3130860bb7fe917f8ea69b5e74d126610aebab10f51d",
+      "observation": "defineSchedule 校验 key、标题、cron 5/6 段、时区、target.type、limit 与 from/to，并输出 definitionHash。",
+      "excerpt": "export function defineSchedule(definition) {\n    if (!definition.key || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(definition.key))\n        throw new Error('Schedule key must be a stable identifier.');\n    if (!definition.title)\n        throw new Error('Schedule title is required.');\n    const parts = definition.schedule?.cron?.trim().split(/\\s+/) ?? [];\n    if (parts.length !== 5 && parts.length !== 6)\n        throw new Error('Schedule cron must contain five or six fields.');\n    const timezone = definition.schedule.timezone ?? 'UTC';\n    try {\n        CronExpressionParser.parse(definition.schedule.cron, {\n            currentDate: new Date('2020-01-01T00:00:00.000Z'),\n            tz: timezone,\n        });\n    }\n    catch {\n        throw new Error('Schedule cron or timezone is invalid.');\n    }\n    if (!definition.target?.type)\n        throw new Error('Schedule target type is required.');\n    assertNoSensitiveConfig(definition.target.config);\n    if (definition.schedule.limit !== undefined &&\n        (!Number.isInteger(definition.schedule.limit) ||\n            definition.schedule.limit < 1))\n        throw new Error('Schedule limit must be a positive integer.');\n    if (definition.schedule.from &&\n        definition.schedule.to &&\n        definition.schedule.from > definition.schedule.to)\n        throw new Error('Schedule from must not be after to.');\n    const normalized = {\n        ...definition,\n        schedule: {\n            ...definition.schedule,\n            cron: definition.schedule.cron.trim(),\n            timezone,\n        },\n    };\n    const canonical = stableStringify(normalized);\n    return freezeDeep({\n        ...normalized,\n        definitionHash: createHash('sha256').update(canonical).digest('hex'),\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/occurrences.js",
+      "lines": [
+        23,
+        72
+      ],
+      "sha256": "392a5f060cc61804e73b02e79a221ecacc3595bc261e987ecf29fbfadff141c3",
+      "observation": "occurrence.start 以 occurrenceId 幂等：已存在 waiting/终态返回 noop，并发插入失败也返回 noop，否则置 running。",
+      "excerpt": "    async start(context, definitionHash, targetType, scheduledAt) {\n        const now = new Date();\n        const existing = await this.find(context.occurrenceId);\n        if (existing) {\n            if (existing.status === 'waiting' || TERMINAL.has(existing.status))\n                return 'noop';\n            const updated = await this.database\n                .query()\n                .updateTable('schedule_occurrences')\n                .set({\n                status: 'running',\n                executionCount: existing.executionCount + 1,\n                lastStartedAt: now,\n                updatedAt: now,\n            })\n                .where('id', '=', context.occurrenceId)\n                .where('status', 'in', ['pending', 'running'])\n                .execute();\n            if ((updated.updatedCount ?? 0) === 0) {\n                const current = await this.required(context.occurrenceId);\n                if (current.status === 'waiting' || TERMINAL.has(current.status))\n                    return 'noop';\n            }\n            return 'start';\n        }\n        const inserted = await this.insertOnce({\n            id: context.occurrenceId,\n            scheduleId: context.scheduleId,\n            definitionHash,\n            status: 'running',\n            reason: null,\n            targetType,\n            targetReferenceType: null,\n            targetReferenceId: null,\n            targetReceipt: null,\n            resultSummary: null,\n            executionCount: 1,\n            scheduledAt: scheduledAt ?? null,\n            startedAt: now,\n            acceptedAt: null,\n            lastStartedAt: now,\n            lastObservedAt: null,\n            finishedAt: null,\n            createdAt: now,\n            updatedAt: now,\n        });\n        // Losing the insert to a concurrent delivery of the same firing means that\n        // delivery runs it.\n        return inserted ? 'start' : 'noop';\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/dispatch.js",
+      "lines": [
+        20,
+        60
+      ],
+      "sha256": "2f586836bd5eba506dcc3a01a7bbcb86c184e779712d5ea6c12bf27bb9cb2495",
+      "observation": "dispatch 以 jobId 作为 occurrenceId，同一 firing 只执行一次；target 未就绪则 skip，并按结果完成/等待/失败。",
+      "excerpt": "        execute: (context) => dispatch(spec, context, dependencies),\n    };\n}\nasync function dispatch(spec, context, { targets, occurrences }) {\n    // The occurrence is the firing: its id is the executor's job id, so the same\n    // firing delivered twice records, and starts its target, once.\n    const occurrenceId = context.jobId;\n    const executionContext = { scheduleId: spec.id, occurrenceId };\n    const record = {\n        scheduleId: spec.id,\n        definitionHash: spec.definitionHash,\n        targetType: spec.target.type,\n        scheduledAt: context.scheduledAt,\n    };\n    const targetState = (await targets.describe(spec.target.type, spec.target.config)).state;\n    if (targetState && targetState !== 'ready') {\n        await occurrences.skip(occurrenceId, `target-${targetState}`, record);\n        return;\n    }\n    const action = await occurrences.start(executionContext, spec.definitionHash, spec.target.type, context.scheduledAt);\n    if (action === 'noop')\n        return;\n    try {\n        const result = await targets.start(spec.target.type, spec.target.config, executionContext);\n        switch (result.state) {\n            case 'completed':\n                await occurrences.succeed(occurrenceId, result.result);\n                return;\n            case 'accepted': {\n                await occurrences.wait(occurrenceId, result.reference, result.receipt);\n                const observation = await targets.inspect(spec.target.type, result.reference);\n                if (observation.state === 'completed')\n                    await occurrences.complete(occurrenceId, result.reference, observation.completion);\n                return;\n            }\n            case 'skipped':\n                await occurrences.skip(occurrenceId, result.reason);\n                return;\n            case 'failed':\n                await occurrences.fail(occurrenceId, result.reason);\n                return;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/providers/scheduler.js",
+      "lines": [
+        25,
+        55
+      ],
+      "sha256": "07bf3fadbb342d98106c6e18b421c4331d954ca25e39412ccd81a64b554419b6",
+      "observation": "注册 schedulerServiceToken 单例，start 前先 sync 注册 handler，再 setup、activate，并周期 reconcile occurrences。",
+      "excerpt": "        // them instead of being resolvable by anyone holding the container.\n        this.app.container.singleton(schedulerServiceToken, () => this.compose().service);\n    }\n    async start() {\n        const { executor, service } = this.compose();\n        const startupMode = this.app.container.resolveIfCreated(schedulerStartupModeToken);\n        const consume = startupMode?.kind !== 'sync-only';\n        // Registers every definition's handler, and the rules of the enabled ones,\n        // before setup() writes the rules and starts the worker: a due firing must\n        // never reach this instance ahead of its handler.\n        await service.sync(startupMode?.finalize ?? false);\n        if (consume) {\n            this.unsubscribe = executor.subscribe(async (event) => {\n                if (event.reason === 'handler-not-registered') {\n                    // Nothing reaches the occurrence history: no dispatch ran.\n                    console.warn('A schedule fired that this instance has no definition for', { scheduleId: event.jobName, occurrenceId: event.jobId });\n                }\n                await service.recordEvent(event);\n            });\n        }\n        await executor.setup({ consume });\n        await service.activate();\n        if (!consume)\n            return;\n        this.reconcileTimer = setInterval(() => {\n            void service.reconcileOccurrences().catch((error) => {\n                console.error('Scheduler occurrence reconciliation failed', error);\n            });\n        }, 60_000);\n        this.reconcileTimer.unref?.();\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E5"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/store.js",
+      "lines": [
+        188,
+        213
+      ],
+      "sha256": "387d2d429a9192f090ee6d4c712fdf1398baa4917c36641de06ced007699e473",
+      "observation": "setEnabled 先查定义再更新，停用时移除 job 并持久化 enabled=false/nextRunAt=null，启用时按剩余 limit 重排规则。",
+      "excerpt": "    async setEnabled(id, enabled) {\n        const definition = await this.database\n            .query()\n            .selectFrom('schedule_definitions')\n            .selectAll()\n            .where('id', '=', id)\n            .where('appName', '=', this.appName)\n            .executeTakeFirst();\n        if (!definition)\n            throw new ScheduleNotFoundError(id);\n        if (!enabled) {\n            // The handler stays registered, so another instance that enables the\n            // schedule again finds this instance able to run it.\n            await this.executor.removeJob(id);\n            await this.updateDefinition(id, { enabled: false, nextRunAt: null });\n            return;\n        }\n        const spec = specOfRow(definition);\n        const limit = nullableNumber(definition.runLimit);\n        // Re-adding a rule restarts BullMQ's count, so it carries what is left.\n        const appliedLimit = limit === null ? null : limit - Number(definition.runCount ?? 0);\n        const nextRunAt = definition.lifecycleState === 'active'\n            ? await this.applyRule(spec, appliedLimit, true)\n            : null;\n        await this.updateDefinition(id, { enabled: true, appliedLimit, nextRunAt });\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+      "lines": [
+        2,
+        35
+      ],
+      "sha256": "2d7e65d94c812d87b9878f2ca2515907ad0a8f34e1a95e8d4f4225c1fa9478c5",
+      "observation": "路由挂 authentication.required() 与 authorization.middleware()，并要求 page:scheduler.schedules/access，未授权 403 SCHEDULE_ACCESS_REQUIRED。",
+      "excerpt": "import { authorizationToken, } from '@nocobase/app-plugin-authorization';\nimport { ApiError, apiErrorHandler, apiErrorResponse, apiErrorResponses, apiValidator, dataResponse, defineApiRoutes, describeRoute, listResponse, } from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\nimport { schedulerServiceToken } from '../services/scheduler.js';\nimport { ScheduleNotFoundError } from '../store.js';\nimport { encodeOccurrencePageToken, OccurrenceListQuery, ScheduleListQuery, ScheduleOccurrenceSchema, SchedulePageMeta, ScheduleParams, ScheduleSchema, } from './schemas.js';\nexport const SCHEDULER_ACCESS_RESOURCE = 'scheduler.schedules';\n/** The URL namespace of this plugin, and the `domain` of every error it reports. */\nexport const SCHEDULER_ERROR_DOMAIN = 'scheduler';\nconst tags = ['Scheduler'];\nconst scheduleNotFoundResponse = apiErrorResponse(404, 'No Schedule with this id exists in the application (`SCHEDULE_NOT_FOUND`).');\nconst accessDescription = 'Requires the `page:scheduler.schedules/access` grant; without it every route answers 403 `SCHEDULE_ACCESS_REQUIRED` before any Schedule is looked up.';\nfunction scheduleNotFound(scheduleId) {\n    return new ApiError({\n        status: 'NOT_FOUND',\n        reason: 'SCHEDULE_NOT_FOUND',\n        domain: SCHEDULER_ERROR_DOMAIN,\n        message: `Schedule ${scheduleId} was not found.`,\n    });\n}\nexport const apiRoutes = defineApiRoutes(({ container }) => {\n    const router = new Hono();\n    const schedules = new Hono();\n    const authentication = container.resolve(authenticationToken);\n    const authorization = container.resolve(authorizationToken);\n    const scheduler = container.resolve(schedulerServiceToken);\n    const scheduleParams = apiValidator('param', ScheduleParams);\n    // Render this plugin's errors here as well as through the application, so the router answers with the standard\n    // body even when it is mounted on its own. Anything else belongs to the application's handler.\n    schedules.onError((error, context) => apiErrorHandler(error instanceof ScheduleNotFoundError\n        ? scheduleNotFound(error.scheduleId)\n        : error, context));\n    schedules.use('*', authentication.required(), authorization.middleware());\n    // Permission is checked before any schedule is looked up, so a caller without access cannot probe which ids exist.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E7"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+      "lines": [
+        1,
+        46
+      ],
+      "sha256": "b068028d4f469d254eff36dd9aa38d62674285d25825a2f9c61937b762bb076d",
+      "observation": "SKILL 说明 Scheduler 的适用边界：需要管理界面的定时任务用 Scheduler，无需 UI 的立即型任务用 JobExecutor。",
+      "excerpt": "---\nname: nocobase-app-plugin-scheduler\ndescription: Develop scheduled tasks in NocoBase 3 that business administrators need to view and track through the application UI. Define schedules in code, register the target a schedule points at, integrate execution status, and report completion. Do not use Scheduler to manage tasks that do not need UI visibility.\nmetadata:\n  short-description: Define scheduled tasks with administrator-facing execution history\n---\n\n# Develop Scheduled Tasks in an Application\n\nUse the installed version's public exports, without importing plugin internals. The application owns business logic, schedule declarations, Providers, permissions, and deployment timing. Scheduler owns scheduling projections, trigger history, and execution state. The plugin's `skills/` directory is the source of truth; do not edit the synchronized application copy under `.agents/skills/`.\n\n## Decide Whether to Use Scheduler\n\nThe primary reason to define tasks through Scheduler is **UI observability for business administrators**. Developers define schedules and execution logic in code. Business administrators use the task list and detail pages the application builds on the Scheduler API to view schedules, track individual executions, and enable or disable tasks when authorized.\n\nTasks that do not need to be viewed and tracked through the UI must not be managed by the Scheduler plugin. Give recurring ones a `ScheduleExecutor` of their own from the application's jobs service (`jobExecutorServiceToken` in `@nocobase/app-server/jobs`), and one-off background work a `JobExecutor`; the application development Skill describes both. For administrator-visible tasks, deliver Client registration, access permissions, meaningful task names, and accurate final execution status together; successful server-side dispatch alone is incomplete.\n\n## Then Choose the Execution Model\n\nAfter deciding to use Scheduler, choose according to business complexity:\n\n| Scenario                                                                                  | Choice          | Implementation boundary                                                                                  |\n| ----------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------- |\n| Periodic cleanup, cache refresh, a single report, or one business Service call            | Own target type | Short operations may complete directly; hand lengthy work to a `JobExecutor`                             |\n| A simple operation that happens hourly                                                    | Own target type | Cron alone is not a reason to introduce a heavier execution system                                       |\n| Immediate asynchronous execution                                                          | `JobExecutor`   | No Cron Schedule is needed                                                                               |\n| A one-time delay, such as ten minutes after a request                                     | Queue `delay`   | No Cron Schedule is needed; `JobExecutor` has no delay                                                   |\n| Another execution system with its own references, status queries, and completion protocol | Own target type | The same `registerTarget()` call, with `inspect()` and completion reporting for work that finishes later |\n\nEvery schedule points at a registered target; `registerTarget()` is the target extension surface, and there is no built-in target type. A target does not guarantee exactly-once external business effects; design business idempotency.\n\n## Read by Task\n\n- To create or change a schedule, read [Definitions, Registration, and Synchronization](references/definitions.md).\n- To register or review a target, hand its work to a `JobExecutor`, report completion, or diagnose a historical occurrence after retargeting, read [Target Extensions and Execution Protocol](references/targets.md).\n- To integrate or review the UI/API and permissions, interpret status, or diagnose missing definitions, read [Operations and Verification](references/operations.md), including the complete management route table, separate status dimensions, and application identity checks.\n\n## Development Loop\n\n1. Establish which tasks and execution records administrators need to see. Check Server/Client/CLI registration, page permissions, the application's `jobs` configuration (a `redis` adapter for more than one instance; `memory` serves one process) and `JobExecutorServiceProvider` composition and target availability, then choose or register the target type.\n2. Implement business logic and Providers in application source, and call `schedulerServiceToken.defineSchedule(definition)` with an application-wide stable key from that Provider's `register()`/`boot()`.\n3. Validate payload/input, timezone, idempotency, and the full asynchronous chain: submission, actual job execution, terminal notification, and recovery from persisted execution state. Obtain credentials through secure business Service configuration, never `target.config`.\n4. Run application type checks, relevant tests, and build. Synchronize definitions and, in development, use an administrator account to find the task in the UI and track a real execution to its final state. Confirm the business result.\n5. Report the schedule key, execution model, timezone, validation evidence, and unverified runtime boundaries. Use `--finalize` in production only when the complete manifest is visible.\n\nSchedules are defined in code. There is no management API for creating or editing Cron definitions, but the UI and API support enabling and disabling tasks. Do not modify `schedule_definitions`, `schedule_occurrences`, or the schedule backend's rules (BullMQ job schedulers, or the memory adapter's state file) directly, and do not add jobs under Scheduler's `@nocobase/app-plugin-scheduler` scope.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E8"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+      "lines": [
+        9,
+        30
+      ],
+      "sha256": "cc4daee55a38ba0b618b6105a3ca9d0ce9a9ceb173c73266685093e823b00999",
+      "observation": "operations.md 给出管理路由、页面授权资源与错误原因码，说明插件不贡献页面、启用/停用共用同一权限。",
+      "excerpt": "## Management Entry Points\n\nThe plugin contributes no pages: the application builds its schedule list and detail pages on the routes below and declares them among its own routes, guarded by the same permission. Definitions are maintained in source. The API supports viewing and enabling/disabling tasks, with no route for creating or editing Cron definitions.\n\nAll routes below require authentication and authorization for `{ resource: { type: 'page', id: 'scheduler.schedules' }, action: 'access' }`, checked before the schedule is looked up. Enabling/disabling currently uses the same permission, not a separate update action.\n\n| Method and path                                        | Response / effect                                                                                                                                                  |\n| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| `GET /api/scheduler/schedules`                         | `{ data: ScheduleListItem[], meta: { page, pageSize, total } }`; `page` (default 1) and `pageSize` (default 20, at most 100)                                       |\n| `GET /api/scheduler/schedules/:scheduleId`             | `{ data: ScheduleListItem }`                                                                                                                                       |\n| `GET /api/scheduler/schedules/:scheduleId/occurrences` | `{ data: ScheduleOccurrenceView[], meta: { nextPageToken? } }`, newest first; `pageSize` (default 20, at most 100) and `pageToken` from the previous page's `meta` |\n| `POST /api/scheduler/schedules/:scheduleId/enable`     | `{ data: ScheduleListItem }`; enables the task, no request body                                                                                                    |\n| `POST /api/scheduler/schedules/:scheduleId/disable`    | `{ data: ScheduleListItem }`; pauses the task, no request body                                                                                                     |\n\nFailures use the standard `/api` error body with domain `scheduler`: a caller without page access gets `403` with reason `SCHEDULE_ACCESS_REQUIRED`, an id this application has no schedule for gets `404` with reason `SCHEDULE_NOT_FOUND`, and an invalid `page`, `pageSize` or `pageToken` gets `400` with reason `INVALID_INPUT`. Treat `pageToken` as opaque; the last page has no `nextPageToken`.\n\nThe running application documents these routes under the `Scheduler` tag at `/api/swagger/docs` (JSON at `/api/swagger`, signed in), with the full `ScheduleListItem` and occurrence schemas; their operationIds are `schedulerListSchedules`, `schedulerGetSchedule`, `schedulerListOccurrences`, `schedulerEnableSchedule` and `schedulerDisableSchedule`.\n\nUse the id returned by list for `:scheduleId`, not the definition key or a target config value. Enabling/disabling affects future scheduling; it does not cancel work already started.\n\n`schedulerServiceToken` from `@nocobase/app-plugin-scheduler/server/tokens` is the plugin's one public service, and it is a contribution surface rather than an administration one:\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/seeder.js",
+      "lines": [
+        60,
+        82
+      ],
+      "sha256": "e3fe3ea102b7aa6a513d9baeb15c922ac9296992c69a4c5b381e600ba8e6d34a",
+      "observation": "Seeder.run 仅在 options.sample.enabled 为 true 时执行 sample:true 的种子，否则记录 status='skipped'；runSamples 只重跑被跳过的样本。",
+      "excerpt": "            const skipped = seeds\n                .filter((seed) => appliedNames.has(seed.name))\n                .map((seed) => seed.name);\n            const executed = [];\n            const skippedSamples = [];\n            const samplesEnabled = this.options.sample?.enabled === true;\n            for (const seed of pending) {\n                if (seed.seed.sample === true && !samplesEnabled) {\n                    await recordSeedCompleted(seedConnection, {\n                        tableName: this.options.tableName,\n                        packageName: seed.packageName,\n                        name: seed.name,\n                        checksum: seed.checksum,\n                        durationMs: null,\n                        status: 'skipped',\n                    });\n                    skippedSamples.push(seed.name);\n                    continue;\n                }\n                await this.runSeed(connection, seed);\n                executed.push(seed.name);\n            }\n            return { executed, skipped, skippedSamples, warnings };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/builder/builder.js",
+      "lines": [
+        85,
+        95
+      ],
+      "sha256": "105281a90da5f2b63b36b38dd7f3640498ebfd284293ef37887c3a93fd4dd029",
+      "observation": "builder.createCollection/createCollections 归一化输入后应用到集合定义。",
+      "excerpt": "    async createCollection(name, input, options = {}) {\n        const definition = normalizeCollectionInput(input);\n        return this.apply([{ type: 'createCollection', name, definition }], options);\n    }\n    async createCollections(inputs, options = {}) {\n        return this.apply(inputs.map(({ name, definition }) => ({\n            type: 'createCollection',\n            name,\n            definition: normalizeCollectionInput(definition),\n        })), options);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        469,
+        499
+      ],
+      "sha256": "da33aad308dac8efb239475a8ab0b9f194eb591a841794799680bb6fedda7847",
+      "observation": "Repository.updateMany 校验写策略、过滤与值后走 adapter.updateMany，支持原地批量更新。",
+      "excerpt": "    async updateMany(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeFieldWritePolicy(policyInput);\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'update', collection);\n        if (writePolicy !== true)\n            validatePolicyFields(collection, writePolicy, ['writePolicy']);\n        const filter = await this.normalizeMutationFilter(collection, options.filter, options.context, options.all === true, 'update');\n        const values = validateValues(collection, evaluateValues(options.values), 'updateMany', false, options.context);\n        assertFieldWrites(values, writePolicy, ['values'], [], 'update', collection.name);\n        this.assertPolicyMutationFields(collection, { values }, 'update', [\n            'values',\n        ]);\n        const selection = options.select\n            ? await this.validateSelect(collection, options.select, options.context, this.readContext(collection))\n            : undefined;\n        if (selection)\n            assertBulkReturningIdentity(collection);\n        const result = await this.options.adapter.updateMany({\n            collection,\n            meta: normalizeRepositoryEventMeta(options.meta, collection.name),\n            filter,\n            all: options.all === true,\n            values,\n            fields: selection",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E12"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        140,
+        150
+      ],
+      "sha256": "c85ea67b6e949cd7fa9f0fa79fa63f0b70549ab0256c0881c372f8185dd9521e",
+      "observation": "SKILL 说明种子幂等、sample:true 仅在 APP_SAMPLE_DATA=true 或 fresh install 时运行，否则记录 skipped，pnpm nocobase db sample 可在开发期补跑。",
+      "excerpt": "- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nSample data goes in the same `seeds` directory, declared with `defineSeed({ name, sample: true, run })`. It runs only when the application installs its database with `app.sampleData` set (`APP_SAMPLE_DATA=true`): the connection held no migration or seed history before that start, or `db reset` rebuilt it. Otherwise the seed is recorded as skipped and never runs on its own; `pnpm nocobase db sample` runs every skipped sample seed in development, and a deployment refuses it. Sample data that has to go through other plugins' services, such as projects with issues, is registered instead on `sampleDataToken` from `@nocobase/app-server/sample-data`, from a service provider's `boot()`: `container.resolve(sampleDataToken).register({ name, packageName, run })`. It runs once the application is ready, under the same condition, and is recorded in the default connection's seed history as `sample-data:<name>`. The seed history's `status` column, `executed` or `skipped`, records which happened; the library adds it to an existing history table on the next run.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E13"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+      "lines": [
+        15,
+        25
+      ],
+      "sha256": "8cbe345a27acd2fe81bab53cc0cb622b2e49b03207f8aca1e38d8fcfaa4db78f",
+      "observation": "migrations.md 明确‘样本数据不是必需数据’，并给出 freshInstall/skippedSamples 报告与 pnpm nocobase db sample 的开发期语义。",
+      "excerpt": "```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.\n\nSample data is not required data. Put it in the same `seeds` directory as `defineSeed({ name, sample: true, run })`, or, when it has to go through plugins' services, register it on `sampleDataToken` from `@nocobase/app-server/sample-data` in a service provider's `boot()`; `.agents/skills/nocobase-db/SKILL.md` section 2 has the details. Both load only while the run installs the connection — it held no migration or seed history, or `db reset` rebuilt it — with `app.sampleData` set (`APP_SAMPLE_DATA=true`); otherwise they are recorded as skipped. The seeds entry of a run reports `freshInstall` and, when it skipped any, `skippedSamples`. `pnpm nocobase db sample` runs what was skipped, in development only: a built `dist/` refuses it.\n\n## Multiple connections\n\nUse `database/<connectionName>/migrations` and `database/<connectionName>/seeds`. Each name must match a configured connection and contain only letters, digits, underscores or hyphens. Directories do not register connections. A connection without application-owned database source needs no empty directory.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/provider.js",
+      "lines": [
+        1,
+        11
+      ],
+      "sha256": "5de6708073c4bd508b7ede97f648f40d75f0e14bd0b9913a0d81e8876b8ea186",
+      "observation": "ServiceProvider 定义 register/boot/start 生命周期骨架。",
+      "excerpt": "export class ServiceProvider {\n    app;\n    constructor(app) {\n        this.app = app;\n    }\n    register() { }\n    async boot() { }\n    async start() { }\n    async ready() { }\n    async shutdown() { }\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/container.js",
+      "lines": [
+        1,
+        30
+      ],
+      "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca",
+      "observation": "ServiceContainer 提供 instance/singleton/has/resolve，按令牌对象身份绑定与解析。",
+      "excerpt": "export class ServiceContainer {\n    bindings = new Map();\n    resolving = [];\n    instance(token, value) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory: () => value,\n            instance: value,\n            state: 'created',\n        });\n    }\n    singleton(token, factory) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory,\n            instance: undefined,\n            state: 'pending',\n        });\n    }\n    has(token) {\n        return this.bindings.has(token);\n    }\n    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }\n        if (binding.state === 'created') {\n            return binding.instance;\n        }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E16"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/routes.js",
+      "lines": [
+        1,
+        18
+      ],
+      "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617",
+      "observation": "defineApiRoutes 返回 { scope: 'api', createRouter } 冻结贡献对象。",
+      "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E17"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/plugins/define.js",
+      "lines": [
+        1,
+        27
+      ],
+      "sha256": "e6b057640c49473cb4008357312869ac7c46352d21872dc04b8ec68097f76db3",
+      "observation": "defineServerPlugin 冻结 packageName/baseDir/serviceProviders/routes/database/queue/locales 贡献。",
+      "excerpt": "import path from 'node:path';\nconst PACKAGE_NAME_PATTERN = /^@[a-z0-9][a-z0-9-]*\\/[a-z0-9][a-z0-9-]*$/;\nexport function defineServerPlugin(definition) {\n    const packageName = normalizePackageName(definition.packageName);\n    if (typeof definition.baseDir !== 'string' ||\n        !path.isAbsolute(definition.baseDir)) {\n        throw new Error(`Server plugin \"${packageName}\" requires an absolute baseDir. Set baseDir relative to the declaring module with import.meta.dirname.`);\n    }\n    return Object.freeze({\n        packageName,\n        baseDir: path.normalize(definition.baseDir),\n        serviceProviders: Object.freeze([...(definition.serviceProviders ?? [])]),\n        routes: Object.freeze([...(definition.routes ?? [])]),\n        database: definition.database\n            ? Object.freeze({ ...definition.database })\n            : undefined,\n        queue: definition.queue\n            ? Object.freeze({\n                ...definition.queue,\n                jobs: definition.queue.jobs\n                    ? Object.freeze([...definition.queue.jobs])\n                    : undefined,\n            })\n            : undefined,\n        locales: definition.locales,\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E18"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+      "lines": [
+        14,
+        60
+      ],
+      "sha256": "873a1e7927f6468fefc75876dfa24b63b138a54446bc2636d5bef95a298a15d4",
+      "observation": "services-and-jobs.md 给出 ServiceProvider/createServiceToken 范式、‘令牌即身份’规则与 register() 阶段职责。",
+      "excerpt": "import { databaseManagerToken } from '@nocobase/db';\nimport {\n  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.\n\n## Provider lifecycle\n\n| Method       | Runs                             | For                                              |\n| ------------ | -------------------------------- | ------------------------------------------------ |\n| `register()` | Assembly, before anything starts | Binding tokens. Do not connect or start anything |\n| `boot()`     | After all providers registered   | Work needing other services                      |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/hooks.js",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55",
+      "observation": "app-client hooks 提供 useClientApplication/useService/useApiClient。",
+      "excerpt": "import { useContext } from 'react';\nimport { apiClientToken } from './application.js';\nimport { ClientApplicationContext } from './application-context.js';\nexport function useClientApplication() {\n    const app = useContext(ClientApplicationContext);\n    if (!app) {\n        throw new Error('useClientApplication() must be used inside AppClientRoot.');\n    }\n    return app;\n}\nexport function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        60,
+        100
+      ],
+      "sha256": "e4f69bd212342dd58ac3b15d4fac115e857b8ed2dd54c0411d1fb95a65ac1820",
+      "observation": "defineAppRoutes 返回冻结的路由贡献并递归冻结子路由；defineClientRouteComponentOverrides 归一化覆盖。",
+      "excerpt": "function resolveContribution(contribution, options) {\n    return typeof contribution === 'function'\n        ? contribution(options)\n        : contribution;\n}\nfunction resolveServiceProviders(contribution, options) {\n    const providers = resolveContribution(contribution, options) ?? [];\n    return providers;\n}\nexport function defineAppRoutes(routes) {\n    return Object.freeze({\n        parent: 'app',\n        routes: freezeNavigationRoutes(routes),\n    });\n}\nfunction freezeNavigationRoutes(routes) {\n    return Object.freeze(routes.map((route) => Object.freeze({\n        ...route,\n        ...(route.navigation\n            ? { navigation: Object.freeze({ ...route.navigation }) }\n            : {}),\n        ...(route.children\n            ? { children: freezeNavigationRoutes(route.children) }\n            : {}),\n    })));\n}\nfunction isDevelopment() {\n    return !import.meta.env?.PROD;\n}\nexport function defineClientRouteComponentOverrides(overrides) {\n    return Object.freeze(overrides.map((override) => Object.freeze({\n        ...override,\n        routeId: normalizeRouteOverrideId(override.routeId),\n        componentEntry: normalizeOptionalComponentEntry(override.componentEntry, override.routeId),\n    })));\n}\nexport function defineClientSourceExtension(extension) {\n    const name = extension.name.trim();\n    if (!name) {\n        throw new Error('A client source extension must define a non-empty name.');\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E21"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+      "lines": [
+        1,
+        55
+      ],
+      "sha256": "81c568baff9d3f2bee707a4976e67523121741ca1cbb0707d972e96ecf55e4b7",
+      "observation": "page.md 说明页面在 client/pages、路由在 client/routes.ts 追加，给出 defineAppRoutes 与 authz 取值示例。",
+      "excerpt": "# Pages, menus and routes\n\nA page is a React component under `client/pages/`; routes and menus are declared in `client/routes.ts`. For child pages, tabs and navigation groups, see [`child-routes.md`](child-routes.md); for dialogs and drawers, see [`overlay.md`](overlay.md).\n\nBefore writing a new page, find the closest file in the worked example: the task table of [`example.md`](example.md) names where a list page, a form too long for a dialog and a settings page start. How to use each component comes from the shadcn skill ([`shadcn.md`](shadcn.md)).\n\n## 1. Declare the route\n\nAppend an entry to the end of the existing `defineAppRoutes([...])` array in `client/routes.ts`. Leave the existing routes (home, sign-in pages) as they are, and do not overwrite the whole file. Add the icon to the existing `lucide-react` import at the top of the file, and the route type to the existing `@nocobase/app-client/plugins` import:\n\n```ts\nimport { FolderKanban, Home } from 'lucide-react';\nimport {\n  defineAppRoutes,\n  type AppClientRouteContribution,\n  type AppClientRouteDefinition,\n} from '@nocobase/app-client/plugins';\n```\n\nThe projects list page to append, with child routes for create, edit, detail and the edit stacked on the detail. The detail drawer and its edit dialog come from a function, because every page that opens a project declares the same pair under itself, so the drawer opens over that page ([section 2.1 of `overlay.md`](overlay.md#21-declare-the-child-routes)):\n\n```ts\n/** The project drawer and the edit dialog stacked on it, under a page that opens projects; `owner` keeps the names unique. */\nfunction projectDetailRoutes(owner: string): AppClientRouteDefinition[] {\n  return [\n    {\n      // …/:projectId: detail drawer (RouteDrawer), over the page that declares it\n      name: `${owner}-detail`,\n      path: ':projectId',\n      authz: 'skip',\n      componentLoader: () => import('./pages/projects/detail/index.js'),\n      children: [\n        {\n          // …/:projectId/edit: edit dialog, stacked on the drawer\n          name: `${owner}-detail-edit`,\n          path: 'edit',\n          authz: 'skip',\n          componentLoader: () => import('./pages/projects/detail/edit.js'),\n        },\n      ],\n    },\n  ];\n}\n\nconst appRoutes: AppClientRouteContribution = defineAppRoutes([\n  // … existing routes (home, sign-in pages); keep them\n  {\n    name: 'projects',\n    path: '/projects',\n    auth: 'required',\n    authz: 'skip',\n    navigation: { title: 'navigation.projects', icon: FolderKanban },\n    componentLoader: () => import('./pages/projects/index.js'),\n    children: [\n      {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authorization/dist/server/authorization.js",
+      "lines": [
+        15,
+        45
+      ],
+      "sha256": "e7b847d5ab40696cf5622d4e20584bca666b4a1590ad9bba519447849afca482",
+      "observation": "createAppAuthorization 装配 permissionSets/database/pages/settings/ui 插件，并注册 authenticated 主体。",
+      "excerpt": "export function createAppAuthorization(options) {\n    const sets = options.config?.permissionSets;\n    const connection = new DatabaseConnectionHandle('Permission Sets', options.connection);\n    const authz = createAuthorization({\n        connection: options.connection,\n        onInvalidGrant: (grant) => options.onInvalidGrant?.(grant),\n        plugins: [\n            permissionSetsPlugin({\n                store: new DatabasePermissionSetStore(connection.resolve),\n                rootSet: {\n                    key: sets?.rootSet ?? DEFAULT_ROOT_SET,\n                    // `user` is this host's principal type: a superuser is an account.\n                    assignableTo: ['user'],\n                },\n                defaultSet: sets?.defaultSet ?? DEFAULT_DEFAULT_SET,\n            }),\n            databasePlugin(options.database),\n            pagesPlugin(),\n            settingsPlugin(),\n            uiPlugin(),\n            ...(options.config?.plugins ?? []),\n        ],\n    });\n    authz.subjects.add('authenticated', {\n        filterActive: async (ids) => ids.filter((id) => id === '*'),\n        administration: {\n            title: text('options.subjectTypes.authenticated'),\n            selection: { type: 'fixed', id: '*' },\n        },\n    });\n    authz.use(async (request, next) => {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E23"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-1/browser-acceptance/report.json",
+      "lines": [
+        1,
+        30
+      ],
+      "sha256": "357c5f179a8ddb052b661e4a140eedb603d5d97ea8c8ff04d450e1993718e57b",
+      "observation": "QA 报告 passed=false：B01/B02 因样本数据未加载 blocked，B03 通过（停用后完整刷新仍 Disabled）；计划 Enabled、按分钟真实调度、执行记录 Succeeded。",
+      "excerpt": "{\n  \"passed\": false,\n  \"authenticated\": true,\n  \"summary\": \"已用 admin 登录并通过真实浏览器验收调度专项。Mark overdue todos 计划处于启用状态，cron `* * * * *`（UTC），观察期间确实按分钟真实调度：运行/成功次数由 6/6 增至 8/8，执行记录全部 Succeeded，Detail 均为 {\\\"marked\\\":0}。但 Todos 页显示 No todos yet，/main/api/todos 返回 total=0、data=[]，样本过期待办/未来待办/已完成待办均不存在，导致 B01（只有过期且未完成被标记）与 B02（重复执行总数不增加、状态仍正确）无法验证，属测试准备前置条件缺失，记为 blocked。B03 通过：在 Schedules 页 Actions 点击 Disable 后状态由 Enabled 变为 Disabled，完整刷新后仍为 Disabled、Next run 为 Not planned，停用配置持久化正确。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"启用计划并观察一次真实调度，执行记录显示结果；只有过期且未完成的记录被标记。\",\n      \"status\": \"blocked\",\n      \"reason\": \"样本数据未加载：Todos 页面显示 No todos yet，/main/api/todos 返回 meta.total=0、data=[]，因此无法观察“只有过期且未完成的记录被标记”，也无法准备过期待办/未来待办/已完成待办各一条。计划本身为 Enabled、cron `* * * * *`，并已真实按分钟调度（观察期间运行次数由 6/6 增至 8/8，执行记录全部 Succeeded）。样本 seed（database/main/seeds/202610130200_sample_todos.ts，sample:true）仅在安装时 APP_SAMPLE_DATA=true 才载入；当前运行数据库安装早于该 seed 文件且环境未设置该变量，属测试准备/环境前置条件缺失，非业务逻辑观察到错误。\",\n      \"actions\": [\n        \"使用 admin 账号登录并打开 Schedules 页，确认 Mark overdue todos 状态 Enabled、cron 为 `* * * * *`（UTC）\",\n        \"展开该计划 Actions 菜单并进入 Execution results 查看执行记录\",\n        \"等待跨过每分钟调度点后完整刷新 /main/schedules，观察运行次数由 6/6 增至 8/8\",\n        \"打开 Todos 页并调用 /main/api/todos 查询列表与总数\"\n      ],\n      \"evidence\": [\n        \"计划 Enabled，Next run 每分钟推进；执行记录 8 条全部 Succeeded，Detail 均为 {\\\"marked\\\":0}\",\n        \"Todos 页面显示 No todos yet，/main/api/todos 返回 data:[] 且 meta.total=0，不存在过期待办/未来待办/已完成待办\"\n      ],\n      \"screenshots\": [\n        \"b01-schedules-enabled.png\",\n        \"b01-execution-results.png\",\n        \"b01-todos-empty.png\"\n      ],\n      \"recordedAt\": 1791855374961\n    },\n    {\n      \"id\": \"B02\",\n      \"criterion\": \"再执行同一目标一次，待办总数不增加，状态仍正确。\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E24"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-execution-results.png",
+      "lines": null,
+      "sha256": "256cd7a13521d91260f65c295769a034e944ac6213fa2c3a798c3a9c2ae4c882",
+      "observation": "QA 采集的 Schedules 执行记录截图文件；评审者本轮无法渲染图像，未据此评分，内容描述见 QA 报告。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-execution-results.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E25"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-disabled-after-reload.png",
+      "lines": null,
+      "sha256": "b41d0020ae388d9394125835b1fc5951cf2aedbaedc5790639e7b690142bb44f",
+      "observation": "QA 采集的停用并刷新后状态截图文件；评审者本轮无法渲染图像，未据此评分，内容描述见 QA 报告。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-disabled-after-reload.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E26"
+      },
+      "kind": "code",
+      "path": "app/database/main/seeds/202610130200_sample_todos.ts",
+      "lines": [
+        1,
+        21
+      ],
+      "sha256": "fb49551caaee02f9524805df46247c903a00006dd98b7c2d201c1ce26788e87e",
+      "observation": "app 以 sample:true 声明 3 条待办（过期/未来/已完成），并注释其仅在 APP_SAMPLE_DATA=true 或 db sample 时载入且按 title 幂等。",
+      "excerpt": "import { defineSeed } from '@nocobase/db';\n\n/** The one row a seed manages here, as this seed writes it; spelled out rather than imported from a model. */\ninterface TodoRow {\n  readonly title: string;\n  readonly dueAt: Date;\n  readonly completed: boolean;\n  readonly overdue: boolean;\n}\n\n/**\n * Three todos that make the overdue marking observable: one past due and open (the schedule must flag it), one far in\n * the future and open (it must stay untouched), and one past due but completed (it must stay untouched as well).\n *\n * Sample data, so it loads only when the database is installed with `APP_SAMPLE_DATA=true`; `pnpm nocobase db sample`\n * loads it afterwards in development. It is idempotent and keyed on the unique `title`: an existing row is left exactly\n * as it is, so a person editing these rows never has their change overwritten by a later run.\n */\nconst seed = defineSeed({\n  name: '202610130200_sample_todos',\n  sample: true,",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "app/server/providers/todos.ts",
+      "lines": [
+        73,
+        85
+      ],
+      "sha256": "feb3958acfa22b5315504eec6a6fa80334acdb95d4907691b2368565735b89a1",
+      "observation": "TodoService.markOverdue 用 repository.updateMany 原地把过期未完成待办置 overdue，不新增行。",
+      "excerpt": "  async markOverdue(now: Date = new Date()): Promise<OverdueMarkResult> {\n    const result = await this.repository().updateMany({\n      filter: (filter) =>\n        filter.and([\n          filter.boolean('completed').isFalse(),\n          filter.boolean('overdue').isFalse(),\n          filter.date('dueAt').notAfter(now),\n        ]),\n      values: { overdue: true },\n    });\n\n    return { marked: result.updatedCount };\n  }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/client/pages/schedules.tsx",
+      "lines": [
+        95,
+        135
+      ],
+      "sha256": "110eeb4631034e88dc25a7074bab37c8ad06ec7f03a9ece09fea406b738ec92d",
+      "observation": "Schedules 页通过 api.request 调用 scheduler/schedules 列表与 enable/disable，并在成功后失效查询、失败时 toaster 报错。",
+      "excerpt": "/**\n * Route `/schedules`: a minimal management UI over the Scheduler plugin's API, because the plugin ships the API but no\n * page. It lists every schedule with its name, cron, enabled state, next run and run counts, and expands one row into\n * its execution history. Enabling and disabling go through the plugin's own routes, so the state it shows is the state\n * the scheduler stored.\n */\nexport default function SchedulesPage(): ReactElement {\n  const api = useApiClient();\n  const toaster = useToaster();\n  const queryClient = useQueryClient();\n  const { t, i18n } = useTranslation();\n  const [expandedId, setExpandedId] = useState<string>();\n\n  const query = useQuery({\n    queryKey: ['scheduler', 'schedules', 'list'],\n    queryFn: ({ signal }) =>\n      api.request<ScheduleListResponse>({\n        path: 'scheduler/schedules',\n        query: { page: 1, pageSize: 100 },\n        signal,\n      }),\n  });\n\n  const setEnabled = useMutation({\n    mutationFn: ({\n      id,\n      enabled,\n    }: {\n      readonly id: string;\n      readonly enabled: boolean;\n    }) =>\n      api.request({\n        path: `scheduler/schedules/${id}/${enabled ? 'enable' : 'disable'}`,\n        method: 'POST',\n      }),\n    onSuccess: () => {\n      void queryClient.invalidateQueries({\n        queryKey: ['scheduler', 'schedules'],\n      });\n    },\n    onError: () =>",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E29"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0032.txt",
+      "lines": [
+        1670,
+        1672
+      ],
+      "sha256": "e9bc248b16c09a5e13bb19e8ac52b0603afec87d35a20d9b0d41abac3dfc2f14",
+      "observation": "实现侧 sqlite 输出：两次 occurrence 均 succeeded，todos 中 Overdue todo overdue=1、Future todo overdue=0、Completed todo overdue=0。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_5Jk4OobR3emGfYdOAU5z9367\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"=== occurrences (after another minute) ===\\nschedule_id|status|started_at\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:17:00.002Z\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:16:29.301Z\\n=== todos ===\\nid|title|overdue|completed\\n1|Overdue todo|1|0\\n2|Future todo|0|0\\n3|Completed todo|0|1\\n=== total todos ===\\n3\\n=== dev server still up? ===\\n000\\n\\n\\nCommand exited with code 7\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_5Jk4OobR3emGfYdOAU5z9367\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== occurrences (after another minute) ===\\nschedule_id|status|started_at\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:17:00.002Z\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:16:29.301Z\\n=== todos ===\\nid|title|overdue|completed\\n1|Overdue todo|1|0\\n2|Future todo|0|0\\n3|Completed todo|0|1\\n=== total todos ===\\n3\\n=== dev server still up? ===\\n000\\n\\n\\nCommand exited with code 7\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854310558}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_5Jk4OobR3emGfYdOAU5z9367\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== occurrences (after another minute) ===\\nschedule_id|status|started_at\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:17:00.002Z\\n3443b2139779cb9f0951be0b98370ab427132bfe3c0a876ac65e0f78395ddad1|succeeded|2026-10-13T01:16:29.301Z\\n=== todos ===\\nid|title|overdue|completed\\n1|Overdue todo|1|0\\n2|Future todo|0|0\\n3|Completed todo|0|1\\n=== total todos ===\\n3\\n=== dev server still up? ===\\n000\\n\\n\\nCommand exited with code 7\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854310558}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E30"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0009.txt",
+      "lines": [
+        994,
+        996
+      ],
+      "sha256": "6ea008971f1b92bec10629b5b5ae83054c351d7042192685cb3632f2c5fbf7c3",
+      "observation": "探索命令读取 inbox registry 并 find 不存在的 node_modules/@nocobase/api-client，find 退出码 2。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_DMmIFGhSsbqIP9fZjySO2928\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"/** A renderer's identity, to key what renders an item: an item's renderer changes once its notice arrives. */\\nexport function rendererKey(renderer: InboxEntryRenderer<never>): string {\\n  return `${renderer.source}/${renderer.types?.join(',') ?? '*'}`;\\n}\\n\\n/** The renderer of an item in the registry in effect. */\\nexport function useRendererOf(): (\\n  entry: InboxEntry,\\n) => InboxEntryRenderer<never> {\\n  const registry = useInboxRegistry();\\n  return (entry) => rendererFor(registry, entry);\\n}\\n\\nexport interface FeedItems {\\n  readonly feed: InboxFeed<never>;\\n  readonly items: readonly unknown[];\\n}\\n\\n/** The feeds of `registry` with the items each has waiting on the viewer. */\\nexport function useFeedItems(registry: InboxRegistry): readonly FeedItems[] {\\n  const { feeds } = registry;\\n  const api = useApiClient();\\n  const combine = useCallback(\\n    (results: readonly { readonly data?: unknown }[]): FeedItems[] =>\\n      feeds.map((feed, index) => ({\\n        feed,\\n        items: (results[index]?.data as readonly unknown[] | undefined) ?? [],\\n      })),\\n    [feeds],\\n  );\\n  return useQueries({\\n    queries: feeds.map((feed) => {\\n      const query = feed.query(api);\\n      return {\\n        queryKey: query.queryKey,\\n        queryFn: query.queryFn,\\n        select: query.select,\\n        retry: false,\\n        staleTime: query.staleTime ?? 30_000,\\n      };\\n    }),\\n    combine,\\n  });\\n}\\n=== api-client types ===\\nfind: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_DMmIFGhSsbqIP9fZjySO2928\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"/** A renderer's identity, to key what renders an item: an item's renderer changes once its notice arrives. */\\nexport function rendererKey(renderer: InboxEntryRenderer<never>): string {\\n  return `${renderer.source}/${renderer.types?.join(',') ?? '*'}`;\\n}\\n\\n/** The renderer of an item in the registry in effect. */\\nexport function useRendererOf(): (\\n  entry: InboxEntry,\\n) => InboxEntryRenderer<never> {\\n  const registry = useInboxRegistry();\\n  return (entry) => rendererFor(registry, entry);\\n}\\n\\nexport interface FeedItems {\\n  readonly feed: InboxFeed<never>;\\n  readonly items: readonly unknown[];\\n}\\n\\n/** The feeds of `registry` with the items each has waiting on the viewer. */\\nexport function useFeedItems(registry: InboxRegistry): readonly FeedItems[] {\\n  const { feeds } = registry;\\n  const api = useApiClient();\\n  const combine = useCallback(\\n    (results: readonly { readonly data?: unknown }[]): FeedItems[] =>\\n      feeds.map((feed, index) => ({\\n        feed,\\n        items: (results[index]?.data as readonly unknown[] | undefined) ?? [],\\n      })),\\n    [feeds],\\n  );\\n  return useQueries({\\n    queries: feeds.map((feed) => {\\n      const query = feed.query(api);\\n      return {\\n        queryKey: query.queryKey,\\n        queryFn: query.queryFn,\\n        select: query.select,\\n        retry: false,\\n        staleTime: query.staleTime ?? 30_000,\\n      };\\n    }),\\n    combine,\\n  });\\n}\\n=== api-client types ===\\nfind: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853086615}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_DMmIFGhSsbqIP9fZjySO2928\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"/** A renderer's identity, to key what renders an item: an item's renderer changes once its notice arrives. */\\nexport function rendererKey(renderer: InboxEntryRenderer<never>): string {\\n  return `${renderer.source}/${renderer.types?.join(',') ?? '*'}`;\\n}\\n\\n/** The renderer of an item in the registry in effect. */\\nexport function useRendererOf(): (\\n  entry: InboxEntry,\\n) => InboxEntryRenderer<never> {\\n  const registry = useInboxRegistry();\\n  return (entry) => rendererFor(registry, entry);\\n}\\n\\nexport interface FeedItems {\\n  readonly feed: InboxFeed<never>;\\n  readonly items: readonly unknown[];\\n}\\n\\n/** The feeds of `registry` with the items each has waiting on the viewer. */\\nexport function useFeedItems(registry: InboxRegistry): readonly FeedItems[] {\\n  const { feeds } = registry;\\n  const api = useApiClient();\\n  const combine = useCallback(\\n    (results: readonly { readonly data?: unknown }[]): FeedItems[] =>\\n      feeds.map((feed, index) => ({\\n        feed,\\n        items: (results[index]?.data as readonly unknown[] | undefined) ?? [],\\n      })),\\n    [feeds],\\n  );\\n  return useQueries({\\n    queries: feeds.map((feed) => {\\n      const query = feed.query(api);\\n      return {\\n        queryKey: query.queryKey,\\n        queryFn: query.queryFn,\\n        select: query.select,\\n        retry: false,\\n        staleTime: query.staleTime ?? 30_000,\\n      };\\n    }),\\n    combine,\\n  });\\n}\\n=== api-client types ===\\nfind: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853086615}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E31"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0016.txt",
+      "lines": [
+        2523,
+        2525
+      ],
+      "sha256": "766dc35c93cb202d9c904e85544025ff27a271845853ffc147a025b1286beaa5",
+      "observation": "再次 find node_modules/@nocobase/api-client 报 No such file or directory，退出码 2。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_1vC9LEzR60ufvxL939jZ0396\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client’: No such file or directory\\n===\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_1vC9LEzR60ufvxL939jZ0396\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client’: No such file or directory\\n===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853370796}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_1vC9LEzR60ufvxL939jZ0396\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client’: No such file or directory\\n===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853370796}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E32"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0019.txt",
+      "lines": [
+        2857,
+        2859
+      ],
+      "sha256": "0b9cee8902fbb6b79034ce5508855a0a87d4547ee5f1e477d81bf1114a8cf3f0",
+      "observation": "grep FindOneOptions 无匹配，退出码 1。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_xe1N0vVwqb4PjZY3aCgl4905\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"11:export interface FindManyOptions<TRecord extends object> extends RepositoryReadOptions<TRecord> {\\n12-    readonly filter?: RepositoryFilter<TRecord>;\\n13-    readonly sort?: RepositorySort<TRecord>;\\n14-    readonly distinct?: readonly [\\n15-        keyof TRecord & string,\\n16-        ...(keyof TRecord & string)[]\\n17-    ];\\n18-    readonly cursor?: RepositoryCursor<TRecord>;\\n19-    readonly direction?: RepositoryCursorDirection;\\n20-    readonly limit?: number;\\n21-    readonly offset?: number;\\n22-}\\n23-export interface RepositoryQuery<T> extends PromiseLike<T[]>, AsyncIterable<T> {\\n24-    catch<TResult = never>(onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null): Promise<T[] | TResult>;\\n25-    finally(onfinally?: (() => void) | null): Promise<T[]>;\\n26-}\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_xe1N0vVwqb4PjZY3aCgl4905\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"11:export interface FindManyOptions<TRecord extends object> extends RepositoryReadOptions<TRecord> {\\n12-    readonly filter?: RepositoryFilter<TRecord>;\\n13-    readonly sort?: RepositorySort<TRecord>;\\n14-    readonly distinct?: readonly [\\n15-        keyof TRecord & string,\\n16-        ...(keyof TRecord & string)[]\\n17-    ];\\n18-    readonly cursor?: RepositoryCursor<TRecord>;\\n19-    readonly direction?: RepositoryCursorDirection;\\n20-    readonly limit?: number;\\n21-    readonly offset?: number;\\n22-}\\n23-export interface RepositoryQuery<T> extends PromiseLike<T[]>, AsyncIterable<T> {\\n24-    catch<TResult = never>(onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null): Promise<T[] | TResult>;\\n25-    finally(onfinally?: (() => void) | null): Promise<T[]>;\\n26-}\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853529893}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_xe1N0vVwqb4PjZY3aCgl4905\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"11:export interface FindManyOptions<TRecord extends object> extends RepositoryReadOptions<TRecord> {\\n12-    readonly filter?: RepositoryFilter<TRecord>;\\n13-    readonly sort?: RepositorySort<TRecord>;\\n14-    readonly distinct?: readonly [\\n15-        keyof TRecord & string,\\n16-        ...(keyof TRecord & string)[]\\n17-    ];\\n18-    readonly cursor?: RepositoryCursor<TRecord>;\\n19-    readonly direction?: RepositoryCursorDirection;\\n20-    readonly limit?: number;\\n21-    readonly offset?: number;\\n22-}\\n23-export interface RepositoryQuery<T> extends PromiseLike<T[]>, AsyncIterable<T> {\\n24-    catch<TResult = never>(onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null): Promise<T[] | TResult>;\\n25-    finally(onfinally?: (() => void) | null): Promise<T[]>;\\n26-}\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853529893}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E33"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0029.txt",
+      "lines": [
+        570,
+        572
+      ],
+      "sha256": "1988ed8a56281821fc02027eb1f95b17057c2cc8d308fbaf4044963de73a09a3",
+      "observation": "find 未命中后 sed 收到空文件名，报 No such file or directory，退出码 2。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_csr8bhc9\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"\\nsed: can't read : No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_csr8bhc9\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"\\nsed: can't read : No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853863611}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_csr8bhc9\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"\\nsed: can't read : No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1791853863611}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E34"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0031.txt",
+      "lines": [
+        1041,
+        1043
+      ],
+      "sha256": "d0d37f752d278ba322a7282a62d2be93d36c3b72a349dbe30c8aa2ac37dc11af",
+      "observation": "require('better-sqlite3') 在 pnpm 严格 node_modules 下报 Cannot find module，退出码 1。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_u7SGscxgYEJGTxILywPg0143\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_u7SGscxgYEJGTxILywPg0143\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854145807}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_u7SGscxgYEJGTxILywPg0143\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854145807}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E35"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        258,
+        263
+      ],
+      "sha256": "48bd1a373a65639f71f253c2cab2e6c78b4c747f7437edcb932acd2086183a58",
+      "observation": "QA 启动阶段 cat 录制状态文件不存在，退出码 1（录制尚未开始）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_pp45xy6d\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 5 runner runner 4096 Oct 13 01:28 ..\\n=== evidence ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 3 runner runner 4096 Oct 13 01:28 ..\\n=== recording state ===\\ncat: /home/runner/work/_temp/repair-state/verify-1/browser-acceptance/recording-active: No such file or directory\\n=== showcase ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/showcase.json: No such file or directory\\n=== report ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/report.json: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_2x2wb0oo\",\"toolName\":\"bash\",\"args\":{\"command\":\"agent-browser --session \\\"$AGENT_BROWSER_SESSION\\\" get url 2>&1; echo \\\"exit=$?\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"about:blank\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_2x2wb0oo\",\"toolName\":\"bash\",\"args\":{\"command\":\"agent-browser --session \\\"$AGENT_BROWSER_SESSION\\\" get url 2>&1; echo \\\"exit=$?\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"about:blank\\nexit=0\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_2x2wb0oo\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"about:blank\\nexit=0\\n\"}]},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_pp45xy6d\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 5 runner runner 4096 Oct 13 01:28 ..\\n=== evidence ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 3 runner runner 4096 Oct 13 01:28 ..\\n=== recording state ===\\ncat: /home/runner/work/_temp/repair-state/verify-1/browser-acceptance/recording-active: No such file or directory\\n=== showcase ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/showcase.json: No such file or directory\\n=== report ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/report.json: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854921958}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_pp45xy6d\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 5 runner runner 4096 Oct 13 01:28 ..\\n=== evidence ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct 13 01:28 .\\ndrwxr-xr-x 3 runner runner 4096 Oct 13 01:28 ..\\n=== recording state ===\\ncat: /home/runner/work/_temp/repair-state/verify-1/browser-acceptance/recording-active: No such file or directory\\n=== showcase ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/showcase.json: No such file or directory\\n=== report ===\\ncat: /home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance/report.json: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791854921958}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E36"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0006.txt",
+      "lines": [
+        84,
+        91
+      ],
+      "sha256": "5da9ed2976401c8129f88f4447fe7d303a4520a627e152105a230938ea07333b",
+      "observation": "QA 扫描环境变量与配置未发现 APP_SAMPLE_DATA/seed 相关设置，命令退出码 1。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_01_P9W8LhsQ64rGoRMDj2yj6332\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"---\\n--- 9447 ---\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mrVIZZHOuSW0CcY6vn8M6941\",\"toolName\":\"bash\",\"args\":{\"command\":\"grep -rn \\\"APP_SAMPLE_DATA\\\\|db sample\\\\|sampleData\\\\|sample-data\\\" /home/runner/work/nb3-factory/nb3-factory/control 2>/dev/null | head -30; echo \\\"=== workspace scripts ===\\\"; grep -rn \\\"APP_SAMPLE_DATA\\\\|db sample\\\" /home/runner/work/nb3-factory/nb3-factory/workspace/package.json /home/runner/work/nb3-factory/nb3-factory/workspace/.env* 2>/dev/null | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"/home/runner/work/nb3-factory/nb3-factory/control/README.MD:593:An environment variable a section declares takes precedence over the file, and the file over the code defaults. `pnpm nocobase config env` lists the variables and whether each is set; `pnpm nocobase config variables` describes each one — what it sets, whether it is a secret, whether a deployment must supply it — and `pnpm build` writes that description to `dist/variables.json`. `DB_*` set the main database connection, `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` the first administrator, and `APP_SAMPLE_DATA=true` loads the sample data when the database is first installed. `${NAME}` in `config.yml` is not expanded.\\n/home/runner/work/nb3-factory/nb3-factory/control/server/config/app.ts:21:    APP_SAMPLE_DATA: envBoolean('sampleData', {\\n/home/runner/work/nb3-factory/nb3-factory/control/server/config/app.ts:23:        'Load sample data while the database is first installed: seeds declared with sample: true and sampleDataToken registrations.',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/pipeline-state.mjs:44:      sampleData: task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/build-prompt.mjs:16:  SAMPLE_DATA: metadata.task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/issue-presets.mjs:265:        sampleData: task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/factory-lib.mjs:29:  sampleData: '示例数据',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/factory-lib.mjs:142:    sampleData: sections.get(FIELD_NAMES.sampleData)?.trim() || '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/build-browser-prompt.mjs:20:      SAMPLE_DATA: metadata.task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/factory-lib.test.mjs:56:    sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/evaluation-fixtures.mjs:44:      sampleData: '是', buildReviewMode: 'full', reviewCriteria: '## 评审\\\\n核对数据访问' },\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/comment-queue.test.mjs:26:  sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/browser-acceptance.test.mjs:135:            sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/evaluation-budget.test.mjs:13:const metadata = (withBudget = true) => ({ issue: { number: 7 }, task: { targetBranch: 'develop', taskType: 't', requirements: 'r', acceptanceCriteria: '1. Works', sampleData: '是' },\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/task-migration-flow.test.mjs:238:      sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/task-review7.test.mjs:117:      sampleData: 'yes',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/agent-recovery.test.mjs:36:    task: { targetBranch: 'issues-182', requirements: 'Customer list', acceptanceCriteria: 'B01. QA-only sentinel', sampleData: 'yes' } };\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/prompt-isolation.test.mjs:51:        sampleData: 'yes',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/review-history.mjs:120:        task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-deployment/SKILL.md:74:- `app.sampleData` (`APP_SAMPLE_DATA=true`) loads the application's sample data while the database is first installed, and is ignored afterwards; leave it off for production.\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-db/SKILL.md:147:Sample data goes in the same `seeds` directory, declared with `defineSeed({ name, sample: true, run })`. It runs only when the application installs its database with `app.sampleData` set (`APP_SAMPLE_DATA=true`): the connection held no migration or seed history before that start, or `db reset` rebuilt\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mrVIZZHOuSW0CcY6vn8M6941\",\"toolName\":\"bash\",\"args\":{\"command\":\"grep -rn \\\"APP_SAMPLE_DATA\\\\|db sample\\\\|sampleData\\\\|sample-data\\\" /home/runner/work/nb3-factory/nb3-factory/control 2>/dev/null | head -30; echo \\\"=== workspace scripts ===\\\"; grep -rn \\\"APP_SAMPLE_DATA\\\\|db sample\\\" /home/runner/work/nb3-factory/nb3-factory/workspace/package.json /home/runner/work/nb3-factory/nb3-factory/workspace/.env* 2>/dev/null | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"/home/runner/work/nb3-factory/nb3-factory/control/README.MD:593:An environment variable a section declares takes precedence over the file, and the file over the code defaults. `pnpm nocobase config env` lists the variables and whether each is set; `pnpm nocobase config variables` describes each one — what it sets, whether it is a secret, whether a deployment must supply it — and `pnpm build` writes that description to `dist/variables.json`. `DB_*` set the main database connection, `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` the first administrator, and `APP_SAMPLE_DATA=true` loads the sample data when the database is first installed. `${NAME}` in `config.yml` is not expanded.\\n/home/runner/work/nb3-factory/nb3-factory/control/server/config/app.ts:21:    APP_SAMPLE_DATA: envBoolean('sampleData', {\\n/home/runner/work/nb3-factory/nb3-factory/control/server/config/app.ts:23:        'Load sample data while the database is first installed: seeds declared with sample: true and sampleDataToken registrations.',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/pipeline-state.mjs:44:      sampleData: task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/build-prompt.mjs:16:  SAMPLE_DATA: metadata.task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/issue-presets.mjs:265:        sampleData: task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/factory-lib.mjs:29:  sampleData: '示例数据',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/factory-lib.mjs:142:    sampleData: sections.get(FIELD_NAMES.sampleData)?.trim() || '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/build-browser-prompt.mjs:20:      SAMPLE_DATA: metadata.task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/factory-lib.test.mjs:56:    sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/evaluation-fixtures.mjs:44:      sampleData: '是', buildReviewMode: 'full', reviewCriteria: '## 评审\\\\n核对数据访问' },\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/comment-queue.test.mjs:26:  sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/browser-acceptance.test.mjs:135:            sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/evaluation-budget.test.mjs:13:const metadata = (withBudget = true) => ({ issue: { number: 7 }, task: { targetBranch: 'develop', taskType: 't', requirements: 'r', acceptanceCriteria: '1. Works', sampleData: '是' },\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/task-migration-flow.test.mjs:238:      sampleData: '是',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/task-review7.test.mjs:117:      sampleData: 'yes',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/agent-recovery.test.mjs:36:    task: { targetBranch: 'issues-182', requirements: 'Customer list', acceptanceCriteria: 'B01. QA-only sentinel', sampleData: 'yes' } };\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/tests/prompt-isolation.test.mjs:51:        sampleData: 'yes',\\n/home/runner/work/nb3-factory/nb3-factory/control/.github/scripts/review-history.mjs:120:        task.sampleData,\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-deployment/SKILL.md:74:- `app.sampleData` (`APP_SAMPLE_DATA=true`) loads the application's sample data while the database is first installed, and is ignored afterwards; leave it off for production.\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-db/SKILL.md:147:Sample data goes in the same `seeds` directory, declared with `defineSeed({ name, sample: true, run })`. It runs only when the application installs its database with `app.sampleData` set (`APP_SAMPLE_DATA=true`): the connection held no migration or seed history before that start, or `db reset` rebuilt it. Otherwise the seed is recorded as skipped and never runs on its own; `pnpm nocobase db sample` runs every skipped sample seed in development, and a deployment refuses it. Sample data that has to go through other plugins' services, such as projects with issues, is registered instead on `sampleDataToken` from `@nocobase/app-server/sample-data`, from a service provider's `boot()`: `container.resolve(sampleDataToken).register({ name, packageName, run })`. It runs once the application is ready, under the same condition, and is recorded in the default connection's seed history as `sample-data:<name>`. The seed history's `status` column, `executed` or `skipped`, records which happened; the library adds it to an existing history table on the next run.\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-app-development/references/migrations.md:21:Sample data is not required data. Put it in the same `seeds` directory as `defineSeed({ name, sample: true, run })`, or, when it has to go through plugins' services, register it on `sampleDataToken` from `@nocobase/app-server/sample-data` in a service provider's `boot()`; `.agents/skills/nocobase-db/SKILL.md` section 2 has the details. Both load only while the run installs the connection — it held no migration or seed history, or `db reset` rebuilt it — with `app.sampleData` set (`APP_SAMPLE_DATA=true`); otherwise they are recorded as skipped. The seeds entry of a run reports `freshInstall` and, when it skipped any, `skippedSamples`. `pnpm nocobase db sample` runs what was skipped, in development only: a built `dist/` refuses it.\\n/home/runner/work/nb3-factory/nb3-factory/control/.agents/skills/nocobase-app-development/references/cli.md:27:| Load sample data an installation skipped, in development              | `pnpm nocobase db sample`                                                           |\\n/home/runner/work/nb3-factory/nb3-factory/control/AGENTS.md:202:Schema changes are migrations under `database/main/migrations/`. Data the application requires to run is a seed under `database/main/seeds/`. Seeds never create structure. Sample data is not required data: it is a seed declared with `defineSeed({ name, sample: true, run })` in the same directory, or, when it has to go through plugins' services, a registration on `sampleDataToken` from `@nocobase/app-server/sample-data`. Either loads only when the database is installed with `app.sampleData` set (`APP_SAMPLE_DATA=true`) and is recorded as skipped otherwise; `pnp",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E37"
+      },
+      "kind": "qa",
+      "path": "artifacts/retro.json",
+      "lines": [
+        6,
+        9
+      ],
+      "sha256": "99db438d64d30e30ae09ed0e18f998a562e49a6863f45705ea970e0de460735c",
+      "observation": "retro 记录：无 config.yml/.env 时 db sample 与 createTestApp 因 secrets.keys 未设抛 ApplicationNotConfiguredError，用 SECRETS_KEYS 或 config.auth.secret 解决。",
+      "excerpt": "      \"title\": \"The application refuses to boot without auth secrets, so database tasks and app-level tests fail before doing anything\",\n      \"symptom\": \"`pnpm nocobase db sample` and every test that calls `createTestApp(...)` failed with `ApplicationNotConfiguredError: secrets.keys is not set.` (raised from the authentication provider's `resolveAuthSecrets`). `pnpm nocobase db apply` happened to succeed, which made the failure look seed-specific at first.\",\n      \"rootCause\": \"The repository has no committed `config.yml` and no `.env`, and the template's `server/config/secrets.ts` declares no default keys. The authentication provider derives Better Auth's signing keys from `secrets.keys` (or falls back to `auth.secret`) and refuses to build when neither is set, so any code path that boots the full provider registry — including the CLI's sample-seed command and `createTestApp` — stops there.\",\n      \"resolution\": \"Set a throwaway `SECRETS_KEYS=1:<openssl rand -hex 32>` in the environment for CLI runs, and pass `config: { auth: { secret: '...' } }` to `createTestApp` so the in-process test app has a secret without touching `config.yml`. Both were recorded in the feature's tests and in the app notes.\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E38"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/database-connections.md",
+      "lines": [
+        28,
+        30
+      ],
+      "sha256": "5f6541bffb6b943ee87df64b5e3bde840e8bace38458d8e6d2048eadc60590d0",
+      "observation": "database-connections.md 说明 pnpm dev 需要配置来源或 SECRETS_KEYS、pnpm start 无 secrets.keys 会立即退出。",
+      "excerpt": "Applications default to `verifyDepsBeforeRun: false` in `pnpm-workspace.yaml`; run `pnpm install` explicitly after changing dependencies or when creation used `--no-install`, before configuring, starting or building. If installation fails, retry `pnpm install` in the generated directory rather than recreating it. Keep `config.yml` gitignored and do not expose its secrets in output.\n\n`pnpm dev` refuses to run until the application has a configuration source — a file, or `SECRETS_KEYS` in the environment — and `pnpm start` exits at once without `secrets.keys` (or an older `auth.secret`). `pnpm build` needs neither, because building reads no secret.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E39"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+      "lines": [
+        150,
+        153
+      ],
+      "sha256": "c218e9546838de8e1b2cbaf6f211066a5b724a75072a01e7782667ccf0c93cf9",
+      "observation": "testing.md 说明 createTestApp 的存储/队列处理，但未提示无 config.yml 时需要 auth secret。",
+      "excerpt": "Set `NOCOBASE_STRICT_STARTUP=true` when running `pnpm dev` or `pnpm start` in automated verification. Startup failures exit nonzero after resource cleanup. Strict dev runs the server without watch mode so a failed server cannot remain hidden behind a watcher; restart the command after server or configuration changes. Client HMR remains available. Omit the variable or set it to `false` for normal development with server hot reload. Request errors and individual job execution failures do not terminate the application.\n\nIn application tests that start jobs or queues, keep their memory state files out of the working tree: `createAppTest()` and `createTestApp()` put the application's storage in a temporary directory, and a test that starts the application another way selects a `jobs` or `queue` configuration key whose `persistence.path` is a temporary directory.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E40"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/202610130100_create_todo_items.ts",
+      "lines": [
+        1,
+        35
+      ],
+      "sha256": "4c2b4ffdfc1f274989d91e6b175b418dbc0688453eb0d856b2874ae396bdb430",
+      "observation": "app 迁移用 defineMigration 与 builder.createCollection 创建 todoItems，并建 dueAt 索引与 title 唯一约束。",
+      "excerpt": "import { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\n/**\n * Creates the `todoItems` table behind the `/todos` page and the Scheduler's overdue marking: a todo's title, the\n * instant it is due, whether it is done, and whether the `todos.mark-overdue` schedule has flagged it as past its\n * due time. The schedule only ever flips `overdue`; it never touches `completed` and never inserts a row.\n *\n * The shape is spelled out here rather than derived from a Collection definition, so a later change to the\n * application's model cannot silently change what this migration already applied.\n */\nconst migration: MigrationDefinition = defineMigration({\n  name: '202610130100_create_todo_items',\n\n  async up({ builder }) {\n    await builder.createCollection('todoItems', (collection) => {\n      collection.increments('id');\n      collection.string('title', { length: 255 }).notNull();\n      collection.datetime('dueAt').notNull();\n      collection.boolean('completed').notNull().defaultTo(false);\n      collection.boolean('overdue').notNull().defaultTo(false);\n\n      // The overdue marking scans by due time; the index keeps that scan proportional to the matching rows.\n      collection.index('dueAt', { name: 'idx_todo_items_due_at' });\n      // A todo's title is its stable identity here: the sample seed keys on it, and a duplicate title would make an\n      // idempotent seed impossible. Distinct wording is a reasonable constraint for this small application.\n      collection.unique('title', { name: 'uq_todo_items_title' });\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('todoItems');\n  },\n});\n\nexport default migration;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E41"
+      },
+      "kind": "qa",
+      "path": "artifacts/retro.json",
+      "lines": [
+        15,
+        19
+      ],
+      "sha256": "99db438d64d30e30ae09ed0e18f998a562e49a6863f45705ea970e0de460735c",
+      "observation": "retro 改进建议：开发 Skill 未说明无 config.yml 时如何提供 auth secrets，建议在 testing 参考补充。",
+      "excerpt": "      \"category\": \"template-docs\",\n      \"title\": \"Say how an agent should provide auth secrets when there is no `config.yml`\",\n      \"detail\": \"The development skill explains `config.yml` and `pnpm nocobase config init`, but not the case this sandbox and many CI checkouts are in: no config file at all. The failure surfaces as an authentication error from an unrelated command (`db sample`) and from `createTestApp`, which is easy to misattribute to the seed or the test rather than to missing secrets.\",\n      \"suggestedChange\": \"Add a short note to the app-development/testing references: with no `config.yml`, booting the application needs `SECRETS_KEYS` (or `auth.secret`); tests can pass `config.auth.secret` to `createTestApp`.\",\n      \"mechanizable\": false",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/38329379899.1/v2-67c9a5c0fc7a/E42",
+      "origin": {
+        "kind": "review",
+        "key": "review/38329379899.1/v2-67c9a5c0fc7a",
+        "localId": "E42"
+      },
+      "kind": "qa",
+      "path": "artifacts/retro.json",
+      "lines": [
+        23,
+        26
+      ],
+      "sha256": "99db438d64d30e30ae09ed0e18f998a562e49a6863f45705ea970e0de460735c",
+      "observation": "retro 改进建议：SeedContext.repository 解构会触发 unbound-method lint，建议改类型或补文档。",
+      "excerpt": "      \"title\": \"Destructuring `SeedContext.repository` trips `@typescript-eslint/unbound-method`\",\n      \"detail\": \"`SeedContext.repository` is declared as a method, so the idiomatic `async run({ repository }) { repository('todos') }` in a seed fails the repository's `--max-warnings 0` lint with an `unbound-method` error. The working pattern is `run: async (context) => context.repository('todos')`, which is not obvious from the type.\",\n      \"suggestedChange\": \"Declare `SeedContext.repository` with `this: void` (or make it a function-typed property) so the destructuring form lints cleanly, or document the `context.repository(...)` pattern next to the seed example in the migrations reference.\",\n      \"mechanizable\": true",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-schedules-enabled.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-schedules-enabled.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-schedules-enabled.png",
+      "lines": null,
+      "sha256": "345a60239e0364be9029a6747bea7a8fac9c3bd509f655a7843ace1111024e59",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-schedules-enabled.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-execution-results.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-execution-results.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-execution-results.png",
+      "lines": null,
+      "sha256": "256cd7a13521d91260f65c295769a034e944ac6213fa2c3a798c3a9c2ae4c882",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-execution-results.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-todos-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-todos-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-todos-empty.png",
+      "lines": null,
+      "sha256": "e147828ee65151bc312f267c7c432835bc611b9829ec7450d3c1d9aa7c8d2121",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-todos-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-execution-results.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-execution-results.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-execution-results.png",
+      "lines": null,
+      "sha256": "d27ffe17a4d5b9c21de57cadc772ddbe187ac56f49f0b0e97e609a5611c0d6b1",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-execution-results.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-todos-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-todos-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-todos-empty.png",
+      "lines": null,
+      "sha256": "e147828ee65151bc312f267c7c432835bc611b9829ec7450d3c1d9aa7c8d2121",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-todos-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-disabled-before-reload.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-disabled-before-reload.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-disabled-before-reload.png",
+      "lines": null,
+      "sha256": "b41d0020ae388d9394125835b1fc5951cf2aedbaedc5790639e7b690142bb44f",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-disabled-before-reload.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-disabled-after-reload.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-disabled-after-reload.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-disabled-after-reload.png",
+      "lines": null,
+      "sha256": "b41d0020ae388d9394125835b1fc5951cf2aedbaedc5790639e7b690142bb44f",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-disabled-after-reload.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #716",
+      "url": "https://github.com/gchust/nb3-factory/issues/716",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 38329379899 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/38329379899/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #719",
+      "url": "https://github.com/gchust/nb3-factory/pull/719",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/716/runs/38329379899/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
