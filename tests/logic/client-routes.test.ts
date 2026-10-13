@@ -51,9 +51,20 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The document library is a grant-backed page, so it carries the id its page grant records; the dialogs and the
+    // drawer under it opt out, because the parent's check already ran and opening one is a record action, not a page
+    // of its own. The people page admits only unrestricted identities.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'documents' },
+      { name: 'documents-new', authorizedAs: null },
+      { name: 'documents-edit', authorizedAs: null },
+      { name: 'documents-share', authorizedAs: null },
+      { name: 'documents-detail', authorizedAs: null },
+      { name: 'documents-detail-edit', authorizedAs: null },
+      { name: 'documents-detail-share', authorizedAs: null },
+      { name: 'users', authorizedAs: 'unrestricted' },
     ]);
   });
 

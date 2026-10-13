@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Library, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -61,6 +61,70 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/device.js'),
     name: 'device',
     path: '/device',
+  },
+  {
+    // The document library. The page is guarded by a page grant, so it is only offered to the two jobs the library
+    // defines; what each row shows and what the row menu offers comes from the server's own answer for that person.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'documents' }, action: 'access' },
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: Library },
+    path: '/documents',
+    children: [
+      // Create, edit and share are child routes, so each opens as a dialog over the page the person is on. The list
+      // page renders the <Outlet /> they appear in.
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/new.js'),
+        name: 'documents-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/detail/edit.js'),
+        name: 'documents-edit',
+        path: 'edit/:documentId',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/share.js'),
+        name: 'documents-share',
+        path: 'share/:documentId',
+      },
+      {
+        // Reading a document happens in a drawer, which is why its path is the parameter alone. The drawer renders
+        // its own <Outlet />, so editing and sharing a document stack on top of it instead of replacing it.
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/detail/index.js'),
+        name: 'documents-detail',
+        path: ':documentId',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/documents/detail/edit.js'),
+            name: 'documents-detail-edit',
+            path: 'edit',
+          },
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/documents/share.js'),
+            name: 'documents-detail-share',
+            path: 'share',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    // People and their Permission Sets, and closing an account. Only an unrestricted identity (root) may open it;
+    // the users endpoints enforce the same rule, so the page is a convenience, not the security boundary.
+    auth: 'required',
+    authz: 'unrestricted',
+    componentLoader: () => import('./pages/admin/users.js'),
+    name: 'users',
+    navigation: { title: 'navigation.users', icon: Users },
+    path: '/admin/users',
   },
 ]);
 
