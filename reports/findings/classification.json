@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0d767b5838066d3e432aea888dd001ea0f5e22300fda00c0adb4e6664cd7adbc",
+  "inputHash": "b9a0e6d41c93bdc506c1c0136bad42693544fdb37a8de4d65140063e66c7631c",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1003,6 +1003,11 @@
       "fingerprint": "c53fb9448f188ca47dadb71d4dd0fe4bb6ac5f1a496815ba58a6ecef49c963a9"
     },
     {
+      "id": "715:38329376329:1:F4",
+      "report": "715:38329376329:1",
+      "fingerprint": "ca695fa9e29f30c8ab9e8f08d6891ce95828900da360e5980d7d52bd70de5310"
+    },
+    {
       "id": "716:38329379899:1:F3",
       "report": "716:38329379899:1",
       "fingerprint": "90ca29e3a6025d250c89e9e9ef6b3d55c17a29268428bf36cf86f13346865c2e"
@@ -1127,13 +1132,14 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。",
+      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。 715:F4（E35/E49/E1/E5）在 1.0.0-beta.61 复现同一缺口：README/Skill 仅以逻辑入口（/core、/permission-sets、/sharing-rules 等）描述 API，但 package.json exports 把插件子路径映射到 dist/plugins/<name>/index.js，物理 dist 顶层并无对应目录；代理按 dist/<subpath> 猜测（cat dist/sharing-rules/plugin.js、dist/restriction-rules/、dist/default-access/builder.d.ts）得到空输出/exit 1，与既有成员描述的公开入口/物理布局缺对照、无效探测同一根因，修复方向（补对照说明并只用公开子路径）一致。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
         "506:36787391890:1:F7",
         "600:37453053696:1:F6",
-        "614:37542344302:1:F3"
+        "614:37542344302:1:F3",
+        "715:38329376329:1:F4"
       ]
     },
     {
@@ -1875,9 +1881,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38339716195",
+    "runId": "38345166508",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-13T03:03:22.162Z"
+    "completedAt": "2026-10-13T04:11:59.668Z"
   }
 }
