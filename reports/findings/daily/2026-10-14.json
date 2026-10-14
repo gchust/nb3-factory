@@ -1,0 +1,377 @@
+{
+  "version": 1,
+  "date": "2026-10-14",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "40711ca4fd47860806e3b91f",
+      "id": "724:38481201050:1:F3",
+      "issue": 724,
+      "runId": 38481201050,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "Scheduler 管理 API 无“立即执行/触发”入口，验证与运维只能等待 cron",
+      "summary": "公共接口只有 list/get/occurrences/enable/disable，没有触发一次 firing 的路由或服务方法；本轮以 cron * * * * * 等待真实触发，浏览器验收也记录了“无立即执行入口，依赖 Cron”。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结源码与文档一致证实：Scheduler 插件管理 API 只有 list/get/occurrences/enable/disable，公开服务无触发方法；应用只能靠 cron '* * * * *' 等待真实 firing，浏览器验收也记录“无立即执行入口，依赖 Cron”。这是框架能力边界上的可用性改进，不涉及违约或应用缺陷。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "冻结公开约定：scheduler Skill operations.md 列出管理入口仅 GET /schedules、GET /schedules/:scheduleId、GET /schedules/:scheduleId/occurrences、POST .../enable、POST .../disable，并明确写“The API supports viewing and enabling/disabling tasks, with no route for creating or editing Cron definitions”；验证指引要求“In development, use a short Cron interval to observe an execution”。该约定没有承诺 trigger/立即执行端点，故本候选属可用性建议而非违约。框架职责边界：插件提供管理 API 与 target/occurrence 协议，应用自建页面。",
+            "evidence": [
+              "E18",
+              "E6"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现实际行为与结论相符：routes/index.js 只注册上述五条路由（enable/disable 调 scheduler.setEnabled），未注册任何 trigger/run 路由；DefaultSchedulerService 公开方法为 defineSchedule/registerTarget/list/get/listOccurrences/sync/setEnabled/activate/recordEvent/reconcileOccurrences，无 trigger 方法；应用用 cron '* * * * *' 取得真实 firing。浏览器验收 B02 直接记录“等待同一计划由真实调度再次执行（无立即执行入口，依赖 Cron * * * * *）”。因此“只能启用并等待 cron”在管理 API 范围内成立。",
+            "evidence": [
+              "E6",
+              "E51",
+              "E52",
+              "E28"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用未错误装配或误用 API：app/server/routes/index.ts 只挂载 todos 业务路由，未尝试解析 scheduler 私有 store/executor 或自行触发；app/server/providers/todos.ts 用 registerTarget + defineSchedule(cron '* * * * *') 正常装配，与插件公开面一致。缺入口归因于框架公开 API，而非应用遗漏业务逻辑。",
+            "evidence": [
+              "E53",
+              "E52",
+              "E18"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "无环境因素更能解释该现象：同一环境下浏览器验收已观察到真实 cron firing（Succeeded result {\"updated\":1} 与 {\"updated\":0}），说明外部服务、jobs 适配器与运行环境都能正常触发；缺少的只是按需触发入口，而该入口在插件源码公开面本就不存在，与环境无关。",
+            "evidence": [
+              "E28",
+              "E6"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂侧：scheduler 插件及其 Skill 由本轮冻结材料提供，operations.md 主动声明“no route for creating or editing Cron definitions”并建议短周期 cron 验证，未承诺 trigger；需求也把“立即执行”写成条件项（如本轮提供则须走同一 Scheduler 目标及执行记录）。因此该缺口是框架公开能力边界，不是工厂提示、注入配置或 QA/构建脚本覆盖造成的误配。",
+            "evidence": [
+              "E18"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已核既有公开入口、正常组合与文档：schedulerServiceToken 仅暴露 registerTarget/defineSchedule 作为贡献面，管理读改经 HTTP 五路由；operations.md 明确 store、target registry、schedule executor 私有且不可由容器解析，应用无法在不绕过授权与 occurrence 的情况下触发。底层 @nocobase/jobs 的 ScheduleJobOption.immediately 仅“Fires once on creation; Ignored for updates”，且 scheduler 的 ScheduleDefinition 未暴露该字段、createScheduleDispatchJob 也未传入；CLI scheduler sync 只同步。故无既有能力满足“按需触发一次真实 firing 并写入 occurrence”。",
+            "evidence": [
+              "E18",
+              "E51",
+              "E54",
+              "E55"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影或私有 runner/私有表",
+        "issues": 7,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/724/runs/38481201050/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "5322c869ae7f4c1b40ab7979",
+      "id": "725:38481207536:1:F4",
+      "issue": 725,
+      "runId": 38481207536,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "唯一约束冲突判定仅存在于 @nocobase/db 内部模块，未以公开类型或 reason 暴露",
+      "summary": "isUniqueConstraintViolation 定义在 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，识别各数据库的唯一冲突码（23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等）并遍历 error.cause；该模块未从包入口导出。Repository 的公开类型与 repository-input 的错误码集合中没有唯一冲突对应的 code/reason，因此路由代码无法可靠地区分“重复 code”和其他写入失败。knex-execution-adapter.js 的 upsertOne 内部正是靠这个内部函数处理并发冲突，说明能力存在但未公开。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 3,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/725/runs/38481207536/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "aafc43f601aa9184cb62a4c5",
+      "id": "725:38481207536:1:F5",
+      "issue": 725,
+      "runId": 38481207536,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "app-plugin-authentication/testing 的 signIn() 会话写请求不带 Origin，与 cookie 写 CSRF 校验冲突",
+      "summary": "signIn() 通过应用登录路由取得 cookie 并返回 fetch()；testing.js:41-47 的实现只把 cookie 头合并进请求，不添加 Origin。auth.js 的 checkCookieWriteOrigin 对带 cookie 的 POST/PATCH/DELETE，在缺少 Origin/Referer 时返回 403 INVALID_CSRF_ORIGIN。因此框架自带的“已登录测试会话”无法直接完成 testing.md 鼓励的受保护写测试。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-development/references/testing.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "测试请求助手（app-testing request / authentication signIn）未注入可信 Origin，cookie 写测试被 CSRF 拒绝",
+        "issues": 4,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/725/runs/38481207536/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "9e37a6619098a63a8d51a481",
+      "id": "725:38481207536:1:F6",
+      "issue": 725,
+      "runId": 38481207536,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "testing.md 的路由测试示例只演示 GET，未说明 cookie 写请求需要可信 Origin",
+      "summary": "nocobase-app-development/references/testing.md:52-73 用 signIn 会话只断言 GET /orders 的 200/401。cookie 写的 CSRF 规则写在同一 Skill 之外的 protecting-routes.md:44 与 user-lifecycle-and-deployment.md:126；本次实现 agent 的日志显示其没有读取 protecting-routes.md，于是首个写测试失败后才在 server/AGENTS.md 自行补记规则。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        "app/.agents/skills/nocobase-app-development/references/testing.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 11,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/725/runs/38481207536/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "db3c174c7dfd421ad115870b",
+      "id": "725:38481207536:1:F7",
+      "issue": 725,
+      "runId": 38481207536,
+      "attempt": 1,
+      "findingId": "F7",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "i18n 语言为会话级单例，同账号多标签页会互相覆盖",
+      "summary": "app-plugin-i18n/README.md:92 明确记载语言存于 session，同账号的两个标签页会互相覆盖：标签 A 切到中文后，标签 B 的请求也按中文返回而界面仍是英文。PUT /api/i18n/locale 是替换式写入 session（routes.js:36-49），没有按标签隔离的机制。本次 B06 只验证了两个独立账号会话互不影响。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-i18n"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-i18n"
+      ],
+      "featurePoint": "应用搭建/多语言",
+      "candidates": [
+        "应用搭建/多语言"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "i18n 语言偏好为会话/浏览器级单例，同账号多标签页或同 profile 多账号会互相覆盖",
+        "issues": 1,
+        "first": "2026-10-14"
+      },
+      "report": "reports/issues/725/runs/38481207536/attempt-1/index.html#review-finding-F7"
+    },
+    {
+      "key": "b6e568c04dfa949a12844c69",
+      "id": "726:38481213917:1:F3",
+      "issue": 726,
+      "runId": 38481213917,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "自转换会重置 changedAtField，使“状态时间”与“提醒时间”互相干扰",
+      "summary": "plan.js 在每次转移（含 from=to 的自转换）都无条件写 changedAtField=now。应用的 24 小时提醒是一个自转换，会重置 statusChangedAt，导致按状态时间衡量的“超时”工单在提醒后从看板消失；应用改用 createdAt 规避。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/lifecycle",
+        "app/.agents/skills/nocobase-app-development/references/lifecycle.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/lifecycle",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "自转换/提醒无条件刷新 changedAtField，破坏“进入状态时间”语义，缺少可保留该字段的声明方式",
+        "issues": 1,
+        "first": "2026-10-14"
+      },
+      "report": "reports/issues/726/runs/38481213917/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "6b07f2452a2b2fffd55cd8bb",
+      "id": "726:38481213917:1:F4",
+      "issue": 726,
+      "runId": 38481213917,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "FilterBuilder 的 string/text 字段能力差异未在指引中说明",
+      "summary": "FilterBuilder 类型签名区分 string()/text() 等分组，运行时不匹配会抛 FIELD_CAPABILITY_NOT_SUPPORTED（消息精确指出字段名与类型）。但 nocobase-db 与 database-and-data 指引只演示 collection.string，未说明 text 能力字段必须用 f.text(path)，Agent 需读包源码与类型才能发现。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "nocobase-db 指引未说明字段类型与过滤能力（算子白名单 / FilterBuilder string-text 分组）的映射",
+        "issues": 2,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/726/runs/38481213917/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "c7983f919fe323766b5d57f5",
+      "id": "726:38481213917:1:F5",
+      "issue": 726,
+      "runId": 38481213917,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-14",
+      "archivedAt": "2026-10-14T23:12:08.989Z",
+      "title": "默认权限集与可指派应用角色的边界缺少示例",
+      "summary": "应用用户角色经 createMember 的 roleScopes 校验，只接受 app 作用域内可指派的权限集；'member' 是内置默认权限集，传入会得到 INVALID_ROLE_SCOPE_VALUE 'Unknown application role: member'。授权 SKILL 说明了权限集与作用域，但未给出“创建用户并分配角色”的最小示例或可指派角色清单来源。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-users",
+        "app/.agents/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-users",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "授权/用户指引未说明内置默认权限集不可作为可指派应用角色，缺少创建用户并分配角色的最小示例",
+        "issues": 1,
+        "first": "2026-10-14"
+      },
+      "report": "reports/issues/726/runs/38481213917/attempt-1/index.html#review-finding-F5"
+    }
+  ]
+}
