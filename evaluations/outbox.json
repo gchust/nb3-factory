@@ -6290,12 +6290,41 @@
       "revision": 1,
       "bundleSha256": "e4642bb1e52f1b6d7e9a2c5b015c2b6f14a4512706f1e9bf717ce9b489191e2e",
       "state": "pending",
-      "attempts": 0,
-      "history": [],
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-10-14T23:26:53.119Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 1132
+        },
+        {
+          "at": "2026-10-14T23:26:56.254Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 942
+        },
+        {
+          "at": "2026-10-14T23:27:05.200Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 1058
+        }
+      ],
       "receipt": null,
-      "reason": null,
+      "reason": "http-502",
       "createdAt": "2026-10-14T23:25:58.133Z",
-      "updatedAt": "2026-10-14T23:25:58.133Z"
+      "updatedAt": "2026-10-14T23:27:18.183Z",
+      "detail": null,
+      "appliedResults": [
+        "4afbb462a850668ad05a8dd03f58ae99d4be5f8871e6ba2368e6a75d4fe4f59a"
+      ]
     }
   ]
 }
