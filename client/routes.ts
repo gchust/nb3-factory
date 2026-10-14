@@ -1,4 +1,9 @@
-import { Home } from 'lucide-react';
+import {
+  Home,
+  Inbox,
+  Ticket as TicketIcon,
+  Users as UsersIcon,
+} from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -6,8 +11,8 @@ import {
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
-    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so
-    // no permission change can leave a user signed in with nowhere to land.
+    // The dashboard is the landing page for every signed-in user. `authz: 'skip'` keeps it reachable whatever page
+    // grants exist, so no permission change can leave a user signed in with nowhere to land.
     authz: 'skip',
     auth: 'required',
     componentLoader: () => import('./pages/home/index.js'),
@@ -16,14 +21,89 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     path: '/',
   },
   {
-    // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
-    // unread badge). The plugin's API answers each person's own messages only, so the page needs no authorization of
-    // its own.
+    // The repair-ticket list. The create dialog is a child route, so `/tickets/new` opens over the list and closing
+    // returns to it. What each caller sees is scoped by the API.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: TicketIcon },
+    path: '/tickets',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/new.js'),
+        name: 'tickets-new',
+        path: 'new',
+      },
+    ],
+  },
+  {
+    // One ticket's own page, a sibling of the list so it replaces the list rather than rendering inside it. Its
+    // action dialogs are children, so `/tickets/12/resolve` opens over the ticket and closing returns to it.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/tickets/detail.js'),
+    name: 'tickets-detail',
+    path: '/tickets/:ticketId',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/transition-dialog.js'),
+        name: 'tickets-assign',
+        path: 'assign',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/transition-dialog.js'),
+        name: 'tickets-reassign',
+        path: 'reassign',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/transition-dialog.js'),
+        name: 'tickets-progress',
+        path: 'progress',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/transition-dialog.js'),
+        name: 'tickets-resolve',
+        path: 'resolve',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/transition-dialog.js'),
+        name: 'tickets-return',
+        path: 'return',
+      },
+    ],
+  },
+  {
+    // The in-app inbox, where the notifications a ticket change sends are read. It declares navigation here because
+    // the shell's header carries no inbox entry.
     authz: 'skip',
     auth: 'required',
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
+    navigation: { title: 'navigation.inbox', icon: Inbox },
     path: '/inbox',
+  },
+  {
+    // Root only: the page grant `it-team` is seeded for nobody but root, whose access is unrestricted, so the
+    // navigation entry is hidden from everyone else and the page itself refuses them.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'it-team' }, action: 'access' },
+    componentLoader: () => import('./pages/team/index.js'),
+    name: 'team',
+    navigation: { title: 'navigation.team', icon: UsersIcon },
+    path: '/team',
   },
   {
     auth: 'guest',
