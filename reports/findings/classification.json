@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "5c4dd3dbcf2661a62482de84cc39d4cfd471cabf9c70bf9e4f833b321079c357",
+  "inputHash": "2f6a27075981643087798caf30fa12e12db0ef8bb097192364a64b25116110b7",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1061,6 +1061,16 @@
       "id": "726:38481213917:1:F5",
       "report": "726:38481213917:1",
       "fingerprint": "a0bb0b1821c3fee1f43a415d1a7e0d77b2001ba70bc9927af0c4bfc1f2f73873"
+    },
+    {
+      "id": "732:38643271089:1:F4",
+      "report": "732:38643271089:1",
+      "fingerprint": "1f0d0b595233042715472f64b8ea35e9cca3759fb6beaef16133832f71cadb3f"
+    },
+    {
+      "id": "732:38643271089:1:F5",
+      "report": "732:38643271089:1",
+      "fingerprint": "a1d223ac2b3e6e44c0e1515f38fe45f9afbea1ee93d85841351647eac2edbb1a"
     }
   ],
   "groups": [
@@ -1173,14 +1183,15 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。 715:F4（E35/E49/E1/E5）在 1.0.0-beta.61 复现同一缺口：README/Skill 仅以逻辑入口（/core、/permission-sets、/sharing-rules 等）描述 API，但 package.json exports 把插件子路径映射到 dist/plugins/<name>/index.js，物理 dist 顶层并无对应目录；代理按 dist/<subpath> 猜测（cat dist/sharing-rules/plugin.js、dist/restriction-rules/、dist/default-access/builder.d.ts）得到空输出/exit 1，与既有成员描述的公开入口/物理布局缺对照、无效探测同一根因，修复方向（补对照说明并只用公开子路径）一致。",
+      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。 715:F4（E35/E49/E1/E5）在 1.0.0-beta.61 复现同一缺口：README/Skill 仅以逻辑入口（/core、/permission-sets、/sharing-rules 等）描述 API，但 package.json exports 把插件子路径映射到 dist/plugins/<name>/index.js，物理 dist 顶层并无对应目录；代理按 dist/<subpath> 猜测（cat dist/sharing-rules/plugin.js、dist/restriction-rules/、dist/default-access/builder.d.ts）得到空输出/exit 1，与既有成员描述的公开入口/物理布局缺对照、无效探测同一根因，修复方向（补对照说明并只用公开子路径）一致。 本次新增 732:38643271089:1:F5（E16/E28/E36/E41/E57/E58/E59）在 1.0.0-beta.61 记录同一缺口：@nocobase/db 的公开入口物理位置为 dist/src/index.js，而 @nocobase/repository-input 与 @nocobase/app-client 为扁平 dist/index.js，Agent 按 dist/src 猜测 repository-input 类型失败（退出码 2）、并枚举 @nocobase/db-testing/app-testing 的 dist；exports 映射虽能正确解析，但缺少公开导入路径与包内物理布局的对照说明，触发条件（按物理路径直读）、缺口（入口/声明位置未文档化）与改进方向（统一布局或在 Skill 中说明走 exports）与既有成员一致。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
         "506:36787391890:1:F7",
         "600:37453053696:1:F6",
         "614:37542344302:1:F3",
-        "715:38329376329:1:F4"
+        "715:38329376329:1:F4",
+        "732:38643271089:1:F5"
       ]
     },
     {
@@ -1941,15 +1952,22 @@
       "members": [
         "726:38481213917:1:F5"
       ]
+    },
+    {
+      "title": "调度 Skill/参考缺少可直接复用的启用/停用 UI 接线示例",
+      "reason": "单独保留。732:38643271089:1:F4（E7/E8/E9/E25/E26/E31/E55）指出 scheduler 的 SKILL.md 与 references/operations.md 只给出 list/detail/occurrences/enable/disable 的路由、权限与错误码表，虽要求管理员可查看/启停，却没有任何客户端接线示例（组件、请求路径、就地更新），首轮应用据此只做了只读页，修复轮才新增 actions.tsx 调 POST enable/disable。与既有 Scheduler group 区分的理由：G\"Scheduler 没有公开的受控立即执行入口\"是能力缺口（缺 run-now API）；G\"Scheduler 指引缺少面向管理员的受控立即执行说明\"（466:F4）针对“立即执行”这一操作，而本条针对“启用/停用 UI 接线示例”这一不同指引位置与修复方向，根因、期望与实际均不同，按“同一文件不同根因/不同缺口分开、缺说明与错误说明区分”的判定规则不并入其它组。",
+      "members": [
+        "732:38643271089:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38497515865",
+    "runId": "38654136606",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-14T01:49:34.396Z"
+    "completedAt": "2026-10-14T23:28:42.261Z"
   }
 }
