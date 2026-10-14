@@ -50,10 +50,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the inbox and the todo list opted out of page authorization, so they are reachable by every
+    // signed-in user; the scheduler pages check the `scheduler.schedules` page resource and gate every signed-in user
+    // until a grant is stored for them.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      { name: 'scheduler', authorizedAs: 'scheduler.schedules' },
+      { name: 'scheduler-detail', authorizedAs: 'scheduler.schedules' },
     ]);
   });
 
