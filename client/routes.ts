@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Laptop } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,30 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The device ledger. Every signed-in user may view, create and edit devices; the server routes enforce sign-in
+    // themselves. `authz: 'skip'` keeps the page out of page authorization, so no grant has to be given per person.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: Laptop },
+    path: '/devices',
+    children: [
+      {
+        // The create dialog, opened over the list. Children inherit `auth: 'required'` and `authz: 'skip'`.
+        componentLoader: () => import('./pages/devices/new.js'),
+        name: 'device-new',
+        path: 'new',
+      },
+      {
+        // A row's edit dialog. It carries the list's search string, so closing returns to the filter the user had.
+        componentLoader: () => import('./pages/devices/edit.js'),
+        name: 'device-edit',
+        path: 'edit/:deviceId',
+      },
+    ],
   },
   {
     auth: 'guest',

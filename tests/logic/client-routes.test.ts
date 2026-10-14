@@ -51,9 +51,14 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The device ledger and its two dialog child routes do the same: every signed-in user may view, create and edit
+    // devices, and the server routes enforce sign-in on their own.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'devices', authorizedAs: null },
+      { name: 'device-new', authorizedAs: null },
+      { name: 'device-edit', authorizedAs: null },
     ]);
   });
 
