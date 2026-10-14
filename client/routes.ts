@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -61,6 +61,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/device.js'),
     name: 'device',
     path: '/device',
+  },
+  {
+    // The device ledger. Every signed-in user may view and manage devices; the endpoint enforces its own permission.
+    auth: 'required',
+    authz: 'skip',
+    navigation: { title: 'navigation.devices', icon: HardDrive },
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    path: '/devices',
+    children: [
+      {
+        // /devices/new: create dialog (RouteDialog)
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/new.js'),
+        name: 'device-new',
+        path: 'new',
+      },
+      {
+        // /devices/edit/:deviceId: edit dialog opened from a row's menu, alone over the list
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/edit.js'),
+        name: 'device-edit',
+        path: 'edit/:deviceId',
+      },
+    ],
   },
 ]);
 
