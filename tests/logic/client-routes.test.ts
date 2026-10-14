@@ -51,17 +51,30 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The repair-ticket pages opt out too: what a viewer may read and do is enforced per ticket by the server, so a
+    // page grant here would only hide the page from the roles the server already scopes correctly. The Team page is
+    // the one administration surface and declares its own page id.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: null },
+      { name: 'tickets-new', authorizedAs: null },
+      { name: 'tickets-detail', authorizedAs: null },
+      { name: 'tickets-assign', authorizedAs: null },
+      { name: 'tickets-reassign', authorizedAs: null },
+      { name: 'tickets-progress', authorizedAs: null },
+      { name: 'tickets-resolve', authorizedAs: null },
+      { name: 'tickets-return', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'team', authorizedAs: 'it-team' },
     ]);
   });
 
-  it('keeps the inbox out of the application navigation', () => {
-    // The inbox is reached from the header's inbox button, so it deliberately declares no menu entry.
+  it('gives the inbox a navigation entry', () => {
+    // The shell header carries no inbox button, so the application reaches its inbox from the sidebar like every
+    // other page.
     expect(
       applicationRoutes[0].routes.find((route) => route.name === 'inbox'),
-    ).not.toHaveProperty('navigation');
+    ).toMatchObject({ navigation: { title: 'navigation.inbox' } });
   });
 });
 
