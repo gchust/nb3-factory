@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "cec2d175c9236857182c9e67f2e293b72e616fb9a81c43336b83aec41bb031b4",
+  "inputHash": "5c4dd3dbcf2661a62482de84cc39d4cfd471cabf9c70bf9e4f833b321079c357",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1046,6 +1046,21 @@
       "id": "725:38481207536:1:F7",
       "report": "725:38481207536:1",
       "fingerprint": "92df5173faf3b2e4b9c1696d1872457a28a1d592d9a016864ec694d0f6a509e8"
+    },
+    {
+      "id": "726:38481213917:1:F3",
+      "report": "726:38481213917:1",
+      "fingerprint": "2a93505bc2253fdbf9436906f77e643ac7645f50a8b62bb69a825a76a6497df7"
+    },
+    {
+      "id": "726:38481213917:1:F4",
+      "report": "726:38481213917:1",
+      "fingerprint": "860ca6e4e83a7d3c9c3ef3073a2518438196a2846396e4cbe0329611727e9a60"
+    },
+    {
+      "id": "726:38481213917:1:F5",
+      "report": "726:38481213917:1",
+      "fingerprint": "a0bb0b1821c3fee1f43a415d1a7e0d77b2001ba70bc9927af0c4bfc1f2f73873"
     }
   ],
   "groups": [
@@ -1762,10 +1777,11 @@
       ]
     },
     {
-      "title": "布尔字段的算子白名单未在 nocobase-db 指引中说明",
-      "reason": "单条保留。665:F4（E29/E30/E31）显示 @nocobase/db 的 OPERATORS_BY_TYPE 对 boolean 只允许 $isTruly/$isFalsy/$empty/$notEmpty，对 boolean 使用 $eq/$ne 会在查询期抛 FIELD_CAPABILITY_NOT_SUPPORTED；E35 显示 nocobase-db SKILL 只讲三参 where 等基本用法，通篇没有按字段类型的算子白名单说明，属文档缺失。462:F3 虽同样引用 OPERATORS_BY_TYPE 与 FIELD_CAPABILITY_NOT_SUPPORTED，但其根因是 condition()/FilterOperator 不按字段类型收窄运算符的框架 API 缺陷，修复方向为类型化或在装配期拒绝，与本文档缺口分属框架根因与缺说明两类；按“应用侧 workaround 与框架根因区分、缺说明与错误说明区分”的规则不合并，故单独保留。",
+      "title": "nocobase-db 指引未说明字段类型与过滤能力（算子白名单 / FilterBuilder string-text 分组）的映射",
+      "reason": "跨报告合并。665:F4（E29/E30/E31/E35）显示 @nocobase/db 的 validateFilterNode 在算子不在 OPERATORS_BY_TYPE[field.type] 内时抛 FIELD_CAPABILITY_NOT_SUPPORTED，boolean 只允许 $isTruly/$isFalsy/$empty/$notEmpty（$eq/$ne 查询期报错），而 nocobase-db SKILL 只讲 Query 不读元数据与三参 where，通篇没有按字段类型的算子白名单。本次新增 726:F4（E130/E131/E132）在 1.0.0-beta.61 指向同一校验函数与同一错误码：FilterBuilder 类型签名把 string()/text()/number()/date() 等区分为不同能力分组，对 text 字段误用 f.string(path) 同样在查询期抛 FIELD_CAPABILITY_NOT_SUPPORTED（消息含字段名与类型）；而 nocobase-db（含 database-and-data）指引只演示 collection.string 等字段声明，未说明 text 能力字段必须用 f.text(path)，Agent 需读 @nocobase/repository-input 类型签名与 dist 源码才发现，先写出 f.string 再得到 400。两条的触发条件都是“按字段类型选错过滤能力、只有查询期才报同一 FIELD_CAPABILITY_NOT_SUPPORTED”，公开缺口都是 nocobase-db 指引缺少“字段类型→可用过滤能力（算子白名单/FilterBuilder 分组）”的映射与示例，受影响 API（@nocobase/db 的过滤能力校验、@nocobase/repository-input 的 FilterBuilder）与修复方向（在该 Skill 补映射表与最小示例）一致，故合并为一组。462:F3（旧分组 15）虽同样引用 OPERATORS_BY_TYPE/FIELD_CAPABILITY_NOT_SUPPORTED，但其根因是 condition()/FilterOperator 不按字段类型收窄运算符的框架 API 缺陷（修复方向为类型化或在装配期拒绝），与本文档缺口分属框架根因与缺说明两类，按“应用侧 workaround 与框架根因区分、缺说明与错误说明区分”的规则不并入。",
       "members": [
-        "665:37700965959:1:F4"
+        "665:37700965959:1:F4",
+        "726:38481213917:1:F4"
       ]
     },
     {
@@ -1911,15 +1927,29 @@
       "members": [
         "725:38481207536:1:F7"
       ]
+    },
+    {
+      "title": "自转换/提醒无条件刷新 changedAtField，破坏“进入状态时间”语义，缺少可保留该字段的声明方式",
+      "reason": "单条保留。726:F3（E102/E103/E105/E163/E168）显示 @nocobase/lifecycle/dist/plan.js 的 planTransition 在每次转移（含 from=to 的自转换）都无条件写入 changedAtField=now 与递增 version；runtime.js 的 runTriggers 又按 changedAtField 计算 idle 记录。应用把 24 小时提醒实现为自转换后，statusChangedAt 被重置，按状态时间衡量的超时工单在提醒后从看板消失，只能改用 createdAt 规避。触发条件（对处于某状态的记录执行自转换后再按 changedAtField 计算停留时长/超时）、期望（提醒不应改变“进入状态的时间”）、实际（changedAtField 被无条件刷新）与修复方向（允许触发器/转移声明保留 changedAtField 或拆分两类时间字段）均自成一类；既有分组中没有相同根因或相同受影响 API（@nocobase/lifecycle 的 changedAtField 写入语义）的成员，故单独保留。",
+      "members": [
+        "726:38481213917:1:F3"
+      ]
+    },
+    {
+      "title": "授权/用户指引未说明内置默认权限集不可作为可指派应用角色，缺少创建用户并分配角色的最小示例",
+      "reason": "单条保留。726:F5（E122/E123/E124/E168）显示 @nocobase/app-plugin-users 的 createMember→validateCreateRoleScopes 会经 requireDirectRole 校验应用角色，只接受 app 作用域内可指派的权限集；把内置默认权限集 'member' 作为角色传入会抛 INVALID_ROLE_SCOPE_VALUE 'Unknown application role: member'，而授权 SKILL 只按“迁移→defineDatabasePermission/defineCompositeResource→middleware→客户端→种子→验证”的顺序说明，未给出“创建用户并分配角色”的最小示例或可指派角色清单来源。既有分组中，612:F4（旧分组 73）虽然同样涉及“默认权限集与可指派角色的边界”，但其根因是 directRoleState 把 authenticated 默认受众的集合从直接角色选择器过滤掉的可见后果，受影响代码路径（permission-set-scope.js 的 directRoleState vs users.js 的 createMember 校验）、指引位置（nocobase-app-plugin-users SKILL vs nocobase-app-plugin-authorization SKILL）与修复方向均不同，证据不足以支持与 612:F4 并为同一问题；其余相关发现（用户名长度、权限集标题解码、权限集可见性等）根因亦不同，故本组单独保留。",
+      "members": [
+        "726:38481213917:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38488520593",
+    "runId": "38497515865",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-14T00:13:00.876Z"
+    "completedAt": "2026-10-14T01:49:34.396Z"
   }
 }
