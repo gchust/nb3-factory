@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "2f6a27075981643087798caf30fa12e12db0ef8bb097192364a64b25116110b7",
+  "inputHash": "352a6191f864537a676a3037304091f2bcd4a94e65ab33efd88290be59c760d1",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1071,6 +1071,16 @@
       "id": "732:38643271089:1:F5",
       "report": "732:38643271089:1",
       "fingerprint": "a1d223ac2b3e6e44c0e1515f38fe45f9afbea1ee93d85841351647eac2edbb1a"
+    },
+    {
+      "id": "733:38643278737:1:F3",
+      "report": "733:38643278737:1",
+      "fingerprint": "0fb891f25875491c1c23b0e4df3d96f301c20a6a019901ffedf727b0bcb27292"
+    },
+    {
+      "id": "733:38643278737:1:F4",
+      "report": "733:38643278737:1",
+      "fingerprint": "20ee3cae794b04808677df6643db08839a1d36134371647c88306079e723687f"
     }
   ],
   "groups": [
@@ -1875,11 +1885,12 @@
     },
     {
       "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
-      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。 本次新增 709:F3（E23/E24/E28）在 1.0.0-beta.61 显示 @nocobase/db RepositoryErrorCode 无重复/唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，recognizeApiError 无法稳定产出 409，应用只能以 query 适配器先查后插并 catch 后重查、自行抛 DeviceCodeTakenError；与既有成员同属缺少可类型判定的唯一约束冲突错误这一公开错误模型缺口与同一修复方向，故合并。 本次新增 725:F4（E11/E12/E13/E31）在 1.0.0-beta.61 复现同一框架缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，遍历 error/cause 识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等，却未从包入口导出；repository-input 的 RepositoryErrorCode 无唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，应用只能 create 前 exists() 预检、catch 后二次 exists() 判定（app/server/providers/devices.ts:141-188），并发窗口仍可能把冲突当未知错误抛 500 而非 409 DEVICE_CODE_TAKEN。触发条件、公开缺口（可判定唯一冲突的错误类型不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致。",
+      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。 本次新增 709:F3（E23/E24/E28）在 1.0.0-beta.61 显示 @nocobase/db RepositoryErrorCode 无重复/唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，recognizeApiError 无法稳定产出 409，应用只能以 query 适配器先查后插并 catch 后重查、自行抛 DeviceCodeTakenError；与既有成员同属缺少可类型判定的唯一约束冲突错误这一公开错误模型缺口与同一修复方向，故合并。 本次新增 725:F4（E11/E12/E13/E31）在 1.0.0-beta.61 复现同一框架缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，遍历 error/cause 识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等，却未从包入口导出；repository-input 的 RepositoryErrorCode 无唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，应用只能 create 前 exists() 预检、catch 后二次 exists() 判定（app/server/providers/devices.ts:141-188），并发窗口仍可能把冲突当未知错误抛 500 而非 409 DEVICE_CODE_TAKEN。触发条件、公开缺口（可判定唯一冲突的错误类型不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致。 本次新增 733:F4（E9/E10/E11/E19）在 1.0.0-beta.61 复现同一缺口：Repository.createOne 直接委托适配器、不翻译原始驱动的唯一约束冲突，isUniqueConstraintViolation 仅用于 upsert 路径且未从包入口导出，recognizeApiError 无法据此产出 409，并发写入同一唯一值仍以不透明 500 暴露；触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）均与既有成员一致，故合并。",
       "members": [
         "701:38106776639:1:F3",
         "709:38179339282:1:F3",
-        "725:38481207536:1:F4"
+        "725:38481207536:1:F4",
+        "733:38643278737:1:F4"
       ]
     },
     {
@@ -1959,15 +1970,22 @@
       "members": [
         "732:38643271089:1:F4"
       ]
+    },
+    {
+      "title": "references/i18n.md 宣称 onError 会把 AppI18nError 自动转成含 localizedMessage 的 ApiError，与实现不符",
+      "reason": "单条保留。E6 显示 references/i18n.md:10 称 AppI18nError 会被 router 的 onError 转成带 localizedMessage 的 ApiError；但 E17 表明 @nocobase/app-server 的 recognizeApiError/toApiError 没有任何 AppI18nError 分支，E16 的 ApiError 映射表也不会自动补充本地化信息，AppI18nError 仅因带 4xx status 经 readStatusError 识别，ns/key/params 与译文会丢失。E5 的 plugin-i18n SKILL L212 已正确说明需应用自行注册 router.onError 并调用转换器，可见缺口是 i18n reference 的过度承诺（错误说明），而非框架缺少能力。该根因与既有 onError 兜底、i18n 语言作用域等条目都不同，故单独保留。",
+      "members": [
+        "733:38643278737:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38654136606",
+    "runId": "38655712791",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-14T23:28:42.261Z"
+    "completedAt": "2026-10-14T23:44:09.759Z"
   }
 }
