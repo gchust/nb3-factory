@@ -51,9 +51,13 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The todo page does the same; the Scheduler page carries the scheduler plugin's page resource, because the API
+    // it reads checks that grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      { name: 'schedules', authorizedAs: 'scheduler.schedules' },
     ]);
   });
 
