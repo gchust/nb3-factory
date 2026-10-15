@@ -1,27 +1,33 @@
+// The service desk home page: the numbers the desk watches, each engineer's open workload and the two ticket lists.
+// The page loads through `useApiClient`, so the client is mocked and the real `ApiClientError` is kept, exactly as
+// `page-harness.test.tsx` does for a page of its own.
+import { ApiClientError } from '@nocobase/app-client';
 import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import type { ReactElement, ReactNode } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { ServiceDeskDashboard } from '../../client/pages/tickets/types.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
+// `vi.mock` factories run before this file's imports, so the mock object is created here.
+const { api } = vi.hoisted(() => ({
+  // One object for the whole file: a new one per call would restart the page's load effect.
+  api: { request: vi.fn() },
 }));
 
 vi.mock('@nocobase/app-client', async (original) => ({
+  // Keep the real module, so `ApiClientError` stays the class the page checks with `instanceof`.
   ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+  useApiClient: () => api,
 }));
 
-// Strict: a key the locale lacks fails the test instead of rendering as text.
+// The real runtime, strict: a key the resources lack fails the test instead of rendering as text.
 const runtime = await createTestI18nRuntime({
   application: {
     namespace: '@nocobase/app-template-default',
@@ -33,142 +39,131 @@ function I18n({ children }: { readonly children: ReactNode }): ReactElement {
   return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
 }
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
+const dashboard: ServiceDeskDashboard = {
+  pendingAssignment: 2,
+  processing: 3,
+  resolved: 1,
+  overdue: 4,
+  pendingTickets: [
+    {
+      id: 11,
+      title: 'Laptop will not power on',
+      status: 'pending',
+      urgency: 'high',
+      createdAt: '2026-01-05T09:00:00.000Z',
+    } as ServiceDeskDashboard['pendingTickets'][number],
+  ],
+  overdueTickets: [
+    {
+      id: 12,
+      title: 'VPN drops every hour',
+      status: 'processing',
+      urgency: 'urgent',
+      createdAt: '2026-01-04T09:00:00.000Z',
+    } as ServiceDeskDashboard['overdueTickets'][number],
+  ],
+  workload: [{ assigneeId: 'u1', assigneeName: 'Morgan Reed', openCount: 3 }],
+};
 
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
-  });
-  return user;
+function renderHome() {
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/',
+        element: <HomePage />,
+        children: [{ path: ':ticketId', element: <div /> }],
+      },
+    ],
+    { initialEntries: ['/'] },
+  );
+  return render(<RouterProvider router={router} />, { wrapper: I18n });
 }
 
-describe('home page', () => {
+describe('service desk home page', () => {
   beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
+    api.request.mockReset();
   });
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows the metric cards, workload and both ticket lists', async () => {
+    api.request.mockResolvedValue({ data: dashboard });
+
+    renderHome();
+
+    await waitFor(() =>
+      expect(screen.getByText(enUS.dashboard.metric.resolved)).toBeVisible(),
+    );
+
+    const metrics: readonly (readonly [string, number])[] = [
+      [enUS.dashboard.metric.pendingAssignment, dashboard.pendingAssignment],
+      [enUS.dashboard.metric.processing, dashboard.processing],
+      [enUS.dashboard.metric.resolved, dashboard.resolved],
+      [enUS.dashboard.metric.overdue, dashboard.overdue],
+    ];
+    // The metric cards are the small cards; badge text elsewhere shares a label with one of them.
+    const metricCards = Array.from(
+      document.querySelectorAll('[data-slot="card"][data-size="sm"]'),
+    );
+    expect(metricCards).toHaveLength(metrics.length);
+    metrics.forEach(([label, value], index) => {
+      expect(within(metricCards[index]).getByText(label)).toBeVisible();
+      expect(within(metricCards[index]).getByText(String(value))).toBeVisible();
+    });
+
+    expect(screen.getByText('Morgan Reed')).toBeVisible();
+    expect(screen.getByText('Laptop will not power on')).toBeVisible();
+    expect(screen.getByText('VPN drops every hour')).toBeVisible();
+  });
+
+  it('opens a ticket over the home page through a child route link', async () => {
+    api.request.mockResolvedValue({ data: dashboard });
+
+    renderHome();
+
+    const link = await screen.findByRole('link', {
+      name: /Laptop will not power on/,
+    });
+    expect(link).toHaveAttribute('href', '/11');
+  });
+
+  it('shows a loading state before the dashboard arrives', () => {
+    api.request.mockImplementation(() => new Promise(() => {}));
+
+    renderHome();
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
+      screen.getByRole('status', { name: enUS.dashboard.loading }),
     ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
   });
 
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
-
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
-    });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
-
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
+  it('tells a forbidden reader why, with no retry action', async () => {
+    api.request.mockRejectedValue(
+      new ApiClientError('forbidden', {
+        status: 403,
+        method: 'GET',
+        url: '/tickets/dashboard',
       }),
     );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
 
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
+    renderHome();
 
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
+    const alert = await screen.findByRole('alert');
     expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
+      within(alert).getByText(enUS.dashboard.error.forbidden),
+    ).toBeVisible();
+    expect(within(alert).queryByRole('button')).toBeNull();
   });
 
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
+  it('offers a retry for a failure that is not a permission denial', async () => {
+    api.request.mockRejectedValue(new Error('network down'));
 
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
-    );
+    renderHome();
 
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
-  });
-});
-
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
+    const alert = await screen.findByRole('alert');
+    expect(
+      within(alert).getByText(enUS.dashboard.error.description),
+    ).toBeVisible();
+    expect(
+      within(alert).getByRole('button', { name: enUS.actions.retry }),
+    ).toBeVisible();
   });
 });

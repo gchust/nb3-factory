@@ -50,10 +50,17 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, its ticket drawer and the inbox opted out of page authorization, so they are reachable by
+    // every signed-in user; the server scopes what each role may see, not the route guard. The ticket pages share
+    // the `service-desk` page grant; a child (the create dialog, the detail drawer) inherits its parent's rule and is
+    // listed here because it is a page somebody has to be granted.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'home-ticket', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'service-desk' },
+      { name: 'ticket-new', authorizedAs: 'service-desk' },
+      { name: 'ticket-detail', authorizedAs: 'service-desk' },
     ]);
   });
 
