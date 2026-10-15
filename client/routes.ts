@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClockIcon, Home, ListTodoIcon } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,40 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // A minimal todo list whose only job is to make the overdue check watchable: its rows show exactly the four
+    // fields the check reads and writes. No page authorization of its own, so every signed-in user can look.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodoIcon },
+    path: '/todos',
+    children: [
+      {
+        // The create form as a child route, so the URL addresses it and closing returns to the list.
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/todos/new.js'),
+        name: 'todos-new',
+        path: 'new',
+      },
+    ],
+  },
+  {
+    // The Scheduler plugin owns the schedules, their history and this page's permission, but contributes no page of
+    // its own — so the application draws the list its administrators read. Stored page grants reference
+    // `scheduler.schedules`, which is why the resource id is the plugin's and not a new one.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/scheduler/index.js'),
+    name: 'scheduler',
+    navigation: { title: 'navigation.scheduler', icon: CalendarClockIcon },
+    path: '/scheduler',
   },
   {
     auth: 'guest',

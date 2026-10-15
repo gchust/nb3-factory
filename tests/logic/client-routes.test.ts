@@ -54,6 +54,11 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      // The create dialog is a page too: it inherits its parent's opt-out.
+      { name: 'todos-new', authorizedAs: null },
+      // The Scheduler plugin's own resource id: this page shows what it guards.
+      { name: 'scheduler', authorizedAs: 'scheduler.schedules' },
     ]);
   });
 
