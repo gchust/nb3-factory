@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "352a6191f864537a676a3037304091f2bcd4a94e65ab33efd88290be59c760d1",
+  "inputHash": "df65a13199278812358048620dfc32d02f4fbf9c7bdd4ab2e185e59e2b5ef57c",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1081,6 +1081,21 @@
       "id": "733:38643278737:1:F4",
       "report": "733:38643278737:1",
       "fingerprint": "20ee3cae794b04808677df6643db08839a1d36134371647c88306079e723687f"
+    },
+    {
+      "id": "734:38643285949:1:F3",
+      "report": "734:38643285949:1",
+      "fingerprint": "4ce3b0666af13bb3140083985a74ad63cf893f6d656e1f04f2f8b2ab6f1fece8"
+    },
+    {
+      "id": "734:38643285949:1:F4",
+      "report": "734:38643285949:1",
+      "fingerprint": "000a3a4406f2fabf7ba7913539ffae24695553b5df0cd2dd95d3fd4e3abdb190"
+    },
+    {
+      "id": "734:38643285949:1:F9",
+      "report": "734:38643285949:1",
+      "fingerprint": "627a99473c0ad0f7b6cf660e531ec3504c96616cad9b99e7a99cb21f3855b0c0"
     }
   ],
   "groups": [
@@ -1977,15 +1992,36 @@
       "members": [
         "733:38643278737:1:F3"
       ]
+    },
+    {
+      "title": "自定义 handler 的写操作授权指引缺少显式规则与开发期校验",
+      "reason": "单条保留。734:F3（E7/E3/E23）显示 repository-routes.md 的「Enforcement and limits」只要求自定义 handler 绑定返回的 conditions.database 策略，未显式写明“handler 写库 ⇒ action 必须声明对应 update grant”，而 authorizeRepository 只在集成期校验映射为 Repository 路由的 action，不校验自定义 handler 的实际写入；浏览器验收中 Comment 对所有非 root 角色返回通用 403。该缺口是“自定义 handler 写操作所需的声明/校验规则缺失”，与组 11 中 597:F2 的“写后读回需声明 read”是同一文件里的不同根因，也与同报告 734:F4 的 snapshot 覆盖边界问题（另一根因）不同，故单独保留。",
+      "members": [
+        "734:38643285949:1:F3"
+      ]
+    },
+    {
+      "title": "Authorization.snapshot() 以 resolveConditions=false 求值，注释却声称不会显示服务端拒绝的动作",
+      "reason": "单条保留。734:F4（E2/E23）显示 authorization.js 的 snapshot() 注释声称“列出 can() 允许的 (type,id,action)，使客户端从不显示服务端拒绝的动作”，但内部以 authorizeWithGrants(..., false) 关闭条件解析，无法覆盖 handler 执行超出声明 grants 的写入；浏览器验收中 Comment 按钮可见却服务端 403。该问题是 Authorization.snapshot 的注释/覆盖边界与实现不符，与同报告 734:F3 的文档规则缺失（同报告不可合并）及组 11 的 read 回读缺口根因不同，故单独保留。",
+      "members": [
+        "734:38643285949:1:F4"
+      ]
+    },
+    {
+      "title": "站内通知集成指引未提示应用需为 inbox 页面提供可发现入口",
+      "reason": "单条保留。734:F9（E14/E15/E22）显示 notification-in-app 的 SKILL Non-Goals 与 inbox-integration「Ownership and upgrades」都明确应用拥有 inbox 页面与路由，但未提醒还需提供导航/头部入口；应用 routes.ts 声明了 /inbox 却注明 Declares no navigation，验收时只能手输 URL 进入。该缺口是“集成检查清单缺少可发现入口”，与组 75 中 616:F8 的“插件自带页面仅开发期、生产消息中心 UI 需自建”（页面是否存在的问题）不是同一根因，故单独保留。",
+      "members": [
+        "734:38643285949:1:F9"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38655712791",
+    "runId": "38670158113",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-14T23:44:09.759Z"
+    "completedAt": "2026-10-15T02:23:53.879Z"
   }
 }
