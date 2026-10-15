@@ -1,0 +1,390 @@
+{
+  "version": 1,
+  "date": "2026-10-15",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "a22d3c2e123d24dcd1f03e76",
+      "id": "732:38643271089:1:F4",
+      "issue": 732,
+      "runId": 38643271089,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "调度 Skill/参考缺少可直接复用的启用/停用 UI 接线示例",
+      "summary": "operations.md 完整给出 list/detail/occurrences/enable/disable 路由、权限与错误码，SKILL.md 也要求管理员可查看/启停，但两者都没有最小可抄的客户端示例（组件、请求路径与就地更新）。首轮实现据此只做了只读页。",
+      "severity": "info",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "原始证据支持这条指引缺口：E8/E9 证实 scheduler Skill 与 operations.md 只给路由、权限与错误码，要求应用自建可查看/启停的管理页，却没有任何客户端接线示例；E7 证实插件已提供 enable/disable 路由并返回更新后的 Schedule；E25/E26/E31 证实首轮只做只读页、修复才补上 actions.tsx。结论是 guidance-gap（指引完整度），不是契约违约或运行时缺陷。合理替代解释不成立：应用开发 Skill 已有通用 useApiClient+写请求范例（E55），但 scheduler 参考既未引用也未给出本插件路由的最小示例，通用范例不能替代专属接线；环境/工厂因素（APP_SAMPLE_DATA、样例种子）解释的是空待办与 B01/B02，与缺少启停示例无因果关系。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "operations.md 承诺 list/detail/occurrences/enable/disable 路由、page:scheduler.schedules/access 权限与 403/404/400 错误码，并明确插件不贡献页面、由应用自建；SKILL.md 要求管理员可查看并启用/停用。框架职责边界是提供 API 与路由，页面接线归应用，故建议补最小示例不构成违约。",
+            "evidence": [
+              "E8",
+              "E9"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "插件路由确实实现 POST /scheduler/schedules/:scheduleId/enable|disable 并返回更新后的 Schedule；两处冻结参考文本只有路由/权限/错误码表，没有组件或 useApiClient 调用示例；修复后的应用 actions.tsx 按 enabled 调 enable/disable 并用返回值就地更新。",
+            "evidence": [
+              "E7",
+              "E8",
+              "E31"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "首轮应用只实现 GET 列表/详情与执行记录，浏览器里没有任何启停控件，B03 因此 failed；retro 明确根因是自建页面未接插件已提供的 POST enable/disable，并在修复轮新增 actions.tsx。",
+            "evidence": [
+              "E25",
+              "E26",
+              "E31"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "APP_SAMPLE_DATA/样例种子只解释 /main/todos 为空与 B01/B02 无法验证；E26 把“空待办”和“只读计划页”拆成两个 blocker，缺少启停入口不是外部服务、凭据或安装问题，环境因素不能解释该指引缺口。",
+            "evidence": [
+              "E25",
+              "E26"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺口位于插件 skill/reference 正文本身，retro 将其归为 skills-docs 改进；冻结材料中没有工厂提示、注入配置或 QA 脚本要求跳过启停接线，故不是工厂覆盖造成。",
+            "evidence": [
+              "E8",
+              "E9",
+              "E26"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "应用开发 Skill 已文档化 useApiClient + api.request(POST/PATCH) 并从返回 {data} 取值的通用写模式，插件路由也已存在，能力并非缺失；但 scheduler 参考未给出本路由的最小示例或指向该通用模式，Agent 需自行从 dist/类型推断，改进空间成立。",
+            "evidence": [
+              "E55",
+              "E15",
+              "E31"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+        "app/.agents/skills/nocobase-app-plugin-scheduler/SKILL.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "调度 Skill/参考缺少可直接复用的启用/停用 UI 接线示例",
+        "issues": 1,
+        "first": "2026-10-15"
+      },
+      "report": "reports/issues/732/runs/38643271089/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "f537a71429e24fcf7713abfb",
+      "id": "732:38643271089:1:F5",
+      "issue": 732,
+      "runId": 38643271089,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "各发布包 dist 布局不一致，增加 Agent 类型/入口探索成本",
+      "summary": "@nocobase/db 的公开入口为 dist/src/index.js，而 @nocobase/repository-input 与 @nocobase/app-client 为扁平 dist/index.js。Agent 在实现期多次按 dist/src 猜测失败，并耗费步骤枚举 db-testing/app-testing 的 dist。exports 映射保证解析正确，但对按物理路径直读的 Agent 不友好。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "核心事实成立：E58/E16/E59 显示 @nocobase/db 的公开入口物理位置为 dist/src/index.js，而 @nocobase/repository-input 与 @nocobase/app-client 为扁平 dist/index.js，app-testing 亦用 dist/src；E36 记录按 dist/src 猜测 repository-input 类型失败，E41 记录直接枚举 @nocobase/db-testing/dist 不存在，均属实际探索成本。E57/E28 的 exports 映射保证解析正确，E56 已要求只经文档化 exports，未发现运行或装配错误，故属 usability-improvement。需说明：候选所列 E45 实际是 sqlite 逻辑列名/物理列名查询差异，与包 dist 布局无关，本次未将其作为依据。替代解释：pnpm 顶层软链与 .pnpm 嵌套（E37）部分解释 db-testing 不在顶层，但不能消除布局不一致造成的直读失败。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "公开入口布局确有差异：db 为 dist/src/index.js，repository-input 与 app-client 为扁平 dist/index.js；包 exports 才是官方解析契约，应用开发 Skill 也要求只走文档化 exports、不得导入插件内部源码路径。没有任何冻结约定承诺各包物理 dist 目录必须一致，故这是易用性偏好而非违约。",
+            "evidence": [
+              "E16",
+              "E58",
+              "E59",
+              "E56"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "日志证据显示 Agent 按 dist/src 读取 repository-input 的 .d.ts 失败（退出码 2），且 @nocobase/db-testing/dist 在顶层不存在；物理布局差异与各包 package.json 的 main/types 声明一致。E45 是 sqlite 列名问题，不支持本条，未采用。",
+            "evidence": [
+              "E36",
+              "E41",
+              "E16",
+              "E28"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "探索失败源于按物理路径猜测，而非应用错误装配：app-client 首次 find 为空后改读 exports/软链即成功；最终 verify-2 全部通过，未产生业务或运行缺陷。",
+            "evidence": [
+              "E36",
+              "E37",
+              "E41"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "pnpm 顶层软链与 .pnpm 嵌套、各包既有 exports 映射，解释了 db-testing 不在顶层及部分直读失败；这是包发布/安装布局而非外部服务或凭据问题，且不影响按 exports 正确解析。",
+            "evidence": [
+              "E37",
+              "E35"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "快照内可见的工厂材料只有 app/factory-template.json，仅固定模板与插件版本，未定义或覆盖各包 dist 布局；没有工厂 prompt/构建脚本原文可证明其要求直读物理路径，故该不一致保留为上游打包约定。",
+            "evidence": [
+              "E27"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "各包 exports 已能正确解析，应用开发 Skill 也明确要求经 documented package exports 访问；Agent 原本无需直读物理路径，改进点是统一输出布局或在 Skill 中显式说明入口，而非能力缺口。",
+            "evidence": [
+              "E56",
+              "E28",
+              "E16"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
+        "issues": 7,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/732/runs/38643271089/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "e7810359c5f0a494f80283ba",
+      "id": "733:38643278737:1:F3",
+      "issue": 733,
+      "runId": 38643278737,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "references/i18n.md:10 暗示 onError 会自动把 AppI18nError 转成带 localizedMessage 的 ApiError",
+      "summary": "同一框架内两份指引对 AppI18nError 的处理描述不一致：Skill 准确，i18n reference 过度承诺自动转换。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+        "app/.agents/skills/nocobase-app-development/references/i18n.md",
+        "@nocobase/app-server"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-i18n"
+      ],
+      "featurePoint": "应用搭建/多语言",
+      "candidates": [
+        "应用搭建/多语言"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "references/i18n.md 宣称 onError 会把 AppI18nError 自动转成含 localizedMessage 的 ApiError，与实现不符",
+        "issues": 1,
+        "first": "2026-10-15"
+      },
+      "report": "reports/issues/733/runs/38643278737/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "d2ba8116503095618159cfc9",
+      "id": "733:38643278737:1:F4",
+      "issue": 733,
+      "runId": 38643278737,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "@nocobase/db 的 createOne 未把唯一约束冲突转成可映射错误，冲突会以 500 暴露",
+      "summary": "isUniqueConstraintViolation 能识别各数据库方言的唯一冲突，但仅用于 upsert 路径；Repository.createOne 直接委托适配器 createOne，不转换原始驱动错误，且该检测函数未从包入口导出，application 的 recognizeApiError 也无法据其给出 409。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-development/references/http-api.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 4,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/733/runs/38643278737/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "2b1c238b2be67860d4529d1a",
+      "id": "734:38643285949:1:F3",
+      "issue": 734,
+      "runId": 38643285949,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "自定义 handler 写操作的授权指引缺少显式警示与开发期校验",
+      "summary": "repository-routes.md 说明了自定义 handler 与映射 CRUD 的要求，但没有一句直接指出“handler 若写库，action 必须授予对应 update”，且框架只在集成期校验 Repository 路由，不校验自定义 handler 的实际写入。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "自定义 handler 的写操作授权指引缺少显式规则与开发期校验",
+        "issues": 1,
+        "first": "2026-10-15"
+      },
+      "report": "reports/issues/734/runs/38643285949/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "ddc11a16e8024e3c10480b7b",
+      "id": "734:38643285949:1:F4",
+      "issue": 734,
+      "runId": 38643285949,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "snapshot() 可能显示服务端会拒绝的动作",
+      "summary": "Authorization.snapshot 以 resolveConditions=false 求值，注释却声称“客户端从不显示服务端拒绝的动作”。当 action 的 handler 执行超出声明 grants 的写操作时，snapshot 仍报告 permitted，造成客户端/服务端判定分歧。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "Authorization.snapshot() 以 resolveConditions=false 求值，注释却声称不会显示服务端拒绝的动作",
+        "issues": 1,
+        "first": "2026-10-15"
+      },
+      "report": "reports/issues/734/runs/38643285949/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "a21415a2b800bedc5f592090",
+      "id": "734:38643285949:1:F9",
+      "issue": 734,
+      "runId": 38643285949,
+      "attempt": 1,
+      "findingId": "F9",
+      "runDay": "2026-10-15",
+      "archivedAt": "2026-10-15T23:03:53.743Z",
+      "title": "通知插件指引未提示应用需提供可发现入口",
+      "summary": "SKILL 与 inbox-integration 明确“应用拥有页面与路由”，但未提醒还需提供导航/头部入口；应用据此只注册了路由而遗漏入口。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-notification-in-app"
+      ],
+      "featurePoint": "应用搭建/通知",
+      "candidates": [
+        "应用搭建/通知"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "站内通知集成指引未提示应用需为 inbox 页面提供可发现入口",
+        "issues": 1,
+        "first": "2026-10-15"
+      },
+      "report": "reports/issues/734/runs/38643285949/attempt-1/index.html#review-finding-F9"
+    }
+  ]
+}
