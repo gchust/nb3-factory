@@ -51,9 +51,16 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The library pages all carry the one `library.documents` page grant, including the overlays, which inherit the
+    // page they are declared under. The staff page names no grant at all, which leaves it to the root administrator.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'library', authorizedAs: 'library.documents' },
+      { name: 'library-new', authorizedAs: 'library.documents' },
+      { name: 'library-document', authorizedAs: 'library.documents' },
+      { name: 'library-document-edit', authorizedAs: 'library.documents' },
+      { name: 'members', authorizedAs: 'unrestricted' },
     ]);
   });
 
