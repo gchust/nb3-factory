@@ -50,9 +50,14 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the device ledger's pages and the inbox opted out of page authorization, so they are
+    // reachable by every signed-in user. The ledger's two dialogs are child routes and inherit `auth: 'required'`,
+    // so they are listed too, each with its own `authz: 'skip'`.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'devices', authorizedAs: null },
+      { name: 'device-new', authorizedAs: null },
+      { name: 'device-edit', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
     ]);
   });
