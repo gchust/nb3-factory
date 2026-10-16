@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "be833cb961ddd185376f39c0b79c609d794f9413030084cff332b9f5a518f506",
+  "inputHash": "a8a093bc681d0a94048c42714b30edc01c657182bc528d0c451a3785e7e37c2c",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1098,6 +1098,16 @@
       "fingerprint": "627a99473c0ad0f7b6cf660e531ec3504c96616cad9b99e7a99cb21f3855b0c0"
     },
     {
+      "id": "739:38810813995:1:F5",
+      "report": "739:38810813995:1",
+      "fingerprint": "083e190811e400f36d91fa3dc134b78dc9c802b982b9b80214448193e24e9016"
+    },
+    {
+      "id": "739:38810813995:1:F6",
+      "report": "739:38810813995:1",
+      "fingerprint": "f8562ba1c282f2a4dfe9bd008a39fa60e8da3345eecde3877a78334a1c28e9c4"
+    },
+    {
       "id": "740:38810821322:1:F1",
       "report": "740:38810821322:1",
       "fingerprint": "aed11e2c18d76f7f5b2e6d691a840452ad14f4b8255cc53f9998c9f56e9f9c1f"
@@ -1861,11 +1871,12 @@
       ]
     },
     {
-      "title": "nocobase-db 指引未说明字段类型与过滤能力（算子白名单 / FilterBuilder string-text 分组）的映射",
-      "reason": "跨报告合并。665:F4（E29/E30/E31/E35）显示 @nocobase/db 的 validateFilterNode 在算子不在 OPERATORS_BY_TYPE[field.type] 内时抛 FIELD_CAPABILITY_NOT_SUPPORTED，boolean 只允许 $isTruly/$isFalsy/$empty/$notEmpty（$eq/$ne 查询期报错），而 nocobase-db SKILL 只讲 Query 不读元数据与三参 where，通篇没有按字段类型的算子白名单。本次新增 726:F4（E130/E131/E132）在 1.0.0-beta.61 指向同一校验函数与同一错误码：FilterBuilder 类型签名把 string()/text()/number()/date() 等区分为不同能力分组，对 text 字段误用 f.string(path) 同样在查询期抛 FIELD_CAPABILITY_NOT_SUPPORTED（消息含字段名与类型）；而 nocobase-db（含 database-and-data）指引只演示 collection.string 等字段声明，未说明 text 能力字段必须用 f.text(path)，Agent 需读 @nocobase/repository-input 类型签名与 dist 源码才发现，先写出 f.string 再得到 400。两条的触发条件都是“按字段类型选错过滤能力、只有查询期才报同一 FIELD_CAPABILITY_NOT_SUPPORTED”，公开缺口都是 nocobase-db 指引缺少“字段类型→可用过滤能力（算子白名单/FilterBuilder 分组）”的映射与示例，受影响 API（@nocobase/db 的过滤能力校验、@nocobase/repository-input 的 FilterBuilder）与修复方向（在该 Skill 补映射表与最小示例）一致，故合并为一组。462:F3（旧分组 15）虽同样引用 OPERATORS_BY_TYPE/FIELD_CAPABILITY_NOT_SUPPORTED，但其根因是 condition()/FilterOperator 不按字段类型收窄运算符的框架 API 缺陷（修复方向为类型化或在装配期拒绝），与本文档缺口分属框架根因与缺说明两类，按“应用侧 workaround 与框架根因区分、缺说明与错误说明区分”的规则不并入。",
+      "title": "字段类型与过滤能力（布尔/string-text 算子白名单）的映射未在 nocobase-db 指引说明",
+      "reason": "跨报告合并。665:F4（E29/E30/E31/E35）显示 @nocobase/db 的 validateFilterNode 在算子不属于 OPERATORS_BY_TYPE[field.type] 时抛 FIELD_CAPABILITY_NOT_SUPPORTED，boolean 仅允许 $isTruly/$isFalsy/$empty/$notEmpty（$eq/$ne 查询期报错），而 nocobase-db SKILL 只讲 Query 不读元数据与三参 where，通篇没有按字段类型的算子白名单。726:F4（E130/E131/E132）在 1.0.0-beta.61 指向同一校验函数与同一错误码：FilterBuilder 类型签名把 string()/text()/number()/date() 区分为不同能力分组，对 text 字段误用 string 能力同样报错，而指引未说明该映射。本次新增 739:F5（E69/E71/E29）在 1.0.0-beta.61 给出同一根因的第三条证据：repository.js 的 OPERATORS_BY_TYPE 对 boolean 仅声明 $isTruly/$isFalsy 等，repository-input 的 FilterOperator 联合类型也列出这两个布尔算子，以 $eq 表达布尔筛选返回 400 并造成真实测试失败，修复方向与上两条一致（补文档说明或给出指向性错误）。成员均指向字段类型→允许算子的白名单缺口，故合并。",
       "members": [
         "665:37700965959:1:F4",
-        "726:38481213917:1:F4"
+        "726:38481213917:1:F4",
+        "739:38810813995:1:F5"
       ]
     },
     {
@@ -2085,15 +2096,22 @@
       "members": [
         "742:38810835265:1:F4"
       ]
+    },
+    {
+      "title": "分享规则为持久配置，缺少“到期自动失效”的时间维度",
+      "reason": "单独保留。739:F6（E52/E49）显示 @nocobase/app-plugin-authz-sharing-rules 的分享规则以持久规则+分配表达，撤销依赖显式 delete/update，规则结构为 { key, resource, actions, title?, subjects, reason? }，没有任何有效期/到期字段，“只开放一段时间后自动失效”的临时共享只能由应用层记录到期时间并定时清理。触发条件（需要到点自然失效的临时共享）、期望（规则可声明有效期并到期自然不再生效）与修复方向（评估在 sharing-rules 中增加可选到期字段）均指向分享规则缺少时间维度这一能力缺口。既有 674:F6 虽同处 sharing-rules Skill，但聚焦“何时应自建共享表而非 defineSharingRule”，根因与修复方向不同；699:F6、577:F4 分别涉及过滤操作符与 store 查询下推，亦不同，故单独保留。",
+      "members": [
+        "739:38810813995:1:F6"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38829012658",
+    "runId": "38830086742",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-16T00:22:38.110Z"
+    "completedAt": "2026-10-16T00:34:03.818Z"
   }
 }
