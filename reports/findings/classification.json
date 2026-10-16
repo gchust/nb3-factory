@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "5152e5fd5dd363d27f5ff018536967a12a59f39c5351c5534064bed0726db5c6",
+  "inputHash": "cc66c7064fcb8f9427bfa3943195ff9ac0ff3389544d1a67040beb9026f37619",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1153,6 +1153,11 @@
       "fingerprint": "f15b59d69ecdefe08ada5f492a1a8f99f339989900e4a3093e7d70c7c1b9c50a"
     },
     {
+      "id": "747:38969414170:1:F4",
+      "report": "747:38969414170:1",
+      "fingerprint": "0f387bb65b44548e2b50e53f6e2f292c47d3e59f5b247b39a97b7d08d6b74151"
+    },
+    {
       "id": "748:38969420819:1:F4",
       "report": "748:38969420819:1",
       "fingerprint": "f3c3ac281bbe4ac96c166327e9450e5a9880146b35ce992eb44df8544430f124"
@@ -2145,15 +2150,22 @@
       "members": [
         "748:38969420819:1:F4"
       ]
+    },
+    {
+      "title": "授权限制 Skill 缺少「共享 + 额外权限集 + 限制直接指派到用户」的单一端到端最小示例",
+      "reason": "单条保留。747:F4（E21/E22/E23/E64，另见复核引用的 E82/E37/E41）显示：nocobase-app-plugin-authz-restriction-rules 的 SKILL 已用文字说明「限制与共享/权限集的正向结果取交集，保密限制应直接指派到每个账号」（E21 L8/L18/L22），subjects 机制表也把「保密记录必须保持排除」指向 restriction 并注明共享与额外权限集不能重新打开（E23 L116/L119）；但唯一可运行的 Service API 示例以 org.team 为主题、只演示 recordAccess（E82），安装种子章节也只给 authorizationRestrictionRules/Assignments 两表与幂等写法（E22），未把「共享 + 额外权限集 + 限制直接指派到 user」连成一个最小可运行例；实现 Agent 因此在「保护权限集 / 启动期对账」等方案间反复权衡直至上下文溢出（E64），最终才以直接指派给 duzhe 落地（E37）并通过验收（E41）。该缺口是 restriction Skill 内缺少组合示例，与既有「跨包/跨主题端到端路径与示例缺失，接入链条分散」（464:F6/541:F5/579:F1）、「无权限模型应用最小授权口径不一致」（552:F4）、「授权 Skill 缺公开 API 速查」（577:F8）、「内置默认权限集不可作为可指派应用角色缺示例」（726:F5）在触发场景、受影响指引位置与修复方向（补 restriction 的反例→正解最小示例）上均不同，故单独保留。",
+      "members": [
+        "747:38969414170:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38978632011",
+    "runId": "38979595564",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-16T22:58:32.126Z"
+    "completedAt": "2026-10-16T23:08:36.840Z"
   }
 }
