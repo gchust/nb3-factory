@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d2a5d44fa781c3650913c8f5e2dc94691da0929d6891e5fae54a9dc875bf18b0",
+  "inputHash": "be833cb961ddd185376f39c0b79c609d794f9413030084cff332b9f5a518f506",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1131,6 +1131,16 @@
       "id": "741:38810828230:1:F2",
       "report": "741:38810828230:1",
       "fingerprint": "4008f8644746fd3f34a848d0637ab4cc280015b59ed8ec80afc1eeb9ff58f2f6"
+    },
+    {
+      "id": "742:38810835265:1:F3",
+      "report": "742:38810835265:1",
+      "fingerprint": "45b72af155c8a4f7a594f57b3076dc7362204a84050ffea29f46742ee4c500c4"
+    },
+    {
+      "id": "742:38810835265:1:F4",
+      "report": "742:38810835265:1",
+      "fingerprint": "f15b59d69ecdefe08ada5f492a1a8f99f339989900e4a3093e7d70c7c1b9c50a"
     }
   ],
   "groups": [
@@ -2061,15 +2071,29 @@
       "members": [
         "740:38810821322:1:F4"
       ]
+    },
+    {
+      "title": "lifecycle.md §3 的 provider.start() 模式未说明 recover() 需要日志集合已由迁移创建",
+      "reason": "单条保留。742:F3（E2/E3/E7/E28）是 guidance-gap：指引 §3 推荐在 start() 中直接 await effectJobs().start()，但未说明该调用会经 recover()→takeBackStale()/listEffectRuns() 读取 lifecycleEffectRuns，迁移未应用时抛 RepositoryError。其根因是指引缺前置条件说明，与 742:F4 的框架错误处理根因不同；同报告不得合并。",
+      "members": [
+        "742:38810835265:1:F3"
+      ]
+    },
+    {
+      "title": "@nocobase/lifecycle 启动恢复对日志集合缺失缺少降级或可操作诊断",
+      "reason": "单条保留。742:F4（E3/E4/E28）是 usability-improvement：JobsEffectDispatcher.start() 无条件 recover()，集合缺失时裸抛 RepositoryError 中止启动，属框架侧缺少降级/领域错误诊断；与 742:F3 的文档缺口根因不同，且同一报告不得合并。suspected 且需应用自行加容错，证据不足以并入其他组，故单独保留。",
+      "members": [
+        "742:38810835265:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38826034299",
+    "runId": "38829012658",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-15T23:52:42.125Z"
+    "completedAt": "2026-10-16T00:22:38.110Z"
   }
 }
