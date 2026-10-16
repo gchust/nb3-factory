@@ -201,6 +201,67 @@ A full-stack NocoBase 3 application. The server runs on `@nocobase/app-server` a
 
 You own everything in this directory. Add pages, API routes, database tables, and business logic directly here — this is your application's source code, not a framework you extend from the outside.
 
+## Document library (资料库)
+
+This application's business feature is an internal document library with
+per-document temporary access.
+
+- 资料员甲 maintains documents: creates, edits the ones it owns, publishes them and marks them confidential.
+- 阅读者乙 reads what is published and never edits it — reading is not editing.
+- The administrator temporarily opens one draft to one colleague, and revoking it takes the document away again on the next request or refresh.
+- A confidential document stays invisible to 阅读者乙 even while a share names it.
+
+Nothing here re-implements permissions. Every decision comes from the real
+Authorization stack:
+
+| Concern                               | Mechanism                                                                                                                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who may read or change documents      | Permission Sets `library.maintainer` (view all, create all, edit own) and `library.reader` (view published) over the composite resource `library.documents` |
+| Published documents are open          | Record Access `library.published` (`published` is true), the reader's view scope                                                                            |
+| A published non-confidential document | The reader's Restriction Rule `library.reader.notConfidential` (`confidential` is false), intersected after every share                                     |
+| Opening one draft to one colleague    | A Sharing Rule over `view` naming that document id and that user id, written through `/api/library/documents/:id/shares`                                    |
+| Revoking it                           | Deleting that Sharing Rule; the next request re-evaluates and answers `404`                                                                                 |
+| Deactivating an account               | The Users plugin's `disable`, which revokes the account's sessions                                                                                          |
+
+Where it lives:
+
+```text
+client/pages/library/                   The list, the document page, and the dialogs that create and edit
+client/pages/library/detail/shares.tsx  The administrator's temporary-access panel
+client/pages/members/                   Staff: permission sets and account state
+server/library/                         Domain, authorization, and the collection service
+server/routes/library/                  /api/library/documents and its shares
+server/providers/                       Registers the library provider
+server/routes/                          Registers the library router
+database/main/migrations/202610150001_create_documents.ts
+database/main/seeds/                    Permission sets, 甲 and 乙, the three documents, 乙's restriction rule
+```
+
+Pages: `/library` (list, search and filter), `/library/new`, `/library/:id`
+(the document, with the share panel for an administrator), `/library/:id/edit`,
+and `/members` for the root administrator. The four `/api/library/documents`
+endpoints are documented at `<APP_BASE_PATH>/api/swagger/docs`.
+
+Accounts this application seeds for the demonstration:
+
+| Account                  | Username   | Password                                                                                       |
+| ------------------------ | ---------- | ---------------------------------------------------------------------------------------------- |
+| 资料员甲, the maintainer | `jia`      | `Jia12345678`                                                                                  |
+| 阅读者乙, the reader     | `duzhe`    | `Duzhe12345678`                                                                                |
+| Administrator            | `nocobase` | `admin123` (the authentication plugin's initial administrator; change it in a real deployment) |
+
+Documents it seeds, all owned by 甲:
+
+| Document              | Id                                     | Published | Confidential |
+| --------------------- | -------------------------------------- | --------- | ------------ |
+| 员工手册（公开）      | `d1000000-0000-4000-8000-00000000000a` | yes       | no           |
+| 2026 年度计划（草稿） | `d2000000-0000-4000-8000-00000000000b` | no        | no           |
+| 高管薪酬方案（保密）  | `d3000000-0000-4000-8000-00000000000c` | yes       | yes          |
+
+Seeds run at installation. `pnpm nocobase db seed` re-runs them, and every one
+is idempotent, so an account password or a document an administrator changed is
+left alone.
+
 ## Default and Examples
 
 Default provides the application shell and product capabilities without example plugins or business demo pages. Application-owned routes start empty, and new databases receive no article sample data. Its built-in Users integration lists direct Authorization Permission Sets as application roles, while access assigned to all authenticated users remains separate. Use `app-template-examples` for article management and runnable plugin demonstrations.
