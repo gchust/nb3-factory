@@ -1,0 +1,673 @@
+{
+  "version": 1,
+  "date": "2026-10-16",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "d36a4dabfe7a38573d230d2d",
+      "id": "739:38810813995:1:F5",
+      "issue": 739,
+      "runId": 38810813995,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "布尔过滤只接受 $isTruly/$isFalsy，$eq 会被拒绝且指引未提示",
+      "summary": "Repository 对布尔字段只声明 $isTruly/$isFalsy 等操作符；以 $eq 表达布尔条件会返回 400，搭建过程因此出现真实测试失败。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "字段类型与过滤能力（布尔/string-text 算子白名单）的映射未在 nocobase-db 指引说明",
+        "issues": 3,
+        "first": "2026-10-08"
+      },
+      "report": "reports/issues/739/runs/38810813995/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "80f448b3bb3a94517ad2a6ad",
+      "id": "739:38810813995:1:F6",
+      "issue": 739,
+      "runId": 38810813995,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "分享规则为持久配置，缺少“到期自动失效”的时间维度",
+      "summary": "分享规则以持久规则+分配表达，撤销依赖显式删除；“临时共享”的时效边界需业务自行管理。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authz-sharing-rules",
+        "packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules",
+        "pkg:@nocobase/app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "分享规则为持久配置，缺少“到期自动失效”的时间维度",
+        "issues": 1,
+        "first": "2026-10-16"
+      },
+      "report": "reports/issues/739/runs/38810813995/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "7ba470808b1148a15582571a",
+      "id": "740:38810821322:1:F1",
+      "issue": 740,
+      "runId": 38810821322,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "references/testing.md 未说明 cookie 写请求需要 trustedOrigins 与 Origin 头",
+      "summary": "testing.md 的整应用测试示例只发起 GET，未提及写请求；而 authentication 的 checkCookieWriteOrigin 会对 cookie 认证的非 GET/HEAD/OPTIONS 请求校验 origin/referer 是否可信，缺失即返回 403 INVALID_CSRF_ORIGIN。Agent 按文档写出 POST 测试后会先失败。",
+      "severity": "major",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "testing.md 的整应用测试小节只给出 GET 示例，全文无 Origin/trustedOrigins 说明（grep 无命中）；而 auth.js 的 checkCookieWriteOrigin 对带 cookie 的非 GET/HEAD/OPTIONS 请求在缺少可信 origin 时返回 INVALID_CSRF_ORIGIN，探针日志 E59 在同一 helper 上实测 POST/PATCH 403、GET 200。应用只能自配 trustedOrigins 并手动补 Origin 头（E34/E60）。属文档 guidance-gap，非运行时缺陷主张。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "testing.md 承诺用 createAppTest + signIn 走真实登录测试整应用路由鉴权，示例只发 GET，未说明写请求所需的 Origin/trustedOrigins；helper 文档语义是'以已登录用户身份请求'。",
+            "evidence": [
+              "E24",
+              "E22"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "auth.js 的 checkCookieWriteOrigin 对 cookie 认证的非 GET/HEAD/OPTIONS 请求在 source 缺失或不信任时返回 invalidCsrfOrigin；E59 记录同一会话 POST/PATCH 403 INVALID_CSRF_ORIGIN、GET 200。",
+            "evidence": [
+              "E23",
+              "E59"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用未误用 API，而是显式配置 config.auth.trustedOrigins 并在写请求补 Origin 头（E34），且把该要求写进 server/AGENTS.md（E60），说明现有文档未覆盖。",
+            "evidence": [
+              "E34",
+              "E60"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "现象在 createTestApp 启动的真实应用与测试数据库上复现（E21/E59），非外部服务、凭据或依赖缺失所致；403 由本应用认证中间件返回。",
+            "evidence": [
+              "E21",
+              "E59"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该文档属模板自带的 nocobase-app-development Skill（E24），未见工厂提示或 QA/构建脚本改写其内容；无工厂材料可解释该缺口。",
+            "evidence": [
+              "E24"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有公开路径只有 testing.md 的整应用测试指引与 signIn helper，二者都不发送 Origin、也未提供写请求配置；cli.md 的 origin 指引针对部署 publicOrigin，不覆盖测试 CSRF。",
+            "evidence": [
+              "E24",
+              "E22",
+              "E66"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 12,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/740/runs/38810821322/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "8a3e1f506f0a30df234764d2",
+      "id": "740:38810821322:1:F2",
+      "issue": 740,
+      "runId": 38810821322,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "signIn 的 TestSession.fetch 只带 cookie，不发送已定义的 TEST_ORIGIN",
+      "summary": "testing.js 中 TEST_ORIGIN='http://localhost' 已知且用于拼 apiRoot，但 TestSession.fetch 只设置 cookie 头，不设置 Origin。写请求因此无法满足 checkCookieWriteOrigin，除非应用另行信任并手动加头。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "signIn 返回的 TestSession.fetch 只合并 cookie 头，TEST_ORIGIN 仅用于拼 apiRoot，从不作为请求头；服务端 checkCookieWriteOrigin 要求可信 source，因此该公开 helper 的写请求必然 403（E59 实测）。可改 helper 或补文档，属可用性改进。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "testing.js 公开 signIn/TestSession.fetch，文档把它作为以已登录用户身份发起请求的入口；契约包含'携带会话 cookie 调用 fetch'，但未声明写请求需额外头。",
+            "evidence": [
+              "E22",
+              "E24"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E22 显示 fetch 只写 cookie 头且 TEST_ORIGIN 未用于请求；E23 服务端在缺可信 origin 时拒绝；E59 实测 POST/PATCH 403、GET 200。",
+            "evidence": [
+              "E22",
+              "E23",
+              "E59"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用通过调用方补 Origin 头并配置 trustedOrigins 绕行（E34/E60），未修改 helper；是 helper 能力边界而非应用误用。",
+            "evidence": [
+              "E34",
+              "E60"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "在真实应用+测试数据库环境复现（E21/E59），排除外部服务、凭据或安装问题。",
+            "evidence": [
+              "E21",
+              "E59"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "helper 是插件包内公开源码（E22），无工厂提示或脚本介入；缺口源于 helper 自身实现。",
+            "evidence": [
+              "E22"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "fetch 没有 origin 参数或默认头，文档也未说明限制或替代，现有公开能力不足以开箱完成写请求。",
+            "evidence": [
+              "E22",
+              "E24"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "测试请求助手（app-testing request / authentication signIn）未注入可信 Origin，cookie 写测试被 CSRF 拒绝",
+        "issues": 5,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/740/runs/38810821322/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "ac677d286cc36fe3e8a9a8d3",
+      "id": "740:38810821322:1:F3",
+      "issue": 740,
+      "runId": 38810821322,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "nocobase-db Skill 的 seed 示例与该仓库基线 ESLint 规则冲突",
+      "summary": "SKILL.md 的 seed 示例把 repository 解构为独立方法再调用，与该仓库默认 lint 规则冲突；Agent 照抄会在提交前被 ESLint 拦下。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "nocobase-db SKILL.md 的 seed 示例解构 run({ repository }) 后调用 repository('orderStatuses').upsertOne（E12），而应用基线 lint 通过 @nocobase/dev-config/eslint 的 recommendedTypeChecked 启用 @typescript-eslint/unbound-method（E63），E58 记录实际报错于该 seed 写法；应用改用 run(context) + context.repository('todos')（E31）才通过。属 guidance-gap。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "SKILL.md 的 seed/migration 示例是要求照抄的规范代码；示例用 run({ repository }) 解构并直接调用 repository(...)，文档未提示该写法与 lint 的冲突（E12）；默认 lint 链启用 unbound-method（E63）。",
+            "evidence": [
+              "E12",
+              "E63"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "默认 typescript 配置展开 recommendedTypeChecked，包含 unbound-method（E63）；E58 记录 eslint 对该 seed 模式报 unbound-method，属实际运行观察。",
+            "evidence": [
+              "E63",
+              "E58"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用的可用 seed 用 run(context) 并把 repository 作为 context 方法调用（E31），即必须偏离 Skill 示例才能通过。",
+            "evidence": [
+              "E31"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该规则来自已安装的 @nocobase/dev-config/eslint（E63）并由 app/eslint.config.js 引入，E58 在同一环境触发；非环境偶发。",
+            "evidence": [
+              "E63",
+              "E58"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂配置附加在应用配置之后，但 E58 证明实际 lint 确实报错，说明没有工厂覆盖消除该问题；冲突写法在 Skill 源文件 E12。",
+            "evidence": [
+              "E58",
+              "E12"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "Skill 的 troubleshooting / 'API shapes that do not exist' 只纠正 db.repository() 缺名等，不涉及解构丢失 this 的 lint 冲突；现有指引无法让示例原样通过。",
+            "evidence": [
+              "E13",
+              "E12"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "SeedContext.repository 声明为方法，Skill 种子示例的解构写法触发 unbound-method lint",
+        "issues": 4,
+        "first": "2026-10-13"
+      },
+      "report": "reports/issues/740/runs/38810821322/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "3ae2fd6472b79968b53e4034",
+      "id": "740:38810821322:1:F4",
+      "issue": 740,
+      "runId": 38810821322,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "Scheduler 插件不提供管理页面，每个应用都要自建计划与运行记录页",
+      "summary": "operations.md 明确插件不贡献页面，只有 HTTP API 与 sync 命令；本应用因此新增 client/pages/scheduler/* 才能满足 B01–B03 的人工验收路径。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "operations.md 明确插件不贡献页面，只提供 HTTP 路由与 schedulerServiceToken（E6/E3）；插件 client 入口只注册 locales、注释亦声明 no pages（E64）。本应用为此自建 client/pages/scheduler/* 路由（E33），QA 报告 B01–B03 才通过（E35）。属可复用的插件能力改进建议。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "operations.md 声明插件只提供管理路由且 'contributes no pages'，应用需自行声明页面（E6）；tokens.js 确认仅公开 schedulerServiceToken，不含任何页面/UI 入口（E3）。",
+            "evidence": [
+              "E6",
+              "E3"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E64 显示插件 client 仅 defineClientPlugin 注册 locales；E33 应用自建 /scheduler 路由；E35 QA 通过列表/启停/运行记录验收，证明页面确实是应用侧实现。",
+            "evidence": [
+              "E64",
+              "E33",
+              "E35"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按 operations.md 的路由与 scheduler.schedules 权限正确装配自建页面（E33），非误用 API。",
+            "evidence": [
+              "E33"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "插件与页面在运行应用上通过 B01–B03（E35），排除环境/依赖问题；无页面是插件设计事实。",
+            "evidence": [
+              "E35"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "operations.md 是插件自带 Skill 指引（E6），未见工厂提示或脚本改写该无页面约定。",
+            "evidence": [
+              "E6"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有公开能力仅 HTTP API 与 sync 命令、client 无页面（E64/E6），因此每个应用仍需重复实现管理视图；改进建议成立。",
+            "evidence": [
+              "E64",
+              "E6"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "Scheduler 插件不提供管理页面，应用须自建计划与运行记录页",
+        "issues": 1,
+        "first": "2026-10-16"
+      },
+      "report": "reports/issues/740/runs/38810821322/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "49ee927b662ea1b2f64ba048",
+      "id": "740:38810821322:1:F7",
+      "issue": 740,
+      "runId": 38810821322,
+      "attempt": 1,
+      "findingId": "F7",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "@nocobase/app-server/package.json 不能通过 require 读取",
+      "summary": "Agent 探查时常 require('<包>/package.json') 读取版本/入口，本包 exports 映射未导出 package.json，返回 ERR_PACKAGE_PATH_NOT_EXPORTED。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "@nocobase/app-server 的 exports 仅列出 ./application、.、./config 等子路径，未导出 './package.json'（E65）；E45 探针记录 require('@nocobase/app-server/package.json') 返回 ERR_PACKAGE_PATH_NOT_EXPORTED。属包元数据读取的可用性改进，非应用缺陷。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "package.json 的 exports 映射枚举了公开子路径且缺 './package.json'（E65）；routes.d.ts 显示该包以显式导出入口对外（E14），未提供元数据入口。",
+            "evidence": [
+              "E65",
+              "E14"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E45 是实际探查输出，require 裸子路径被 exports 拦截；E65 源码解释为没有 './package.json' 导出。",
+            "evidence": [
+              "E45",
+              "E65"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用/Agent 只是读取包元数据受挫（E45），没有装配或调用错误。",
+            "evidence": [
+              "E45"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "包已安装（basis 列 @nocobase/app-server 2.0.0-beta.3），失败来自 Node exports 解析而非缺依赖或网络（E45/E65）。",
+            "evidence": [
+              "E45",
+              "E65"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该 exports 由包自身 package.json 决定（E65），无工厂提示/脚本注入因素。",
+            "evidence": [
+              "E65"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有导出入口提供运行时 API，但没有任何入口返回包版本/元数据；调用方须改用 fs 路径等非裸规范方式，改进空间成立。",
+            "evidence": [
+              "E65",
+              "E14"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-server"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/* 部分包未从 exports 导出 ./package.json，按包名解析包元数据失败",
+        "issues": 2,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/740/runs/38810821322/attempt-1/index.html#review-finding-F7"
+    },
+    {
+      "key": "e022c5bfbf92092cbce3f58b",
+      "id": "741:38810828230:1:F1",
+      "issue": 741,
+      "runId": 38810828230,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "nocobase-db 技能种子示例使用对象方法简写，触发 unbound-method lint",
+      "summary": "app/.agents/skills/nocobase-db/SKILL.md L120-130 的种子示例写成 `async run({ repository }) { ... }`（对象方法简写）。应用把该写法照抄进 202610070002_sample_devices.ts 后，模板 ESLint（@nocobase/dev-config/eslint + 工厂配置）报 @typescript-eslint/unbound-method（37:17），必须改成 `run: async ({ repository }) => { ... }` 才能通过。框架/模板的推荐指引给出了会被自身 lint 拒绝的样例。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "SeedContext.repository 声明为方法，Skill 种子示例的解构写法触发 unbound-method lint",
+        "issues": 4,
+        "first": "2026-10-13"
+      },
+      "report": "reports/issues/741/runs/38810828230/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "d0d264bf93df9a7a5c37ad85",
+      "id": "741:38810828230:1:F2",
+      "issue": 741,
+      "runId": 38810828230,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "nocobase-db 未说明空 filter shorthand {} 会被拒绝",
+      "summary": "@nocobase/db 的 Repository 在 filterShorthandToAst 中对空对象 shorthand 抛 `RepositoryError: Filter shorthand must not be empty.`（packages/@nocobase/db/dist/src/repository/repository.js:947）。nocobase-db 技能 L246-258 只说明 filter 接受 builder/JSON AST、不接受字符串数组 shorthand，并提到 updateMany/deleteMany 拒绝空作用域，但未说明『无筛选』时不能传 `filter: {}`。应用最初为无状态列表传 `filter: {}`，运行时报该错，最后改为无筛选时完全不传 filter 键。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "Repository 对空 filter 的 INVALID_FILTER 只能在运行期发现，Skill 未对称说明",
+        "issues": 2,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/741/runs/38810828230/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "036b75c286b8de8b1b8d03bb",
+      "id": "742:38810835265:1:F3",
+      "issue": 742,
+      "runId": 38810835265,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "lifecycle.md §3 的 provider.start() 模式未说明 recover() 需要日志表已迁移",
+      "summary": "指引在 §3 给出在 start() 中直接 await effectJobs().start() 的推荐写法，并注释其会“recover runs an earlier process left”（E7）；但实现里该调用会进入 recover()→takeBackStale()→listEffectRuns()（E2/E3），在日志表尚不存在时抛 COLLECTION_NOT_FOUND。应用照此模式后，两个 app-server 测试直接失败（E28）。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/lifecycle",
+        "app/.agents/skills/nocobase-app-development/references/lifecycle.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/lifecycle",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "lifecycle.md §3 的 provider.start() 模式未说明 recover() 需要日志集合已由迁移创建",
+        "issues": 1,
+        "first": "2026-10-16"
+      },
+      "report": "reports/issues/742/runs/38810835265/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "576eef48f26578bafbe65d04",
+      "id": "742:38810835265:1:F4",
+      "issue": 742,
+      "runId": 38810835265,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-16",
+      "archivedAt": "2026-10-16T22:49:29.483Z",
+      "title": "@nocobase/lifecycle 启动恢复对日志集合缺失缺少降级或可操作诊断",
+      "summary": "JobsEffectDispatcher.start() 无条件调用 runtime.recover()（E2），后者直接查询 lifecycleEffectRuns（E3）；当集合不存在时抛出的是底层 db 的 RepositoryError，只带 collection 名，未提示“需要先运行应用迁移”。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/lifecycle"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/lifecycle"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/lifecycle 启动恢复对日志集合缺失缺少降级或可操作诊断",
+        "issues": 1,
+        "first": "2026-10-16"
+      },
+      "report": "reports/issues/742/runs/38810835265/attempt-1/index.html#review-finding-F4"
+    }
+  ]
+}
