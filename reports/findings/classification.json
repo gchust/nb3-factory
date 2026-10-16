@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a8a093bc681d0a94048c42714b30edc01c657182bc528d0c451a3785e7e37c2c",
+  "inputHash": "ae78a23ff7ed20359aa0f435c86596a3f85e3405cb90133d0c20b4980cefdb5b",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1151,6 +1151,21 @@
       "id": "742:38810835265:1:F4",
       "report": "742:38810835265:1",
       "fingerprint": "f15b59d69ecdefe08ada5f492a1a8f99f339989900e4a3093e7d70c7c1b9c50a"
+    },
+    {
+      "id": "749:38969428277:1:F3",
+      "report": "749:38969428277:1",
+      "fingerprint": "35eccb0d9fbc7df911b8fb62d184f72aa5aad59d710e54e50f837f311f425b8f"
+    },
+    {
+      "id": "749:38969428277:1:F4",
+      "report": "749:38969428277:1",
+      "fingerprint": "896cf87155976d0685d3726a7b6089bf9e2c10b5c5aab7e34eb58e26bee0c394"
+    },
+    {
+      "id": "749:38969428277:1:F5",
+      "report": "749:38969428277:1",
+      "fingerprint": "0719bba0b4da592361ddc2cd8cfb2650010ddf3f1cf25db4052898f414997dd5"
     }
   ],
   "groups": [
@@ -1960,12 +1975,13 @@
     },
     {
       "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
-      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。 本次新增 709:F3（E23/E24/E28）在 1.0.0-beta.61 显示 @nocobase/db RepositoryErrorCode 无重复/唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，recognizeApiError 无法稳定产出 409，应用只能以 query 适配器先查后插并 catch 后重查、自行抛 DeviceCodeTakenError；与既有成员同属缺少可类型判定的唯一约束冲突错误这一公开错误模型缺口与同一修复方向，故合并。 本次新增 725:F4（E11/E12/E13/E31）在 1.0.0-beta.61 复现同一框架缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，遍历 error/cause 识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等，却未从包入口导出；repository-input 的 RepositoryErrorCode 无唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，应用只能 create 前 exists() 预检、catch 后二次 exists() 判定（app/server/providers/devices.ts:141-188），并发窗口仍可能把冲突当未知错误抛 500 而非 409 DEVICE_CODE_TAKEN。触发条件、公开缺口（可判定唯一冲突的错误类型不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致。 本次新增 733:F4（E9/E10/E11/E19）在 1.0.0-beta.61 复现同一缺口：Repository.createOne 直接委托适配器、不翻译原始驱动的唯一约束冲突，isUniqueConstraintViolation 仅用于 upsert 路径且未从包入口导出，recognizeApiError 无法据此产出 409，并发写入同一唯一值仍以不透明 500 暴露；触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）均与既有成员一致，故合并。",
+      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。 本次新增 709:F3（E23/E24/E28）在 1.0.0-beta.61 显示 @nocobase/db RepositoryErrorCode 无重复/唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，recognizeApiError 无法稳定产出 409，应用只能以 query 适配器先查后插并 catch 后重查、自行抛 DeviceCodeTakenError；与既有成员同属缺少可类型判定的唯一约束冲突错误这一公开错误模型缺口与同一修复方向，故合并。 本次新增 725:F4（E11/E12/E13/E31）在 1.0.0-beta.61 复现同一框架缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，遍历 error/cause 识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等，却未从包入口导出；repository-input 的 RepositoryErrorCode 无唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，应用只能 create 前 exists() 预检、catch 后二次 exists() 判定（app/server/providers/devices.ts:141-188），并发窗口仍可能把冲突当未知错误抛 500 而非 409 DEVICE_CODE_TAKEN。触发条件、公开缺口（可判定唯一冲突的错误类型不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致。 本次新增 733:F4（E9/E10/E11/E19）在 1.0.0-beta.61 复现同一缺口：Repository.createOne 直接委托适配器、不翻译原始驱动的唯一约束冲突，isUniqueConstraintViolation 仅用于 upsert 路径且未从包入口导出，recognizeApiError 无法据此产出 409，并发写入同一唯一值仍以不透明 500 暴露；触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）均与既有成员一致，故合并。 本次新增 749:F3（E17/E18/E19/E15/E26）在 1.0.0-beta.61 复核同一公开错误模型缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，仅 upsert 路径使用；executeCreateOne 直接调用 createRecord、不捕获唯一冲突，原始驱动错误外抛，repositoryErrorStatuses/RepositoryErrorCode 中无 DUPLICATE/ALREADY_EXISTS，recognizeApiError 无法映射 409，应用只能在 devices.ts 先 exists 预检查再于 catch 中重查（TOCTOU 竞态）。其触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致，故合并。",
       "members": [
         "701:38106776639:1:F3",
         "709:38179339282:1:F3",
         "725:38481207536:1:F4",
-        "733:38643278737:1:F4"
+        "733:38643278737:1:F4",
+        "749:38969428277:1:F3"
       ]
     },
     {
@@ -2103,15 +2119,29 @@
       "members": [
         "739:38810813995:1:F6"
       ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明 createOne 唯一约束冲突的失败形态与推荐处理",
+      "reason": "单条保留。749:F4（E24/E15/E18）显示 nocobase-db SKILL.md 只展示 collection.unique('orderNo') 与 Repository 方法边界，未说明普通 createOne 命中原生唯一约束时不会产生可类型判定的 RepositoryError，也未给出 upsertOne/预检查的取舍建议；应用因此只能自行阅读实现并写 exists 预检查。该缺口是同一报告 749:F3 所证实框架能力缺口的文档侧表现，因与 749:F3 属同一 report 不能同组，且其“缺说明”根因与其他数据库 Skill 缺说明条目（date-only、uuid 主键、时间戳责任等）所涉 API 与修复落点均不同，故单独保留。",
+      "members": [
+        "749:38969428277:1:F4"
+      ]
+    },
+    {
+      "title": "错误本地化存在两条并行路径（AppI18nError→localizedMessage 与 reason→客户端翻译），指引未说明取舍",
+      "reason": "单条保留。749:F5（E20/E21/E23/E25）显示 nocobase-app-plugin-i18n SKILL 与前端 api.md 同时描述了“抛 AppI18nError 由 router.onError 转成带 localizedMessage 的 ApiError”和“客户端按 reason 分支翻译”两条本地化路径，但未说明何时应选哪一条；应用选择了 reason→客户端翻译路径（被 Skill 明确允许），可能造成实现风格分裂。该条目为“两条路径并存但缺少取舍说明”的指引缺口，与既有 733:F3（references/i18n.md 错误宣称 onError 会自动转换，属错误说明）根因不同（缺说明 vs 错误说明），与 i18n 语言作用域等条目亦无关，故单独保留。",
+      "members": [
+        "749:38969428277:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38830086742",
+    "runId": "38977012584",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-16T00:34:03.818Z"
+    "completedAt": "2026-10-16T22:40:40.704Z"
   }
 }
