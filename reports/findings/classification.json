@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ae78a23ff7ed20359aa0f435c86596a3f85e3405cb90133d0c20b4980cefdb5b",
+  "inputHash": "5152e5fd5dd363d27f5ff018536967a12a59f39c5351c5534064bed0726db5c6",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1153,6 +1153,11 @@
       "fingerprint": "f15b59d69ecdefe08ada5f492a1a8f99f339989900e4a3093e7d70c7c1b9c50a"
     },
     {
+      "id": "748:38969420819:1:F4",
+      "report": "748:38969420819:1",
+      "fingerprint": "f3c3ac281bbe4ac96c166327e9450e5a9880146b35ce992eb44df8544430f124"
+    },
+    {
       "id": "749:38969428277:1:F3",
       "report": "749:38969428277:1",
       "fingerprint": "35eccb0d9fbc7df911b8fb62d184f72aa5aad59d710e54e50f837f311f425b8f"
@@ -2133,15 +2138,22 @@
       "members": [
         "749:38969428277:1:F5"
       ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明任务要求演示数据在运行时可见时该选必需 seed 还是 sample seed",
+      "reason": "单独保留。748:F4（E14/E15/E13/E51/E23/E44/E45/E52）显示 nocobase-db SKILL §2 与 app/AGENTS.md 的 Database 段只定义『运行所需数据用必需 seed、示例/演示内容声明 sample:true 且未启用 APP_SAMPLE_DATA 时被记为 skipped』，未给出『任务或验收脚本依赖这些记录在运行时存在』这一情形该改用必需 seed 还是显式开启 sampleData 的判定示例；代理据现有文字把过期/未来/已完成三条待办写成 sample seed（E51），无 APP_SAMPLE_DATA 时被 DefaultSeeder 记为 skipped（E13），修复轮才通读配置并改判为必需 seed（E23）。其触发条件（任务要求演示记录运行时可见而环境不设 APP_SAMPLE_DATA）、期望（指引给出判定规则与示例）与修复方向（在 nocobase-db SKILL 的 Migrations and seeds 或 AGENTS.md 的 Database 段增补判定）均与既有『以绝对表述禁止种子承载示例/演示数据、未给演示数据落点与幂等写法』组不同：后者针对种子规则本身的绝对表述错误与样例数据无落点，本条针对规则正确但缺少必需 seed 与 sample seed 之间的决策边界，属同一章节的不同根因，故单独保留。",
+      "members": [
+        "748:38969420819:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "38977012584",
+    "runId": "38978632011",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-16T22:40:40.704Z"
+    "completedAt": "2026-10-16T22:58:32.126Z"
   }
 }
