@@ -1,0 +1,423 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "c303b3297db6fa588334d40e",
+      "id": "747:38969414170:1:F4",
+      "issue": 747,
+      "runId": 38969414170,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-17",
+      "archivedAt": "2026-10-17T22:16:36.160Z",
+      "title": "保密限制的“直接指派到用户”缺少单一、端到端的最小示例",
+      "summary": "restriction SKILL 的 L18/L22 与 subjects 机制表 L116/L119 已说明：限制与共享相交，且应直接指派到账号，使其不受后续权限集授予影响。但做法分散在多个文档、缺少一个把“共享 + 额外权限集 + 限制直接指派”连起来的最小可运行例；本轮实现 Agent 在有该 Skill 的前提下仍反复在“保护权限集 / 启动期对账”间权衡直至上下文溢出。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "定向复核支持该 documentation/guidance-gap：限制 Skill 已用文字给出“限制与共享相交、应直接指派到用户”的原则（E21 L8/L18/L20/L22），但唯一的可运行 Service API 示例以 org.team 为主题（新增 E82），未把“共享 + 额外权限集 + 限制直接指派到 user”连成单一端到端例；安装种子章节也只给两表与幂等写法（E22）。原始日志显示实现 Agent 在 Option A–G 间权衡保护权限集/启动期对账等并最终上下文溢出（E64/E65），最终应用种子才改为直接指派给 duzhe（E37），B04 通过（E41）。替代解释（现有文档已含端到端例）不成立：现有示例主题为团队且无共享/权限集组合。故属可改进的指引缺口，而非框架违约。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "冻结的 Skill 文本承诺：限制与权限集/默认访问/共享的正向结果取交集，且“保密限制应直接指派到每个账号，从而在其权限集被授予时依然成立”（E21 L8/L18/L20/L22）；机制表把“保密记录必须保持排除”指向 Restriction rule，并注明共享与额外权限集不能重新打开（E23 L116/L119）；种子章节要求把规则写进 authorizationRestrictionRules/Assignments 两张表并幂等（E22）。这是已成立的现有能力与边界；本条只是建议补充单一示例，并未把框架缺少该能力写成违约。",
+            "evidence": [
+              "E21",
+              "E23",
+              "E22"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现过程的原始记录：Agent 在思考中枚举 Option A（保护阅读者权限集）、Option B（启动期/请求期对账）、Option C（自定义 role scope）等来解决“如何确保阅读者持续持有保密限制”（E64），随后发生 compaction overflow、agent_settled 且未产出代码（E65）。这印证在文档已给原则的前提下仍未落到最小实现，属实现/指引过程行为，而非框架运行时缺陷；最终交付才由 E37 的直接指派落地。",
+            "evidence": [
+              "E64",
+              "E65",
+              "E37"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用最终装配正确，无 API 误用或漏配：种子 202610150005 以 resource=composite library.documents、action=view、selection=library.notConfidential 生成限制并直接指派到 user duzhe，未保护权限集、未启动期重写（E37 L54–113）；配套 reader 权限集只含 view=library.published（E36 L40–71）；verify-3 报告 B01–B05 全通过，含共享保密 C 后乙仍被拒而甲不受影响（E41）。因此缺陷不在应用接线，而在缺少把该做法串起来的示例。",
+            "evidence": [
+              "E37",
+              "E36",
+              "E41"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "环境不构成更优解释：与本条相关的唯一失败事件是模型上下文溢出（E65），属会话/上下文窗口条件，不是外部服务、凭据或依赖安装问题；相同环境下最终浏览器验收全部通过（E41）。审查材料没有显示任何缺失的运行时/环境材料会解释该发散，故不能把未看到的错误当作环境已排除之外的反证，只能按指引缺口归因。",
+            "evidence": [
+              "E65",
+              "E41"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂材料正是缺口所在：工厂指引要求按需阅读已安装的 authorization/default-access/sharing/restriction Skill 并以其为实现依据（E12 L7–9），而缺口恰在工厂提供的 restriction SKILL 文本内（E21），其唯一可运行例用 org.team（E82）。没有证据表明注入配置、QA 或构建脚本制造了该行为，因此保留“工厂所提供的 Skill 文档需改进”的定位，而非外推为其他工厂缺陷。",
+            "evidence": [
+              "E12",
+              "E21",
+              "E82"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有公开文档已覆盖原则但缺少单一端到端示例：限制 SKILL L18/L20/L22 只给文字步骤与概念例，L46–L70 的唯一代码示例以 org.team 主题并只演示 recordAccess（E21、新增 E82）；安装种子章节只列 authorizationRestrictionRules/Assignments 两表与幂等写法（E22）。正常组合本身可用，但读者须自行跨文档拼接“共享 + 额外权限集 + 直接指派 user”，正是可证实的改进空间，而非“未发现即不存在”。",
+            "evidence": [
+              "E21",
+              "E82",
+              "E22"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/subjects-and-administration.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-authorization",
+        "skill:nocobase-app-plugin-authz-restriction-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "授权限制 Skill 缺少「共享 + 额外权限集 + 限制直接指派到用户」的单一端到端最小示例",
+        "issues": 1,
+        "first": "2026-10-17"
+      },
+      "report": "reports/issues/747/runs/38969414170/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "9f5dbaebf1071aa82500141e",
+      "id": "748:38969420819:1:F4",
+      "issue": 748,
+      "runId": 38969420819,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-17",
+      "archivedAt": "2026-10-17T22:16:36.160Z",
+      "title": "指引缺少任务要求演示数据必须可见时的种子判定示例",
+      "summary": "nocobase-db Skill 与 app/AGENTS.md 都只声明示例/演示内容不是安装数据、须用 sample:true，并说明未启用时记为 skipped；但没有覆盖另一类情形：构建/验收任务明确要求若干条演示记录在运行库中可见，而环境不设 APP_SAMPLE_DATA。代理读完指引后仍把这三行判为 sample，说明规则本身正确但缺少可操作的决策边界。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "候选主张成立：nocobase-db SKILL 与 AGENTS.md 只定义『运行所需数据用必需 seed / 示例内容用 sample:true 且未启用时 skipped』，未给出任务验收依赖记录在运行时可见时如何在必需 seed 与显式开启 sampleData 间判定的示例。初始实现据此把三条 fixture 写成 sample seed（E51），在未设 APP_SAMPLE_DATA 时被 seeder 记为 skipped（E13），修复轮被迫通读 APP_SAMPLE_DATA 配置并查找环境设置（E44/E45）后改判为必需 seed（E23）。补充决策示例的改进空间可由指引文本与已发生误判直接证实。注：原候选引用的 E11 落在 AGENTS.md API documentation 段，不支撑种子结论，正确的 Database 段以新增 E52 佐证。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "已核对的约定：nocobase-db SKILL §2 规定 seed 写入应用运行所需记录，示例/演示内容不是安装数据、必须声明为 sample seed（E14）；同节说明 sample seed 仅在 app.sampleData/APP_SAMPLE_DATA 启用时运行，否则记 skipped（E15）。AGENTS.md Database 段同样规定『Data the application requires to run is a seed... Sample data is not required data』并把 sample seed 绑定到 APP_SAMPLE_DATA、未设时记 skipped（E52）。两处只给定义，没有把『任务/验收要求记录在运行时可见』映射到具体选择的示例。候选引用的 E11 实际是 AGENTS.md 的 API documentation 段（186-198 行），不是 Database 段，本身不支撑该种子主张。",
+            "evidence": [
+              "E14",
+              "E15",
+              "E52",
+              "E11"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "已发生的实际行为：implement Agent 的 retro 自述实现为『a `todos` collection (migration + sample seed)』（E51），即初始确把三条待办声明为 sample seed。DefaultSeeder 对 sample===true 且未启用 sampleData 的种子写 status=skipped 并跳过（E13），因此无 APP_SAMPLE_DATA 的运行库为空。修复轮 Agent 在推理中确认『sample seeds only load when APP_SAMPLE_DATA=true』并通读 server/config/app.ts 的变量说明（E44）、遍查 .github 无该变量（E45），最终把同一批记录改判为必需 seed 并在注释写明『required data rather than optional sample data』（E23）。行为与契约一致，且暴露契约中缺少可操作判定示例。",
+            "evidence": [
+              "E51",
+              "E13",
+              "E44",
+              "E45",
+              "E23"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用侧初始误装配成立：把验收要求运行时可见的过期/未来/已完成三条 fixtures 以 sample:true 声明，导致无 APP_SAMPLE_DATA 时被 seeder 记为 skipped、运行库为空（E51、E13）。修复未改框架，而是把同一记录改判为必需 seed（E23），说明这是应用对指引的误用，而指引未提供可机械判定的示例；因此候选归因于 guidance-gap 而非应用缺陷是合理的。",
+            "evidence": [
+              "E23",
+              "E51",
+              "E13"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "环境材料显示 APP_SAMPLE_DATA 未被启用：应用仅在 server/config/app.ts 暴露 APP_SAMPLE_DATA（E44），而修复 Agent 在 .github/workflows、.github/actions、config.example.yml、.env* 中均未找到设置该变量的位置（E44、E45）。这解释了 sample seed 为何不加载，但正是候选要求指引覆盖的『环境不设 APP_SAMPLE_DATA』前提；环境事实不能推翻『指引缺少判定示例』这一改进空间，也未证明该指引已足够。",
+            "evidence": [
+              "E44",
+              "E45"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂是否应负责把任务元数据 sampleData 映射为 APP_SAMPLE_DATA，缺少冻结的工厂运行配置材料：现有材料只表明 workflows/actions 中没有 APP_SAMPLE_DATA（E45），不足以确认或排除工厂注入层是另一主因，故保留未知。这不否定文档层的改进空间，只是不把工厂当作已证实的根因。",
+            "evidence": [
+              "E45"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已存在的公开能力边界：指引本已区分必需 seed 与 sample seed，并给出 sampleDataToken 入口（E14、E15、E52），应用本可自行选择必需 seed。但未发现任何文档示例或入口把『任务/验收依赖记录在运行时存在』映射到具体选择，也未提供可复制的模式；已发生的误判（E51）表明现有文字边界不足以防止该错判，故补充示例确有改进空间。未使用/未发现不作为不存在的直接证据，这里仅作指引改进依据。",
+            "evidence": [
+              "E14",
+              "E15",
+              "E52",
+              "E51"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/AGENTS.md",
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:app/AGENTS.md",
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "nocobase-db Skill 未说明任务要求演示数据在运行时可见时该选必需 seed 还是 sample seed",
+        "issues": 1,
+        "first": "2026-10-17"
+      },
+      "report": "reports/issues/748/runs/38969420819/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "a487b080aebc500a8de823c0",
+      "id": "749:38969428277:1:F3",
+      "issue": 749,
+      "runId": 38969428277,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-17",
+      "archivedAt": "2026-10-17T22:16:36.160Z",
+      "title": "框架未公开唯一冲突错误：Repository.createOne 命中原生唯一约束会落到不透明 500",
+      "summary": "@nocobase/db 内部有 isUniqueConstraintViolation，但仅在 upsert 路径使用；RepositoryErrorStatus/Code 中没有唯一冲突码。普通 createOne 遇唯一约束时原始驱动错误外抛，app-server 的 recognizeApiError 无法识别而回退 INTERNAL/INTERNAL_ERROR 500，尽管错误分类already 定义了 ALREADY_EXISTS。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结包源码支持该 capability-gap：普通 createOne 不把原生唯一约束映射为公开错误，app-server 只识别 ApiError/HTTPException/非 INTERNAL 的 RepositoryError，未识别错误回退 500 INTERNAL_ERROR，而 apiErrorStatusCodes 已有 ALREADY_EXISTS=409；应用的 exists()+createOne 只是有竞态的自有绕行。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "公开契约无唯一冲突错误：repository-input 的仓库错误码/状态表（E15）与 RepositoryError 类型（E16）没有 DUPLICATE/ALREADY_EXISTS/唯一冲突码；app-server 的 apiErrorStatusCodes 已定义 ALREADY_EXISTS=409（E12），但 recognizeApiError 只识别 ApiError、HTTPException、非 INTERNAL 的 RepositoryError 与 4xx status error（E13），未承诺 createOne 唯一冲突可映射为公开错误。",
+            "evidence": [
+              "E15",
+              "E16",
+              "E12",
+              "E13"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "executeCreateOne 直接调用 createRecord，不捕获唯一约束冲突，原始驱动错误外抛（E18）；isUniqueConstraintViolation 仅被 executeUpsertOne（E19）及 upsert-physical-row 使用，且只是未从包入口导出的 internal 工具（E17）。未映射错误经 toApiError 回退 500 INTERNAL_ERROR（E13）。",
+            "evidence": [
+              "E18",
+              "E19",
+              "E17",
+              "E13"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用未误用 API 而是绕行：create() 先 repository.exists({filter:{code}}) 再 createOne（E26），并把冲突转成自有 DeviceCodeTakenError，路由映射为 ApiError(ALREADY_EXISTS/DEVICE_CODE_TAKEN)（E25）。预检查存在 TOCTOU 窗口，说明原子冲突反馈仍需框架提供。",
+            "evidence": [
+              "E26",
+              "E25"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "触发条件是数据库原生唯一约束（migration 已 collection.unique('code')，E27），isUniqueConstraintViolation 覆盖 PostgreSQL/MySQL/SQLite 驱动码（E17）；这是包内代码路径，与外部服务、凭据或安装无关，环境不更能解释该现象。",
+            "evidence": [
+              "E27",
+              "E17"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "缺口位于随工厂安装的 @nocobase/db 与 @nocobase/app-server 冻结包源码路径，证据是包本身；未见工厂提示、注入配置或 QA/构建脚本创建或消除该映射，未发现工厂归因材料。",
+            "evidence": [
+              "E15",
+              "E18"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现成公开能力不足：upsertOne 会在并发创建时捕获 isUniqueConstraintViolation 并重试/更新（E19），但语义是 upsert 且要求唯一等值条件，不是“创建并稳定返回冲突”；isUniqueConstraintViolation 未公开导出（E17）；exists()+createOne 有竞态（E26）。",
+            "evidence": [
+              "E19",
+              "E17",
+              "E26"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 6,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/749/runs/38969428277/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "ff03cb5c5adb67f67c4a74e6",
+      "id": "749:38969428277:1:F4",
+      "issue": 749,
+      "runId": 38969428277,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-17",
+      "archivedAt": "2026-10-17T22:16:36.160Z",
+      "title": "nocobase-db Skill 未说明 createOne 唯一冲突的失败形态与推荐处理",
+      "summary": "Skill 展示了 collection.unique() 与 Repository 方法边界，但未提示普通 createOne 命中原生唯一约束不会被映射为公开 RepositoryError，也未给出 upsertOne/预检查的取舍建议，导致 Agent 需自行推断。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "Skill 证据支持该 guidance-gap：冻结的 nocobase-db Skill 展示 collection.unique('orderNo') 与 Repository 方法边界，却没有 createOne 唯一冲突失败形态或 upsertOne/预检查取舍的说明；底层 createOne 确实不映射唯一冲突，应用只能自行预检查。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "nocobase-db Skill 是数据库实现的冻结指引：它以 collection.unique('orderNo') 迁移示例与 Repository 方法边界（含 createOne/upsertOne）为承诺（E24），但未承诺 createOne 唯一冲突的失败形态；repository-input 也无公开唯一冲突码可引用（E15）。",
+            "evidence": [
+              "E24",
+              "E15"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "Skill 没有唯一冲突/duplicate/409 的处理小节（全文仅见 upsertOne 用于幂等 seed 与 createOne 方法存在），而底层 createOne 不捕获唯一冲突、原始错误外抛（E18），形成指引空白。",
+            "evidence": [
+              "E24",
+              "E18"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用只能自行推断：provider 用 exists() 预检查后再 createOne，并以 DeviceCodeTakenError 兜底（E26、E25）；这是缺少 Skill 指引下的实现者做法，非应用误用。",
+            "evidence": [
+              "E26",
+              "E25"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "唯一约束是标准数据库能力，应用 migration 已建 unique('code')（E27）；缺口与外部服务、凭据、依赖安装或运行环境无关。",
+            "evidence": [
+              "E27",
+              "E17"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该 Skill 随 @nocobase/db 包发布并复制进应用，属工厂模板提供的指引；缺口存在于 Skill 文本本身，而非注入配置或构建脚本，所需材料即 Skill。",
+            "evidence": [
+              "E24"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已有文档提到 upsertOne 与唯一约束，但未说明 createOne 冲突失败与 upsertOne/预检查取舍（E24）；其他引用也未覆盖，因此需要新增“唯一键冲突”小节。",
+            "evidence": [
+              "E24",
+              "E15"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "nocobase-db Skill 未说明 createOne 唯一约束冲突的失败形态与推荐处理",
+        "issues": 1,
+        "first": "2026-10-17"
+      },
+      "report": "reports/issues/749/runs/38969428277/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "c1ad1bf5c055509f95fcfbe1",
+      "id": "749:38969428277:1:F5",
+      "issue": 749,
+      "runId": 38969428277,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-17",
+      "archivedAt": "2026-10-17T22:16:36.160Z",
+      "title": "错误本地化存在两条并行路径，指引未说明取舍",
+      "summary": "AppI18nError→ApiError.localizedMessage 与“reason→客户端翻译”都能本地化错误；Skill 同时描述了两者，但未明确何时用哪条。应用选择了后者（被 Skill 明确允许），可能造成实现风格分裂。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "本条定向复核未通过校验：Supported feedback needs diagnosis and every counter-evidence check",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-i18n",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-i18n"
+      ],
+      "featurePoint": "应用搭建/多语言",
+      "candidates": [
+        "应用搭建/多语言"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.61",
+      "group": {
+        "title": "错误本地化存在两条并行路径（AppI18nError→localizedMessage 与 reason→客户端翻译），指引未说明取舍",
+        "issues": 1,
+        "first": "2026-10-17"
+      },
+      "report": "reports/issues/749/runs/38969428277/attempt-1/index.html#review-finding-F5"
+    }
+  ]
+}
