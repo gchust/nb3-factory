@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ff43fa76d709f80a0f58d5b49480d4a2513c54ccdc294b331e83e306740424e5",
+  "inputHash": "56e0895292c52b4d6d1577a2ce2408ad974e5433f9dabb8609eed45cd51038c4",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1178,6 +1178,11 @@
       "fingerprint": "0719bba0b4da592361ddc2cd8cfb2650010ddf3f1cf25db4052898f414997dd5"
     },
     {
+      "id": "755:39068136400:1:F4",
+      "report": "755:39068136400:1",
+      "fingerprint": "08d910b1705f51ef1c1958810f4f0144eeeac26f49f29f3def400b77657628e3"
+    },
+    {
       "id": "756:39068139542:1:F1",
       "report": "756:39068139542:1",
       "fingerprint": "096802346b9da2d12e65fb06c730e30d0f3fe7b843a8ce3b5e7e27f2b18bd579"
@@ -1248,15 +1253,16 @@
       ]
     },
     {
-      "title": "nocobase-db Skill 以绝对表述禁止种子承载示例/演示数据，却未给出演示数据落点与幂等写法，并与组织指引冲突",
-      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。 570:F1（E11/E30/E14/E38）进一步显示同一条绝对句“a seed is never sample or demonstration content”与 organization/subjects.md 明确要求“演示需要账号时用 seed 的 query 写 user/account”直接矛盾，应用在同一 seed 中既要初始化权限集又要写演示账号与示例工单，代理只能自行裁决。三者与 570:F1 是同一句未加限定的种子规则、同一触发条件（任务要求经 seed 写入演示/样例数据）与同一修复方向（限定为生产/安装种子并给出演示数据的第一方落点/幂等写法及交叉引用）。 576:F2（E6/E17/E36/E37/E40/E50）进一步显示安装种子需要在无应用容器的 SeedContext 中创建可登录演示账号与样例工单，nocobase-db SKILL:80 与 code-and-seeds 禁止演示/夹具内容进入种子与生产初始化，authentication Skill 又只把账号变更指向运行时的 userAdministrationServiceToken（需应用容器），应用只能照抄认证插件自带 seed 的裸表 + hashPassword 模式；同一条绝对种子规则与同一“演示/夹具数据无受支持落点/创建路径”的缺口，故并入本组。 611:F2（E4/E31）显示 nocobase-db/SKILL.md 第 80 行“a seed is never sample or demonstration content”与任务要求全新安装即含 2 客户/3 联系人/3 商机的验收直接冲突，Agent 只能把样例写进 seed 并在注释中承担冲突；同一条未加限定的绝对种子规则与同一“演示/样例数据无受支持落点”的缺口，故并入本组。",
+      "title": "nocobase-db 种子规则未给出演示/样例数据的落点、幂等写法与必需/sample 判定，并与组织指引冲突",
+      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。 570:F1（E11/E30/E14/E38）进一步显示同一条绝对句“a seed is never sample or demonstration content”与 organization/subjects.md 明确要求“演示需要账号时用 seed 的 query 写 user/account”直接矛盾，应用在同一 seed 中既要初始化权限集又要写演示账号与示例工单，代理只能自行裁决。三者与 570:F1 是同一句未加限定的种子规则、同一触发条件（任务要求经 seed 写入演示/样例数据）与同一修复方向（限定为生产/安装种子并给出演示数据的第一方落点/幂等写法及交叉引用）。 576:F2（E6/E17/E36/E37/E40/E50）进一步显示安装种子需要在无应用容器的 SeedContext 中创建可登录演示账号与样例工单，nocobase-db SKILL:80 与 code-and-seeds 禁止演示/夹具内容进入种子与生产初始化，authentication Skill 又只把账号变更指向运行时的 userAdministrationServiceToken（需应用容器），应用只能照抄认证插件自带 seed 的裸表 + hashPassword 模式；同一条绝对种子规则与同一“演示/夹具数据无受支持落点/创建路径”的缺口，故并入本组。 611:F2（E4/E31）显示 nocobase-db/SKILL.md 第 80 行“a seed is never sample or demonstration content”与任务要求全新安装即含 2 客户/3 联系人/3 商机的验收直接冲突，Agent 只能把样例写进 seed 并在注释中承担冲突；同一条未加限定的绝对种子规则与同一“演示/样例数据无受支持落点”的缺口，故并入本组。 748:F4（E14/E15/E52/E51/E13/E23/E44/E45）进一步显示同一章节只定义“运行所需数据用必需 seed、示例/演示内容用 sample:true 且未启用 APP_SAMPLE_DATA 时 skipped”，却未给出“任务或验收依赖记录在运行时可见”时该选必需 seed 还是显式开启 sampleData 的判定示例；Agent 把三条待办写成 sample seed（E51），无 APP_SAMPLE_DATA 时被 DefaultSeeder 记为 skipped（E13），修复轮才改判为必需 seed（E23）。这与本组“演示/样例数据无受支持落点/判定”为同一缺口，故并入。",
       "members": [
         "460:36434284393:1:F2",
         "490:36575632059:1:F5",
         "552:37238845336:1:F2",
         "570:37332578227:1:F1",
         "576:37394448063:1:F2",
-        "611:37542326691:1:F2"
+        "611:37542326691:1:F2",
+        "748:38969420819:1:F4"
       ]
     },
     {
@@ -1823,10 +1829,11 @@
       ]
     },
     {
-      "title": "Skill 内部引用路径缺少完整前缀，Agent 猜测错误路径",
-      "reason": "单条保留。616:F7（E5/E6/E43）显示应用开发 Skill 的能力映射与 authorization.md 只写“authorization Skill 的 references/code-and-seeds.md / client-development.md”而未给出从应用根开始的完整路径，实现阶段因此出现文件不存在的工具错误。证据仅涉及 Skill 之间的引用写法歧义，与“已发布 dist 布局/公开入口未文档化”组的根因（包只发布 dist、未列出公开入口）以及“跨包端到端路径缺失”组的根因（缺统一接线清单）均不同，修复方向是补全引用路径或列出自身 references 清单，故单独保留。",
+      "title": "Skill 内部 references 路径/目录说明不明，Agent 猜测路径失败",
+      "reason": "跨报告合并。616:F7（E5/E6/E43）显示应用开发 Skill 的能力映射与 authorization.md 只写“authorization Skill 的 references/code-and-seeds.md / client-development.md”而未给出从应用根开始的完整路径，实现阶段因此出现文件不存在的工具错误。755:F4（E14/E16/E39/E23/E59/E61）显示 sharing/restriction Skill 把包 README 指定为完整参考、未说明本 Skill 不设 references/，agent 按既有 Skill 目录习惯执行 ls .agents/skills/.../references 返回 No such file or directory（code 2），对 nocobase-db/references 的同类探测也失败。两者同一缺口：Skill 未把实际参考位置（完整引用路径或是否存在 references 目录）说清，导致 agent 按惯例探测不存在路径；修复方向均是补全引用路径或在 Skill 中明确参考在包 README。与 dist 布局组不同（后者是包公开入口/物理 dist 映射），也与跨包端到端接线组不同。",
       "members": [
-        "616:37567947893:1:F7"
+        "616:37567947893:1:F7",
+        "755:39068136400:1:F4"
       ]
     },
     {
@@ -2173,13 +2180,6 @@
       ]
     },
     {
-      "title": "nocobase-db Skill 未说明任务要求演示数据在运行时可见时该选必需 seed 还是 sample seed",
-      "reason": "单独保留。748:F4（E14/E15/E13/E51/E23/E44/E45/E52）显示 nocobase-db SKILL §2 与 app/AGENTS.md 的 Database 段只定义『运行所需数据用必需 seed、示例/演示内容声明 sample:true 且未启用 APP_SAMPLE_DATA 时被记为 skipped』，未给出『任务或验收脚本依赖这些记录在运行时存在』这一情形该改用必需 seed 还是显式开启 sampleData 的判定示例；代理据现有文字把过期/未来/已完成三条待办写成 sample seed（E51），无 APP_SAMPLE_DATA 时被 DefaultSeeder 记为 skipped（E13），修复轮才通读配置并改判为必需 seed（E23）。其触发条件（任务要求演示记录运行时可见而环境不设 APP_SAMPLE_DATA）、期望（指引给出判定规则与示例）与修复方向（在 nocobase-db SKILL 的 Migrations and seeds 或 AGENTS.md 的 Database 段增补判定）均与既有『以绝对表述禁止种子承载示例/演示数据、未给演示数据落点与幂等写法』组不同：后者针对种子规则本身的绝对表述错误与样例数据无落点，本条针对规则正确但缺少必需 seed 与 sample seed 之间的决策边界，属同一章节的不同根因，故单独保留。",
-      "members": [
-        "748:38969420819:1:F4"
-      ]
-    },
-    {
       "title": "授权限制 Skill 缺少「共享 + 额外权限集 + 限制直接指派到用户」的单一端到端最小示例",
       "reason": "单条保留。747:F4（E21/E22/E23/E64，另见复核引用的 E82/E37/E41）显示：nocobase-app-plugin-authz-restriction-rules 的 SKILL 已用文字说明「限制与共享/权限集的正向结果取交集，保密限制应直接指派到每个账号」（E21 L8/L18/L22），subjects 机制表也把「保密记录必须保持排除」指向 restriction 并注明共享与额外权限集不能重新打开（E23 L116/L119）；但唯一可运行的 Service API 示例以 org.team 为主题、只演示 recordAccess（E82），安装种子章节也只给 authorizationRestrictionRules/Assignments 两表与幂等写法（E22），未把「共享 + 额外权限集 + 限制直接指派到 user」连成一个最小可运行例；实现 Agent 因此在「保护权限集 / 启动期对账」等方案间反复权衡直至上下文溢出（E64），最终才以直接指派给 duzhe 落地（E37）并通过验收（E41）。该缺口是 restriction Skill 内缺少组合示例，与既有「跨包/跨主题端到端路径与示例缺失，接入链条分散」（464:F6/541:F5/579:F1）、「无权限模型应用最小授权口径不一致」（552:F4）、「授权 Skill 缺公开 API 速查」（577:F8）、「内置默认权限集不可作为可指派应用角色缺示例」（726:F5）在触发场景、受影响指引位置与修复方向（补 restriction 的反例→正解最小示例）上均不同，故单独保留。",
       "members": [
@@ -2205,9 +2205,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39077180592",
+    "runId": "39077650033",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-17T23:00:10.885Z"
+    "completedAt": "2026-10-17T23:08:53.358Z"
   }
 }
