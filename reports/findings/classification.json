@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "17a8f862242f5e9d3347c307d5e06107654143c915dc188409562893da1e806d",
+  "inputHash": "2cda03b2cc1814316334f848b83f12ea03dd3bf55271e2b70d0852e27130ddb1",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1191,6 +1191,11 @@
       "id": "756:39068139542:1:F5",
       "report": "756:39068139542:1",
       "fingerprint": "f97a54dfeb35ada899009a0a6696887581afea9c94e7120ec4745ee1e95b770a"
+    },
+    {
+      "id": "757:39068142600:1:F3",
+      "report": "757:39068142600:1",
+      "fingerprint": "c348d14ed0043ea61fef21bc880058165ddf6e2022513bab0ebb60230cb789fb"
     }
   ],
   "groups": [
@@ -2000,13 +2005,14 @@
     },
     {
       "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
-      "reason": "单条保留。E26 显示 isUniqueConstraintViolation 已在 database/internal 实现，跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等；但 E27 的包公开导出清单不含该函数或任何唯一冲突错误类型，E28 的 RepositoryErrorCode/RepositoryErrorStatus 没有 ALREADY_EXISTS/UNIQUE 项。框架 recognizeApiError 已能映射 ALREADY_EXISTS:409（E29/E30），缺口在于 create 路径不产生可判定的错误类型，应用只能在 devices.ts 先 exists 预检查、再在 catch 中二次 exists 兜底（E32/E33）。这与既有的授权组合子未导出、FILE_COLUMNS 未导出等条目所涉 API 与根因均不同，故不并入任何既有分组。 本次新增 709:F3（E23/E24/E28）在 1.0.0-beta.61 显示 @nocobase/db RepositoryErrorCode 无重复/唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，recognizeApiError 无法稳定产出 409，应用只能以 query 适配器先查后插并 catch 后重查、自行抛 DeviceCodeTakenError；与既有成员同属缺少可类型判定的唯一约束冲突错误这一公开错误模型缺口与同一修复方向，故合并。 本次新增 725:F4（E11/E12/E13/E31）在 1.0.0-beta.61 复现同一框架缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，遍历 error/cause 识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等，却未从包入口导出；repository-input 的 RepositoryErrorCode 无唯一冲突码、RepositoryErrorStatus 无 ALREADY_EXISTS，应用只能 create 前 exists() 预检、catch 后二次 exists() 判定（app/server/providers/devices.ts:141-188），并发窗口仍可能把冲突当未知错误抛 500 而非 409 DEVICE_CODE_TAKEN。触发条件、公开缺口（可判定唯一冲突的错误类型不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致。 本次新增 733:F4（E9/E10/E11/E19）在 1.0.0-beta.61 复现同一缺口：Repository.createOne 直接委托适配器、不翻译原始驱动的唯一约束冲突，isUniqueConstraintViolation 仅用于 upsert 路径且未从包入口导出，recognizeApiError 无法据此产出 409，并发写入同一唯一值仍以不透明 500 暴露；触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）均与既有成员一致，故合并。 本次新增 749:F3（E17/E18/E19/E15/E26）在 1.0.0-beta.61 复核同一公开错误模型缺口：isUniqueConstraintViolation 位于 packages/@nocobase/db/dist/src/database/internal/unique-constraint.js，仅 upsert 路径使用；executeCreateOne 直接调用 createRecord、不捕获唯一冲突，原始驱动错误外抛，repositoryErrorStatuses/RepositoryErrorCode 中无 DUPLICATE/ALREADY_EXISTS，recognizeApiError 无法映射 409，应用只能在 devices.ts 先 exists 预检查再于 catch 中重查（TOCTOU 竞态）。其触发条件、公开缺口（可判定的唯一冲突错误不可达）与修复方向（导出判定函数或纳入 RepositoryErrorCode 并映射 409）与既有成员一致，故合并。",
+      "reason": "跨报告合并。701:F3（E26/E27/E28/E32）、709:F3（E23/E24/E28）、725:F4（E11/E12/E13/E31）、733:F4（E9/E10/E11/E19）与 749:F3（E15/E16/E17/E18/E19/E26）均显示 @nocobase/db 内部已有 isUniqueConstraintViolation（跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等），但该 helper 未从包入口导出，repository-input 的 RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项；普通 createOne 路径直接外抛原始驱动异常，recognizeApiError 无法映射为 409，应用只能在 create 前 exists 预检并在 catch 后重查，并发窗口仍会把冲突暴露成不透明 500。本次新增 757:F3（E11/E12/E13/E14/E25/E27）在 1.0.0-beta.61 再现同一公开错误模型缺口：executeCreateOne 不捕获唯一冲突，仅 executeUpsertOne 使用内部 helper，且应用 devices 服务同样以 exists+createOne 预检兜底；触发条件（并发重复键写入）、期望（可类型判定的唯一冲突 RepositoryError 并映射 409）与修复方向（导出判定函数或将冲突纳入 RepositoryErrorCode 并映射）均与既有成员一致，故合并。",
       "members": [
         "701:38106776639:1:F3",
         "709:38179339282:1:F3",
         "725:38481207536:1:F4",
         "733:38643278737:1:F4",
-        "749:38969428277:1:F3"
+        "749:38969428277:1:F3",
+        "757:39068142600:1:F3"
       ]
     },
     {
@@ -2187,9 +2193,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39073062029",
+    "runId": "39073635178",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-17T22:00:44.897Z"
+    "completedAt": "2026-10-17T22:06:57.591Z"
   }
 }
