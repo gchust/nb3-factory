@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "2cda03b2cc1814316334f848b83f12ea03dd3bf55271e2b70d0852e27130ddb1",
+  "inputHash": "ff43fa76d709f80a0f58d5b49480d4a2513c54ccdc294b331e83e306740424e5",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1196,6 +1196,11 @@
       "id": "757:39068142600:1:F3",
       "report": "757:39068142600:1",
       "fingerprint": "c348d14ed0043ea61fef21bc880058165ddf6e2022513bab0ebb60230cb789fb"
+    },
+    {
+      "id": "758:39068146241:1:F7",
+      "report": "758:39068146241:1",
+      "fingerprint": "b36040d9e2a4f8ef1f28e16ed67c73d296a1ff00283128e778bc70204e8e33e0"
     }
   ],
   "groups": [
@@ -2187,15 +2192,22 @@
       "members": [
         "756:39068139542:1:F1"
       ]
+    },
+    {
+      "title": "SQLite 单连接池下事务内的外部读取会阻塞至连接获取超时，事务指引只讲回滚而未说明挂起模式",
+      "reason": "单独保留。758:F7 的证据显示 nocobase-db Skill 的事务章节只警告事务外的 db.query()/repository()/connection() 不会随事务回滚（E49），未说明默认 SQLite 池只有一个连接时，这类外部读取会等待事务占用的连接直到 acquire timeout，使请求看起来永久挂起；db-sqlite 的 configurePool 只包装 afterCreate 安装 decimal 聚合，既不设池大小也不设 acquire timeout（E50），而应用在事务内查询 manager 的 reopen 请求实测挂起超过 30 秒（E63），把查询移到事务提交后即恢复（E65）。触发条件（SQLite 默认单连接、事务内执行外部读取）、期望（指引明确阻塞/超时风险并给出提交后读取或只用回调连接的示例，或提供有界 acquire timeout）与修复方向均与既有“SQLite Date 绑定类型”“check 约束被忽略”“逻辑名/物理列名”等 SQLite 或事务相关条目不同，不能按同一根因合并，故单列。",
+      "members": [
+        "758:39068146241:1:F7"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39073635178",
+    "runId": "39077180592",
     "attempt": 1,
     "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-17T22:06:57.591Z"
+    "completedAt": "2026-10-17T23:00:10.885Z"
   }
 }
