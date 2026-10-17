@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,32 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    auth: 'required',
+    // Every colleague who can sign in shares this ledger: there is no separate role or narrower page grant to
+    // distinguish. `skip` keeps the page out of page authorization, like the landing page and the inbox, while
+    // `auth: 'required'` still sends a signed-out visitor to sign in. The device endpoints enforce the session on
+    // their own; page authorization was never server security.
+    authz: 'skip',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    path: '/devices',
+    navigation: { title: 'navigation.devices', icon: HardDrive },
+    children: [
+      {
+        // /devices/new: the create form over the list. A static segment is matched before :deviceId.
+        name: 'device-new',
+        path: 'new',
+        componentLoader: () => import('./pages/devices/new.js'),
+      },
+      {
+        // /devices/:deviceId: the edit form over the list.
+        name: 'device-edit',
+        path: ':deviceId',
+        componentLoader: () => import('./pages/devices/edit.js'),
+      },
+    ],
   },
   {
     auth: 'guest',

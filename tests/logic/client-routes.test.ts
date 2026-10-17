@@ -23,6 +23,9 @@ describe('app client routes', () => {
         '/reset-password',
         // The page `deviceAuthorization()`'s verificationUri names, where a CLI's sign-in is approved.
         '/device',
+        '/devices',
+        '/devices/new',
+        '/devices/:deviceId',
       ]),
     );
   });
@@ -50,10 +53,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the inbox and the device ledger opted out of page authorization, so they are reachable by
+    // every signed-in user. The ledger is shared by the whole team, so it has no narrower page grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'devices', authorizedAs: null },
+      // The create and edit dialogs are pages too, and inherit the list's rule.
+      { name: 'device-new', authorizedAs: null },
+      { name: 'device-edit', authorizedAs: null },
     ]);
   });
 
