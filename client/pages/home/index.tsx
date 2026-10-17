@@ -1,190 +1,472 @@
+import { ApiClientError, useApiClient } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  CopyIcon,
-  MessageSquareTextIcon,
-  SparklesIcon,
+  AlertTriangleIcon,
+  CheckCircle2Icon,
+  CircleDotIcon,
+  InboxIcon,
+  PlusIcon,
+  TicketIcon,
+  UserPlusIcon,
+  UsersRoundIcon,
 } from 'lucide-react';
-import { type ReactElement, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
+import { Link } from 'react-router';
 
+import { Loading } from '#components/loading';
 import { PageContainer } from '#components/page-container';
+import { PageHeader } from '#components/page-header';
+import { StatusBadge } from '#components/status-badge';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '#components/ui/empty';
 import { Button } from '#components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '#components/ui/card';
 
-import { CAPABILITIES, type Capability } from './capabilities.js';
-import { PromptDialog } from './prompt-dialog.js';
-import { useCopy } from './use-copy.js';
+import type {
+  DashboardResult,
+  TicketPriority,
+  TicketSummary,
+} from '../tickets/types.js';
+import { formatDate, requestErrorMessage } from '../tickets/ticket-format.js';
+import {
+  OverdueBadge,
+  PriorityBadge,
+  TicketStatusBadge,
+} from '../tickets/ticket-ui.js';
 
-const STEPS = ['describe', 'build', 'review'] as const;
+const PRIORITIES: readonly TicketPriority[] = [
+  'urgent',
+  'high',
+  'normal',
+  'low',
+];
 
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Capability>();
-  const [open, setOpen] = useState(false);
-  // Changes on every opening, so the dialog remounts and drops the edits of the previous one.
-  const [openCount, setOpenCount] = useState(0);
+  const api = useApiClient();
+  const [result, setResult] = useState<{
+    readonly data?: DashboardResult;
+    readonly denied?: boolean;
+    readonly error?: string;
+  }>();
 
-  const openCapability = (capability: Capability): void => {
-    setSelected(capability);
-    setOpenCount((count) => count + 1);
-    setOpen(true);
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .request<{ data: DashboardResult }>({
+        path: 'service-desk/dashboard',
+        signal: controller.signal,
+      })
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setResult({ data });
+      })
+      .catch((cause: unknown) => {
+        if (controller.signal.aborted) return;
+        if (cause instanceof ApiClientError && cause.status === 403) {
+          setResult({ denied: true });
+          return;
+        }
+        setResult({ error: requestErrorMessage(cause, t) });
+      });
+    return () => controller.abort();
+  }, [api, t]);
+
+  const loading = !result;
+  const { data, denied, error } = result ?? {};
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
-      <AgentIntro />
-      <section
-        aria-labelledby='home-capabilities'
-        className='flex flex-col gap-4'
-      >
-        <div className='flex flex-col gap-1'>
-          <h2 id='home-capabilities' className='text-base font-medium'>
-            {t('home.capabilitiesTitle')}
-          </h2>
-          <p className='text-sm text-muted-foreground'>
-            {t('home.capabilitiesDescription')}
-          </p>
-        </div>
-        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {CAPABILITIES.map((capability) => (
-            <li key={capability.id} className='flex'>
-              <CapabilityCard
-                capability={capability}
-                onOpen={() => openCapability(capability)}
+      <PageHeader
+        title={t('serviceDesk.dashboard.title', {
+          defaultValue: 'Service desk',
+        })}
+        description={t('serviceDesk.dashboard.description', {
+          defaultValue:
+            'See what needs attention, what is in progress, and how quickly requests are resolved.',
+        })}
+        actions={
+          data?.canCreate ? (
+            <Button render={<Link to='/tickets/new' />}>
+              <PlusIcon data-icon='inline-start' />
+              {t('serviceDesk.ticket.new', { defaultValue: 'New ticket' })}
+            </Button>
+          ) : null
+        }
+      />
+
+      {loading && !data ? (
+        <Loading className='py-24' />
+      ) : denied ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant='icon'>
+              <InboxIcon />
+            </EmptyMedia>
+            <EmptyTitle>
+              {t('serviceDesk.dashboard.deniedTitle', {
+                defaultValue: 'Service desk is not available',
+              })}
+            </EmptyTitle>
+            <EmptyDescription>
+              {t('serviceDesk.dashboard.deniedDescription', {
+                defaultValue:
+                  'Your account does not have permission to use the service desk.',
+              })}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : error ? (
+        <p className='rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive'>
+          {error}
+        </p>
+      ) : data ? (
+        <div className='flex flex-col gap-6'>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <SummaryCard
+              icon={<TicketIcon className='size-4' />}
+              label={t('serviceDesk.dashboard.total', {
+                defaultValue: 'Total tickets',
+              })}
+              value={data.total}
+              hint={t('serviceDesk.dashboard.allTime', {
+                defaultValue: 'All requests',
+              })}
+            />
+            <SummaryCard
+              icon={<CircleDotIcon className='size-4' />}
+              label={t('serviceDesk.dashboard.active', {
+                defaultValue: 'Active',
+              })}
+              value={data.open + data.assigned}
+              hint={t('serviceDesk.dashboard.activeHint', {
+                defaultValue: '{{open}} open · {{assigned}} in progress',
+                open: data.open,
+                assigned: data.assigned,
+              })}
+            />
+            {data.canAssign ? (
+              <SummaryCard
+                icon={<UserPlusIcon className='size-4' />}
+                label={t('serviceDesk.dashboard.unassigned', {
+                  defaultValue: 'Awaiting assignment',
+                })}
+                value={data.unassigned}
+                hint={t('serviceDesk.dashboard.unassignedHint', {
+                  defaultValue: 'No engineer assigned yet',
+                })}
+                tone={data.unassigned > 0 ? 'warning' : 'neutral'}
               />
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected ? (
-        <PromptDialog
-          key={openCount}
-          capability={selected}
-          open={open}
-          onOpenChange={setOpen}
-        />
+            ) : null}
+            <SummaryCard
+              icon={<CheckCircle2Icon className='size-4' />}
+              label={t('serviceDesk.dashboard.resolutionRate', {
+                defaultValue: 'Resolution rate',
+              })}
+              value={`${Math.round(data.resolutionRate)}%`}
+              hint={t('serviceDesk.dashboard.resolvedHint', {
+                defaultValue: '{{count}} resolved or closed',
+                count: data.resolved + data.closed,
+              })}
+            />
+            <SummaryCard
+              icon={<AlertTriangleIcon className='size-4' />}
+              label={t('serviceDesk.dashboard.overdue', {
+                defaultValue: 'Overdue',
+              })}
+              value={data.overdue}
+              hint={t('serviceDesk.dashboard.overdueHint', {
+                defaultValue: 'Past the SLA target',
+              })}
+              tone={data.overdue > 0 ? 'warning' : 'neutral'}
+            />
+          </div>
+
+          <div className='grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]'>
+            <Card>
+              <CardHeader className='flex-row items-center justify-between gap-3'>
+                <div className='flex flex-col gap-1'>
+                  <CardTitle>
+                    {t('serviceDesk.dashboard.recent', {
+                      defaultValue: 'Recent tickets',
+                    })}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('serviceDesk.dashboard.recentDescription', {
+                      defaultValue: 'The latest requests from your team.',
+                    })}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  render={<Link to='/tickets' />}
+                >
+                  {t('serviceDesk.actions.viewAll', {
+                    defaultValue: 'View all',
+                  })}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {data.recent.length === 0 ? (
+                  <p className='py-8 text-center text-sm text-muted-foreground'>
+                    {t('serviceDesk.dashboard.noRecent', {
+                      defaultValue: 'No tickets yet.',
+                    })}
+                  </p>
+                ) : (
+                  <ul className='flex flex-col divide-y divide-border'>
+                    {data.recent.map((ticket) => (
+                      <li key={ticket.id}>
+                        <RecentTicket ticket={ticket} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {t('serviceDesk.dashboard.byPriority', {
+                    defaultValue: 'By priority',
+                  })}
+                </CardTitle>
+                <CardDescription>
+                  {t('serviceDesk.dashboard.byPriorityDescription', {
+                    defaultValue: 'Where the current workload sits.',
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PriorityBreakdown data={data} />
+                <dl className='mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm'>
+                  <div>
+                    <dt className='text-xs text-muted-foreground'>
+                      {t('serviceDesk.status.open', { defaultValue: 'Open' })}
+                    </dt>
+                    <dd className='mt-0.5 text-lg font-medium tabular-nums'>
+                      {data.open}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-xs text-muted-foreground'>
+                      {t('serviceDesk.status.assigned', {
+                        defaultValue: 'Assigned',
+                      })}
+                    </dt>
+                    <dd className='mt-0.5 text-lg font-medium tabular-nums'>
+                      {data.assigned}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-xs text-muted-foreground'>
+                      {t('serviceDesk.status.resolved', {
+                        defaultValue: 'Resolved',
+                      })}
+                    </dt>
+                    <dd className='mt-0.5 text-lg font-medium tabular-nums'>
+                      {data.resolved}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-xs text-muted-foreground'>
+                      {t('serviceDesk.status.closed', {
+                        defaultValue: 'Closed',
+                      })}
+                    </dt>
+                    <dd className='mt-0.5 text-lg font-medium tabular-nums'>
+                      {data.closed}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          </div>
+
+          {data.canAssign ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {t('serviceDesk.dashboard.workload', {
+                    defaultValue: 'Engineer workload',
+                  })}
+                </CardTitle>
+                <CardDescription>
+                  {t('serviceDesk.dashboard.workloadDescription', {
+                    defaultValue: 'Active tickets assigned to each engineer.',
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {data.workload.length === 0 ? (
+                  <p className='py-4 text-sm text-muted-foreground'>
+                    {t('serviceDesk.dashboard.workloadEmpty', {
+                      defaultValue:
+                        'No service desk engineer has been granted the role yet.',
+                    })}
+                  </p>
+                ) : (
+                  <ul className='flex flex-col divide-y divide-border'>
+                    {data.workload.map((engineer) => (
+                      <li
+                        key={engineer.id}
+                        className='flex flex-wrap items-center justify-between gap-2 py-3'
+                      >
+                        <div className='flex min-w-0 items-center gap-2'>
+                          <UsersRoundIcon className='size-4 shrink-0 text-muted-foreground' />
+                          <div className='min-w-0'>
+                            <p className='truncate text-sm font-medium'>
+                              {engineer.name}
+                            </p>
+                            <p className='truncate text-xs text-muted-foreground'>
+                              {engineer.email}
+                            </p>
+                          </div>
+                        </div>
+                        <div className='flex shrink-0 items-center gap-2'>
+                          {engineer.overdue > 0 ? (
+                            <StatusBadge tone='warning'>
+                              {t('serviceDesk.dashboard.engineerOverdue', {
+                                count: engineer.overdue,
+                                defaultValue: '{{count}} overdue',
+                              })}
+                            </StatusBadge>
+                          ) : null}
+                          <StatusBadge
+                            tone={engineer.active > 0 ? 'info' : 'neutral'}
+                          >
+                            {t('serviceDesk.dashboard.engineerActive', {
+                              count: engineer.active,
+                              defaultValue: '{{count}} active',
+                            })}
+                          </StatusBadge>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
       ) : null}
     </PageContainer>
   );
 }
 
-/** The first part of the page: development here happens by asking a coding agent, which the steps and sample show. */
-function AgentIntro(): ReactElement {
-  const { t } = useTranslation();
-  const { copied, copy } = useCopy();
-  const example = t('home.example.text');
-
+function SummaryCard({
+  icon,
+  label,
+  value,
+  hint,
+  tone = 'neutral',
+}: {
+  readonly icon: ReactElement;
+  readonly label: string;
+  readonly value: string | number;
+  readonly hint: string;
+  readonly tone?: 'neutral' | 'warning';
+}): ReactElement {
   return (
-    <section className='grid gap-8 rounded-2xl border border-border bg-linear-to-br from-primary/5 via-card to-card p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center'>
-      <div className='flex flex-col gap-6'>
-        <div className='flex flex-col gap-4'>
-          <p className='flex items-center gap-2 text-sm font-medium text-primary'>
-            <SparklesIcon className='size-4' aria-hidden />
-            {t('home.platform')}
-          </p>
-          <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em] text-balance md:text-4xl'>
-            {t('home.title')}
-          </h1>
-          <p className='text-base leading-7 text-muted-foreground'>
-            {t('home.description')}
-          </p>
-        </div>
-        <ol className='flex flex-col gap-3'>
-          {STEPS.map((step, index) => (
-            <li key={step} className='flex gap-3'>
-              <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>
-                {index + 1}
-              </span>
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-sm font-medium'>
-                  {t(`home.steps.${step}.title`)}
-                </span>
-                <span className='text-sm text-muted-foreground'>
-                  {t(`home.steps.${step}.description`)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
+    <div className='flex flex-col gap-3 rounded-xl border border-border bg-card p-4'>
+      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+        <span
+          className={
+            tone === 'warning' ? 'text-(--status-warning)' : 'text-primary'
+          }
+        >
+          {icon}
+        </span>
+        {label}
       </div>
-      <figure className='flex flex-col overflow-hidden rounded-xl border border-primary/10 bg-card shadow-sm'>
-        <figcaption className='flex items-center justify-between gap-2 border-b border-primary/10 px-4 py-2.5'>
-          <span className='flex items-center gap-2 text-sm font-medium'>
-            <MessageSquareTextIcon
-              className='size-4 text-primary'
-              aria-hidden
-            />
-            {t('home.example.title')}
-          </span>
-          <Button variant='ghost' size='sm' onClick={() => void copy(example)}>
-            {copied ? (
-              <CheckIcon data-icon='inline-start' />
-            ) : (
-              <CopyIcon data-icon='inline-start' />
-            )}
-            {copied ? t('home.prompt.copiedShort') : t('home.prompt.copy')}
-          </Button>
-        </figcaption>
-        <p className='bg-primary/5 px-4 py-4 text-sm leading-7 whitespace-pre-line'>
-          {example}
-        </p>
-        <p className='border-t border-primary/10 px-4 py-2.5 text-xs text-muted-foreground'>
-          {t('home.example.hint')}
-        </p>
-      </figure>
-    </section>
+      <div className='font-heading text-3xl font-semibold tracking-[-0.035em] tabular-nums'>
+        {value}
+      </div>
+      <p className='text-xs text-muted-foreground'>{hint}</p>
+    </div>
   );
 }
 
-function CapabilityCard({
-  capability,
-  onOpen,
+function RecentTicket({
+  ticket,
 }: {
-  readonly capability: Capability;
-  readonly onOpen: () => void;
+  readonly ticket: TicketSummary;
 }): ReactElement {
   const { t } = useTranslation();
-  const prefix = `home.capabilities.${capability.id}`;
-  const Icon = capability.icon;
+  return (
+    <Link
+      to={`/tickets/${ticket.id}`}
+      className='flex flex-col gap-2 py-3 transition-colors hover:bg-muted/20'
+    >
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='text-xs text-muted-foreground tabular-nums'>
+          #{ticket.id}
+        </span>
+        <TicketStatusBadge status={ticket.status} />
+        <PriorityBadge priority={ticket.priority} />
+        {ticket.overdue ? <OverdueBadge /> : null}
+      </div>
+      <span className='truncate text-sm font-medium'>{ticket.title}</span>
+      <span className='text-xs text-muted-foreground'>
+        {ticket.requesterName ??
+          t('serviceDesk.ticket.unknownUser', {
+            defaultValue: 'Unknown user',
+          })}{' '}
+        ·{' '}
+        {t('serviceDesk.ticket.updatedAt', {
+          date: formatDate(ticket.updatedAt),
+          defaultValue: 'Updated {{date}}',
+        })}
+      </span>
+    </Link>
+  );
+}
+
+function PriorityBreakdown({
+  data,
+}: {
+  readonly data: DashboardResult;
+}): ReactElement {
+  const { t } = useTranslation();
+  const max = Math.max(1, ...PRIORITIES.map((item) => data.byPriority[item]));
 
   return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='group flex w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-    >
-      <Card className='w-full transition-[translate,box-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-foreground/20 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0'>
-        <CardHeader className='gap-3'>
-          {/* The chip only deepens its tint on hover rather than inverting: swapping a light background and a dark icon
-              passes both through the same color halfway, where the icon vanishes for a moment and reads as a flicker. */}
-          <span className='flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 ease-out group-hover:bg-primary/10 group-hover:ring-primary/20 motion-reduce:transition-none'>
-            <Icon
-              className='size-4 transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none'
-              aria-hidden
-            />
-          </span>
-          <div className='flex flex-col gap-1'>
-            <CardTitle>{t(`${prefix}.title`)}</CardTitle>
-            <CardDescription className='leading-6'>
-              {t(`${prefix}.description`)}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardFooter className='mt-auto justify-between text-sm text-muted-foreground transition-colors duration-200 ease-out group-hover:text-foreground'>
-          {t('home.viewPrompts', { count: capability.prompts.length })}
-          <ArrowRightIcon
-            className='size-4 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none'
-            aria-hidden
-          />
-        </CardFooter>
-      </Card>
-    </button>
+    <ul className='flex flex-col gap-3'>
+      {PRIORITIES.map((priority) => {
+        const count = data.byPriority[priority];
+        return (
+          <li key={priority} className='flex items-center gap-3'>
+            <span className='w-14 shrink-0 text-xs text-muted-foreground'>
+              {t(`serviceDesk.priority.${priority}`)}
+            </span>
+            <span className='h-2 flex-1 overflow-hidden rounded-full bg-muted'>
+              <span
+                className={
+                  priority === 'urgent' || priority === 'high'
+                    ? 'block h-full rounded-full bg-(--status-warning)'
+                    : 'block h-full rounded-full bg-primary/60'
+                }
+                style={{ width: `${(count / max) * 100}%` }}
+              />
+            </span>
+            <span className='w-6 shrink-0 text-right text-sm tabular-nums'>
+              {count}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

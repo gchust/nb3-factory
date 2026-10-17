@@ -28,6 +28,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppRouter } from '../../client/routing/app-router.tsx';
 import { AppThemeProvider } from '../../client/theme/index.ts';
 
+vi.mock('../../client/components/notification-bell.js', () => ({
+  NotificationBell: () => null,
+}));
+
 afterEach(() => vi.unstubAllGlobals());
 
 /** The sidebar's entries; the header's breadcrumb names the current page as well. */

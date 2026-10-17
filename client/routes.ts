@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Bell, Home, LifeBuoy, UsersRound } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -16,13 +16,58 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     path: '/',
   },
   {
-    // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
-    // unread badge). The plugin's API answers each person's own messages only, so the page needs no authorization of
-    // its own.
+    authz: { resource: { type: 'page', id: 'service-desk' }, action: 'access' },
+    auth: 'required',
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: LifeBuoy },
+    path: '/tickets',
+    children: [
+      {
+        authz: {
+          resource: { type: 'page', id: 'service-desk' },
+          action: 'access',
+        },
+        auth: 'required',
+        componentLoader: () => import('./pages/tickets/new.js'),
+        name: 'ticket-new',
+        path: 'new',
+      },
+      {
+        authz: {
+          resource: { type: 'page', id: 'service-desk' },
+          action: 'access',
+        },
+        auth: 'required',
+        componentLoader: () => import('./pages/tickets/detail.js'),
+        name: 'ticket-detail',
+        path: ':ticketId',
+      },
+    ],
+  },
+  {
+    // User and role management for service desk managers. The Users plugin ships the API but no page, so the
+    // application owns this one. Its page grant is seeded on `service-desk-manager`; the API independently checks
+    // the `user` record actions in that same set.
+    authz: {
+      resource: { type: 'page', id: 'service-desk.users' },
+      action: 'access',
+    },
+    auth: 'required',
+    componentLoader: () => import('./pages/users/index.js'),
+    name: 'users',
+    navigation: { title: 'navigation.users', icon: UsersRound },
+    path: '/users',
+  },
+  {
+    // Reached from the header's notification bell as well as this sidebar entry: the inbox lists every message the
+    // person received, with unread state, so it belongs in the navigation rather than only behind the bell. The
+    // plugin's API answers each person's own messages only, so the page needs no authorization of its own.
     authz: 'skip',
     auth: 'required',
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
+    navigation: { title: 'navigation.notifications', icon: Bell },
     path: '/inbox',
   },
   {

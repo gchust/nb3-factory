@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { TooltipProvider } from '#components/ui/tooltip';
 
+import { NotificationBell } from '../../components/notification-bell.js';
 import { ThemeSettings } from '../../theme/index.js';
 import { UserMenu } from './user-menu.js';
 
@@ -9,6 +10,7 @@ export function HeaderActions(): ReactElement {
   return (
     <TooltipProvider>
       <div className='flex shrink-0 items-center gap-2'>
+        <NotificationBell />
         <ThemeSettings />
         <UserMenu />
       </div>
