@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Boxes, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,32 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The shared equipment ledger. Every signed-in user may view, add and edit devices, so the page checks no
+    // permission of its own (`authz: 'skip'`), like the landing page; the endpoints require a session too.
+    auth: 'required',
+    authz: 'skip',
+    name: 'equipment',
+    path: '/equipment',
+    navigation: { title: 'navigation.equipment', icon: Boxes },
+    componentLoader: () => import('./pages/equipment/index.js'),
+    children: [
+      {
+        // /equipment/new: create dialog (RouteDialog).
+        name: 'equipment-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/equipment/new.js'),
+      },
+      {
+        // /equipment/edit/:equipmentId: edit dialog opened from a row's menu, alone over the list.
+        name: 'equipment-edit',
+        path: 'edit/:equipmentId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/equipment/edit.js'),
+      },
+    ],
   },
   {
     auth: 'guest',
