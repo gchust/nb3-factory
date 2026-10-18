@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { validateSmokeRequest, reason } from '../failure-smoke.mjs';
+import { validateSmokeRequest, reason, markerPath } from '../failure-smoke.mjs';
 
 function request() {
   return {
@@ -74,9 +80,28 @@ test('smoke accepts only an explicit fresh dedicated issue and rejects accidenta
 test('injection really stages safe application changes then exits failed without inventing QA', (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'failed-smoke-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const repo = fileURLToPath(new URL('../../../', import.meta.url));
   const workspace = path.join(root, 'workspace');
-  execFileSync('git', ['clone', '--quiet', '--shared', repo, workspace]);
+  mkdirSync(workspace);
+  execFileSync('git', ['init', '--quiet', workspace]);
+  // Deliberately unrelated to any template revision or historical patch.
+  writeFileSync(path.join(workspace, 'README.md'), 'Fresh application\n');
+  execFileSync('git', ['add', '.'], { cwd: workspace });
+  execFileSync(
+    'git',
+    [
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.invalid',
+      '-c',
+      'commit.gpgsign=false',
+      'commit',
+      '--quiet',
+      '-m',
+      'Initialize smoke workspace',
+    ],
+    { cwd: workspace },
+  );
   const initial = {
     version: 1,
     verificationAttempts: 0,
@@ -102,15 +127,25 @@ test('injection really stages safe application changes then exits failed without
     { encoding: 'utf8' },
   );
   assert.equal(result.status, 1, result.stderr);
-  assert.ok(result.stderr.includes(reason));
+  assert.ok(result.stderr.includes(reason), result.stderr);
   const names = execFileSync('git', ['diff', '--cached', '--name-only'], {
     cwd: workspace,
     encoding: 'utf8',
   })
     .trim()
     .split('\n');
-  assert.equal(names.length, 6);
-  assert.ok(names.every((name) => /^(client|tests)\//.test(name)));
+  assert.deepEqual(names, [markerPath]);
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(workspace, markerPath), 'utf8')),
+    {
+      purpose: 'controlled-failure-smoke',
+      businessQA: 'not_run',
+    },
+  );
+  assert.equal(
+    readFileSync(path.join(workspace, 'README.md'), 'utf8'),
+    'Fresh application\n',
+  );
   const state = JSON.parse(
     readFileSync(path.join(root, 'pipeline-state.json'), 'utf8'),
   );
@@ -124,7 +159,42 @@ test('injection really stages safe application changes then exits failed without
   );
   assert.equal(diagnostic.modelInvoked, false);
   assert.equal(diagnostic.businessQA, 'not_run');
-  assert.equal(diagnostic.fixtureSource.issue, 400);
+  assert.deepEqual(diagnostic.smokeSource, {
+    type: 'generated-marker',
+    path: markerPath,
+  });
+  assert.equal(diagnostic.fixtureSource, undefined);
+
+  // A colliding application file must survive instead of being replaced.
+  writeFileSync(
+    path.join(workspace, markerPath),
+    'existing application content',
+  );
+  writeFileSync(
+    path.join(root, 'pipeline-state.json'),
+    JSON.stringify(initial),
+  );
+  const collision = spawnSync(
+    process.execPath,
+    [
+      fileURLToPath(new URL('../failure-smoke.mjs', import.meta.url)),
+      'inject',
+      workspace,
+      root,
+      'agent/issue-42',
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(collision.status, 1, collision.stderr);
+  assert.match(collision.stderr, /EEXIST/);
+  assert.equal(
+    readFileSync(path.join(workspace, markerPath), 'utf8'),
+    'existing application content',
+  );
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(root, 'pipeline-state.json'), 'utf8')),
+    initial,
+  );
 });
 
 test('smoke skips every model invocation while using the existing failed publication path', () => {

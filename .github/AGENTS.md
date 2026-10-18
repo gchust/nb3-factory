@@ -32,7 +32,7 @@ A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserve
 
 ## Controlled failed-delivery smoke
 
-The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.
+The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. Injection creates and stages an inert, unimported `client/factory-failure-smoke.json` marker and refuses to overwrite an existing file. It does not load historical patches or modify template pages, routes, or translations. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance. The regression test uses a fresh minimal Git repository and needs no template baseline or historical Git objects.
 
 ## Ordinary preset evaluation scope
 

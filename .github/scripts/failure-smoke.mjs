@@ -1,20 +1,14 @@
-// Explicit maintainer smoke only: reuse code, never another run's QA verdict.
+// Explicit maintainer smoke only: generate an inert change, then fail before QA.
 import assert from 'node:assert/strict';
-import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GitHubClient } from './factory-lib.mjs';
 
 export const reason =
-  '受控失败测试：复用 #400 的计数器补丁，在业务验收前主动退出；本轮未调用搭建模型、未运行业务 QA，不代表应用或框架存在缺陷。';
-export const fixtureSource = {
-  issue: 400,
-  runId: 36315838213,
-  commit: '208f8bc8a50d57a32d1ff2c327283b8cd507789d',
-};
+  '受控失败测试：生成独立测试标记，在业务验收前主动退出；本轮未调用搭建模型、未运行业务 QA，不代表应用或框架存在缺陷。';
+export const markerPath = 'client/factory-failure-smoke.json';
 
 export function validateSmokeRequest(
   event,
@@ -70,7 +64,7 @@ export function recordSmokeFailure(root) {
     repairAttempts: state.repairAttempts,
     failures: [],
     rootCause: { owner: 'factory', confidence: 'confirmed', reason },
-    fixtureSource,
+    smokeSource: { type: 'generated-marker', path: markerPath },
     modelInvoked: false,
     businessQA: 'not_run',
   };
@@ -83,9 +77,7 @@ export function recordSmokeFailure(root) {
     path.join(root, 'task-diagnostic.md'),
     '# 受控失败测试\n\n' +
       reason +
-      '\n\n来源：Issue #400 / Run 36315838213 / ' +
-      fixtureSource.commit +
-      '。只复用代码补丁，不复用 QA、截图或成功结论。\n',
+      '\n\n本轮生成独立 JSON 标记，不加载历史补丁，不复用 QA、截图或成功结论。\n',
   );
 }
 
@@ -111,43 +103,24 @@ async function main() {
     });
   } else if (mode === 'inject') {
     const [workspace, root, branch] = args;
-    const fixture = new URL(
-      './tests/fixtures/failed-delivery/agent.patch.base64',
-      import.meta.url,
-    );
-    const manifest = JSON.parse(
-      readFileSync(
-        new URL(
-          './tests/fixtures/failed-delivery/source.json',
-          import.meta.url,
-        ),
-        'utf8',
-      ),
-    );
-    assert.equal(
-      createHash('sha256')
-        .update(Buffer.from(readFileSync(fixture, 'utf8'), 'base64'))
-        .digest('hex'),
-      manifest.patchSha256,
-    );
-    const patchPath = path.join(root, 'smoke-source.patch');
+    execFileSync('git', ['switch', '--force-create', branch], {
+      cwd: workspace,
+      stdio: 'inherit',
+    });
+    // An unimported JSON marker gives failed publication a real code diff
+    // without depending on template routes, locales, or historical Git objects.
+    const target = path.join(workspace, markerPath);
+    mkdirSync(path.dirname(target), { recursive: true });
     writeFileSync(
-      patchPath,
-      Buffer.from(readFileSync(fixture, 'utf8'), 'base64'),
+      target,
+      JSON.stringify(
+        { purpose: 'controlled-failure-smoke', businessQA: 'not_run' },
+        null,
+        2,
+      ) + '\n',
+      { flag: 'wx' },
     );
-    execFileSync(
-      process.execPath,
-      [
-        fileURLToPath(new URL('./apply-patch.mjs', import.meta.url)),
-        '--workspace',
-        workspace,
-        '--patch',
-        patchPath,
-        '--branch',
-        branch,
-      ],
-      { stdio: 'inherit' },
-    );
+    execFileSync('git', ['add', '--', markerPath], { cwd: workspace });
     recordSmokeFailure(root);
     console.error(reason);
     process.exitCode = 1;
