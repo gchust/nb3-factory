@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListChecks } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,38 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // A minimal, read-only todo list: it exists only so the "检查过期待办" Schedule has data to mark. Every signed-in
+    // user may open it, and its endpoint only requires a session (see `server/routes/todos.ts`).
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListChecks },
+    path: '/todos',
+  },
+  {
+    // The Scheduler plugin contributes no pages, so this application reads its API for the plan list. The page grant
+    // is the same resource the plugin's `/api/scheduler/...` routes check, so one grant opens both.
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    auth: 'required',
+    componentLoader: () => import('./pages/scheduler/index.js'),
+    name: 'scheduler',
+    navigation: { title: 'navigation.scheduler', icon: CalendarClock },
+    path: '/scheduler',
+    children: [
+      {
+        // A covering child page: the plan's name and its execution history. It inherits the parent's authz.
+        name: 'scheduler-detail',
+        path: ':scheduleId',
+        breadcrumb: { title: 'scheduler.detail.breadcrumb' },
+        componentLoader: () => import('./pages/scheduler/detail.js'),
+      },
+    ],
   },
   {
     auth: 'guest',
