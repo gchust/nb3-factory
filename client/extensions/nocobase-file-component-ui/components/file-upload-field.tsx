@@ -54,6 +54,7 @@ export function FileUploadField(
     disabled = false,
     removeOnDelete = false,
     labels,
+    validate,
   } = inputProps;
 
   const [items, setItems] = useState<UploadItem[]>([]);
@@ -118,6 +119,31 @@ export function FileUploadField(
   };
 
   const upload = async (item: UploadItem): Promise<void> => {
+    // The content check runs first: a file the browser accepted by name and MIME type may still not be what it
+    // claims, and it must be rejected with a reason rather than uploaded and shown as done.
+    if (validate) {
+      let problem: string | null | undefined;
+      try {
+        problem = await validate(item.file);
+      } catch {
+        problem = t('uploadFailed', {
+          defaultValue: 'File upload failed.',
+        });
+      }
+      if (!mountedRef.current) return;
+      if (problem) {
+        const validationError = new Error(problem);
+        setItems((current) =>
+          current.map((candidate) =>
+            candidate.key === item.key
+              ? { ...candidate, status: 'error', error: validationError }
+              : candidate,
+          ),
+        );
+        onError?.(validationError);
+        return;
+      }
+    }
     const controller = new AbortController();
     controllersRef.current.set(item.key, controller);
     setItems((current) =>
@@ -177,36 +203,36 @@ export function FileUploadField(
       );
       return;
     }
-    const selected = (multiple ? files : files.slice(0, 1)).filter((file) => {
-      if (maxSize !== undefined && file.size > maxSize) {
-        onError?.(
-          new Error(
+    // A file the accept rules or the size limit reject is kept as a failed entry rather than dropped, so the
+    // person can see which file was refused and why instead of watching it disappear with no explanation.
+    const nextItems = (multiple ? files : files.slice(0, 1)).map(
+      (file): UploadItem => {
+        const key = `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`;
+        if (maxSize !== undefined && file.size > maxSize) {
+          const error = new Error(
             t('fileTooLarge', {
               defaultValue: 'File exceeds the maximum size.',
             }),
-          ),
-        );
-        return false;
-      }
-      if (!accepts(file, accept)) {
-        onError?.(
-          new Error(
+          );
+          onError?.(error);
+          return { key, file, status: 'error', error };
+        }
+        if (!accepts(file, accept)) {
+          const error = new Error(
             t('fileTypeNotAllowed', {
               defaultValue: 'File type is not allowed.',
             }),
-          ),
-        );
-        return false;
-      }
-      return true;
-    });
-    const nextItems = selected.map((file): UploadItem => ({
-      key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
-      file,
-      status: 'pending',
-    }));
+          );
+          onError?.(error);
+          return { key, file, status: 'error', error };
+        }
+        return { key, file, status: 'pending' };
+      },
+    );
     setItems((current) => [...current, ...nextItems]);
-    nextItems.forEach((item) => void upload(item));
+    nextItems
+      .filter((item) => item.status === 'pending')
+      .forEach((item) => void upload(item));
   };
 
   const removeRecord = async (record: FileRecord): Promise<void> => {
