@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Ticket } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,33 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The help desk. Every signed-in user reaches the list; the server scopes what each role may see (an employee
+    // only their own tickets, an engineer only the tickets assigned to them, the service desk all of them), so the
+    // page itself declares no page authorization.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: Ticket },
+    path: '/tickets',
+    children: [
+      {
+        // The create form, opened as a dialog over the list.
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/new.js'),
+        name: 'ticket-create',
+        path: 'new',
+      },
+      {
+        // A ticket's own page, covering the list.
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/detail/index.js'),
+        name: 'ticket-detail',
+        path: ':id',
+      },
+    ],
   },
   {
     auth: 'guest',

@@ -1,174 +1,128 @@
-import {
-  TestI18nProvider,
-  createTestI18nRuntime,
-} from '@nocobase/i18n/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { I18nRuntime } from '@nocobase/i18n';
+import { I18nProvider } from '@nocobase/i18n/client';
+import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
-import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import locales from '../../client/locales/index.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
-}));
+const { request } = vi.hoisted(() => ({ request: vi.fn() }));
 
-vi.mock('@nocobase/app-client', async (original) => ({
-  ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
-}));
-
-// Strict: a key the locale lacks fails the test instead of rendering as text.
-const runtime = await createTestI18nRuntime({
-  application: {
-    namespace: '@nocobase/app-template-default',
-    resources: enUS,
-  },
+vi.mock('@nocobase/app-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nocobase/app-client')>();
+  const client = { request };
+  return { ...actual, useApiClient: () => client };
 });
 
-function I18n({ children }: { readonly children: ReactNode }): ReactElement {
-  return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
-}
+import HomePage from '../../client/pages/home/index.js';
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
+const overview = {
+  role: 'service-desk',
+  stats: { pending: 3, overdue: 1, open: 5, resolved: 7, total: 12 },
+  workload: [
+    { id: 'user-2', name: 'Bob', count: 2 },
+    { id: 'user-3', name: 'Carol', count: 1 },
+  ],
+  recent: [
+    {
+      id: 'ticket-1',
+      title: 'Printer jam on the third floor',
+      status: 'assigned',
+      priority: 'high',
+      category: 'hardware',
+      reporterId: 'user-1',
+      reporterName: 'Alice',
+      assigneeId: 'user-2',
+      assigneeName: 'Bob',
+      createdAt: '2026-10-01T08:00:00.000Z',
+      updatedAt: '2026-10-02T09:00:00.000Z',
+    },
+  ],
+};
 
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
+let runtime: I18nRuntime;
+beforeEach(async () => {
+  request.mockReset();
+  request.mockResolvedValue({ data: overview });
+  runtime = new I18nRuntime({
+    defaultLocale: 'en-US',
+    locales: ['en-US', 'zh-CN'],
+    applicationNamespace: 'test-app',
   });
-  return user;
+  runtime.registerApplicationNamespace('test-app', locales);
+  await runtime.init('en-US');
+});
+
+function Frame({ children }: { readonly children: ReactNode }): ReactElement {
+  return (
+    <MemoryRouter initialEntries={['/']}>
+      <I18nProvider runtime={runtime}>{children}</I18nProvider>
+    </MemoryRouter>
+  );
 }
 
 describe('home page', () => {
-  beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
-  });
-
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows the help-desk counts and the most recently updated tickets', async () => {
+    render(
+      <Frame>
+        <HomePage />
+      </Frame>,
+    );
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
+      await screen.findByRole('heading', { level: 1, name: 'Help desk' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
-  });
-
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
-
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
+    expect(request).toHaveBeenCalledWith({
+      path: 'helpdesk/overview',
+      signal: expect.any(AbortSignal),
     });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
-
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
-      }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
+    expect(screen.getByText('Awaiting assignment')).toBeVisible();
+    expect(screen.getByText('12')).toBeVisible();
     expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
+      screen.getByRole('link', { name: 'Printer jam on the third floor' }),
+    ).toHaveAttribute('href', '/tickets/ticket-1');
   });
 
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
+  it('lists the engineer workload for the service desk', async () => {
+    render(
+      <Frame>
+        <HomePage />
+      </Frame>,
     );
 
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
+    expect(await screen.findByText('Carol')).toBeVisible();
+    // Bob is both in the workload list and the assignee of the recent ticket.
+    expect(screen.getAllByText('Bob')).toHaveLength(2);
+    expect(screen.getByText('2 open')).toBeVisible();
   });
-});
 
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
+  it('hides the workload from a role that does not dispatch', async () => {
+    request.mockResolvedValue({ data: { ...overview, role: 'employee' } });
+    render(
+      <Frame>
+        <HomePage />
+      </Frame>,
+    );
+
+    await screen.findByText('Printer jam on the third floor');
+    expect(screen.queryByText('Engineer workload')).not.toBeInTheDocument();
+  });
+
+  it('reports a failed load with a retry that asks again', async () => {
+    request.mockRejectedValue(new Error('network down'));
+    render(
+      <Frame>
+        <HomePage />
+      </Frame>,
+    );
+
+    expect(
+      await screen.findByText('Unable to load the help desk'),
+    ).toBeVisible();
+    expect(request).toHaveBeenCalledTimes(1);
+    screen.getByRole('button', { name: 'Retry' }).click();
+    await screen.findByText('Unable to load the help desk');
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });
