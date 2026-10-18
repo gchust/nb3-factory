@@ -50,10 +50,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the shared equipment ledger and the inbox opted out of page authorization, so they are
+    // reachable by every signed-in user. The equipment create and edit dialogs inherit none of that automatically:
+    // they are child routes and declare the same choice themselves.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'equipments', authorizedAs: null },
+      { name: 'equipment-new', authorizedAs: null },
+      { name: 'equipment-edit', authorizedAs: null },
     ]);
   });
 

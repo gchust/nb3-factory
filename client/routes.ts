@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Package } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,36 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The shared equipment ledger is available to every signed-in team member, in either language. Its child
+    // routes are the create and edit dialogs; neither adds a navigation entry.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/equipments/index.js'),
+    name: 'equipments',
+    navigation: {
+      title: 'navigation.equipments',
+      icon: Package,
+      order: 10,
+    },
+    path: '/equipments',
+    children: [
+      {
+        authz: 'skip',
+        auth: 'required',
+        componentLoader: () => import('./pages/equipments/new.js'),
+        name: 'equipment-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        auth: 'required',
+        componentLoader: () => import('./pages/equipments/edit.js'),
+        name: 'equipment-edit',
+        path: 'edit/:id',
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
