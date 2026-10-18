@@ -9,6 +9,7 @@ const tones = {
     'border-(--status-warning)/20 bg-(--status-warning-background) text-(--status-warning)',
   success:
     'border-(--status-success)/20 bg-(--status-success-background) text-(--status-success)',
+  danger: 'border-destructive/20 bg-destructive/8 text-destructive',
 };
 
 /** Quiet semantic status labels; reserve solid primary fills for actions. */
