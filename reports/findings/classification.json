@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "3de774753b12a873277e9ebbeb8f3c2b577bbe8c0a54c0e58b8c87d327c23ca6",
+  "inputHash": "6deeaa15a7c8d724dcd2b2125b552dcabb8a887fd78811198eb28b075ab8de7c",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1208,6 +1208,16 @@
       "fingerprint": "b36040d9e2a4f8ef1f28e16ed67c73d296a1ff00283128e778bc70204e8e33e0"
     },
     {
+      "id": "765:39165528773:1:F1",
+      "report": "765:39165528773:1",
+      "fingerprint": "89541600e5283a8be5ab6844166ad044f184c075a656adc70d1fe1e187b6b464"
+    },
+    {
+      "id": "765:39165528773:1:F3",
+      "report": "765:39165528773:1",
+      "fingerprint": "d8ee6f8b9134d651111055de8df8b73ac2bac13b6153301f01f183d7326d8244"
+    },
+    {
       "id": "766:39165532645:1:F3",
       "report": "766:39165532645:1",
       "fingerprint": "9dd82293f5bd190fa2748df2972cd25668e932e0f693b8169b158914b24978c7"
@@ -1226,7 +1236,7 @@
   "groups": [
     {
       "title": "Registry OOXML 预览缺少加载/渲染超时与看门狗，viewer 不收敛时永久停在 Loading",
-      "reason": "跨报告合并。463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）、543:F4（E5/E6）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；543:F4 进一步比对该分支与旧 Office iframe 的 OFFICE_PREVIEW_TIMEOUT_MS，确认 ooxml 分支没有加载超时。触发条件、期望（超时后失败回退+下载）与修复位置一致。 614:F1（E7/E22）在 1.0.0-beta.55 复现同一缺口：office-open-xml-preview.tsx 的 useEffect 仅在 reportViewerError 抛错时回退下载，viewer.load() 既不 resolve 也不 reject 时 loaded 永为 false，verify-6 中 DOCX GET 200、渲染 chunk 已加载且 worker 实测正常，但 20 秒后仍停在 Loading preview...，B02 连续 6 轮未通过；触发条件、期望（限定时间内渲染或超时后明确失败并回退下载）与修复位置均与既有成员一致。",
+      "reason": "跨报告合并：463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）、543:F4（E5/E6）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；543:F4 进一步比对该分支与旧 Office iframe 的 OFFICE_PREVIEW_TIMEOUT_MS，确认 ooxml 分支没有加载超时。",
       "members": [
         "463:36434310207:1:F1",
         "476:36498929142:1:F2",
@@ -1238,7 +1248,7 @@
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。 578:F2（E7/E10/E11）同样记录 registry 的 file-preview-content.tsx image 分支直接渲染裸 <img>、无 onError/失败回退，SKILL 验证清单虽要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码 PNG 只显示破图，应用复制注册表副本新增 ImagePreview(onError) 与 DownloadFallback 才满足 B06；属同一公开缺口与修复方向。 664:F2（E15/E16/E19）同样记录 file-preview-content.tsx 的 image 分支与默认 file-thumbnail.tsx 均只渲染无 onError 的 <img>，扩展名/MIME 像图片但字节损坏时只显示破图；应用在自有 Registry 副本新增 ImagePreview.onError→DownloadFallback 与 FileThumbnail.onError→类型图标才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 681:F5（E4/E5/E32）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 case 'image' 直接渲染裸 <img>、无 onError/失败回退，而同文件 OfficePreview 具备 DownloadFallback/officeFailed 失败路径，应用只能 fork 组件补 ImagePreview.onError，触发条件、公开缺口与修复方向与既有成员一致。 本次新增 689:F1（E5/E6/E9/E35/E39）在 1.0.0-beta.55 复现同一缺口：file-preview-content.tsx 的 image/pdf/audio/video 分支直接渲染 <img>/<iframe>/<audio>/<video> 且无 onError，file-thumbnail.tsx 亦为裸 <img>，README 只承诺 OOXML 失败提示；应用复制 Registry 源新增 ImagePreview(onError)/files.imageFailed 后才满足 B06，触发条件、公开缺口与修复方向与既有成员一致。",
+      "reason": "跨报告合并：463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
@@ -1255,7 +1265,7 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
-      "reason": "跨报告合并。474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。 544:F1（E18/E19/E7/E30/E60）再次确认 code-and-seeds.md 的 .js 相对说明符在 task-loader 以原生 import 加载 .ts 源码时解析失败（__rewriteRelativeImportExtension 只处理 ./、../ 字符串且对 file:/// URL 无效），需改为 .ts 或内联，与前三者同一错误指引与同一修复方向。 649:F1（E43/E44/E39/E40/E45）再次指向同一 code-and-seeds.md 种子示例 import '../../seed-data/permission-sets.js'：种子由 importTaskDefinition 加载，CLI 走 tsx 可把 .js 解析到 .ts，但进程内测试用 Node 原生类型剥离直接加载时相对 .js 不解析到 .ts，且 __rewriteRelativeImportExtension 只改写入口文件、不处理种子内部相对导入，报 Cannot find module；同一错误指引与同一修复方向（改为 .ts/无扩展名或让加载器解析传递依赖），故并入。 646:F1（E29/E30/E40/E2/E3/E42）再次确认同一 code-and-seeds.md 第 40/69 行示例在 .ts 种子中以 .js 相对说明符导入 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js，而同页第 97 行文字却称导入 .ts，自相矛盾；task-loader 用 pathToFileURL().href 交给原生 import，__rewriteRelativeImportExtension 只对 ^\\.\\.?/ 字面量生效、不作用于 file URL，应用把说明符改成 .ts 后测试才通过。与既有成员同一错误指引、同一修复方向（示例改 .ts 或加载器回退解析），故并入。 688:F1（E29/E30/E24/E25/E31/E76）在 1.0.0-beta.55 复现同一错误指引：code-and-seeds.md 第 36/69/97 行把“共享 seed-data 模块 + .js 说明符导入”作为标准做法，实际应用启动即 Database seeds failed，Caused by ERR_MODULE_NOT_FOUND: .../database/seed-data/library-accounts.js imported from .../database/main/seeds/*.ts；task-loader 只用原生 import 并按字面路径解析、仅改写任务文件自身扩展名，对种子内部的传递导入无效，最终只能内联常量保持自包含，与既有成员同一错误指引与同一修复方向，故并入。 699:F1（E18/E19/E36/E37）在 1.0.0-beta.61 再确认同一错误指引：code-and-seeds.md 第 40/69 行示例以 ../../server/sales-resources.js、../../seed-data/permission-sets.js 相对导入，而同页说明实际文件是 .ts；importTaskDefinition 只重写任务文件自身的 .ts 说明符，嵌套 .js 不解析到 .ts，verify-2 报 ERR_MODULE_NOT_FOUND，改为 .ts 后通过，与既有成员同一错误指引与同一修复方向。",
+      "reason": "跨报告合并：474:F1（E20/E21/E22）、475:F2（E6/E13/E18）、496:F1（E11/E15）都引用 code-and-seeds.md 用 .js 相对导入 .ts 的 seed-data 模块，而 task-loader 只把任务文件自身的 .ts/.tsx 说明符改写为 .js，传递导入的 .js 解析失败并抛 ERR_MODULE_NOT_FOUND；同一错误指引、同一修复方向（改为 .ts）。",
       "members": [
         "474:36498921009:1:F1",
         "475:36498925234:1:F2",
@@ -1269,7 +1279,7 @@
     },
     {
       "title": "nocobase-db 种子规则未给出演示/样例数据的落点、幂等写法与必需/sample 判定，并与组织指引冲突",
-      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。 570:F1（E11/E30/E14/E38）进一步显示同一条绝对句“a seed is never sample or demonstration content”与 organization/subjects.md 明确要求“演示需要账号时用 seed 的 query 写 user/account”直接矛盾，应用在同一 seed 中既要初始化权限集又要写演示账号与示例工单，代理只能自行裁决。三者与 570:F1 是同一句未加限定的种子规则、同一触发条件（任务要求经 seed 写入演示/样例数据）与同一修复方向（限定为生产/安装种子并给出演示数据的第一方落点/幂等写法及交叉引用）。 576:F2（E6/E17/E36/E37/E40/E50）进一步显示安装种子需要在无应用容器的 SeedContext 中创建可登录演示账号与样例工单，nocobase-db SKILL:80 与 code-and-seeds 禁止演示/夹具内容进入种子与生产初始化，authentication Skill 又只把账号变更指向运行时的 userAdministrationServiceToken（需应用容器），应用只能照抄认证插件自带 seed 的裸表 + hashPassword 模式；同一条绝对种子规则与同一“演示/夹具数据无受支持落点/创建路径”的缺口，故并入本组。 611:F2（E4/E31）显示 nocobase-db/SKILL.md 第 80 行“a seed is never sample or demonstration content”与任务要求全新安装即含 2 客户/3 联系人/3 商机的验收直接冲突，Agent 只能把样例写进 seed 并在注释中承担冲突；同一条未加限定的绝对种子规则与同一“演示/样例数据无受支持落点”的缺口，故并入本组。 748:F4（E14/E15/E52/E51/E13/E23/E44/E45）进一步显示同一章节只定义“运行所需数据用必需 seed、示例/演示内容用 sample:true 且未启用 APP_SAMPLE_DATA 时 skipped”，却未给出“任务或验收依赖记录在运行时可见”时该选必需 seed 还是显式开启 sampleData 的判定示例；Agent 把三条待办写成 sample seed（E51），无 APP_SAMPLE_DATA 时被 DefaultSeeder 记为 skipped（E13），修复轮才改判为必需 seed（E23）。这与本组“演示/样例数据无受支持落点/判定”为同一缺口，故并入。",
+      "reason": "跨报告合并：460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。",
       "members": [
         "460:36434284393:1:F2",
         "490:36575632059:1:F5",
@@ -1282,7 +1292,7 @@
     },
     {
       "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影或私有 runner/私有表",
-      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。 新增 666:F3（E65/E66/E68/E79）：公开 SchedulerService 仅 registerTarget/defineSchedule，HTTP 仅 list/get/occurrences/enable/disable，Skill 明确 store、target registry、schedule executor 对插件私有；应用 runScheduleNow 只能读私有 schedule_definitions、访问私有 executor.runner 并手工 recordEvent。与上述各条同为公开面缺少受控单次执行入口、修复方向一致（提供遵守 enabled、写入同一 occurrence 的受支持触发入口），故合并。 674:F4（E16-E24）在 1.0.0-beta.55 复现同一能力缺口：SchedulerService 只公开 registerTarget/defineSchedule，store、target registry、occurrence history 与 executor 均为私有，operations 指引又明确不能通过容器解析绕过 Routes 授权，应用只能重复私有 SCHEDULER_SCOPE、cast schedulerServiceToken、解析 jobExecutorServiceToken.getScheduleExecutor 取私有 runner.run 并直读 schedule_occurrences；触发条件、期望（公开受控 run-now 入口）与修复位置与既有成员一致。 本次新增 724:F3（E6/E18/E28）在 1.0.0-beta.61 复现同一框架能力边界：Scheduler 管理 API 只有 list/get/occurrences/enable/disable，公开服务无 trigger 方法，应用只能以 cron '* * * * *' 等待真实触发；触发条件（希望立即验证或补偿执行）、期望（受授权保护、走同一 target 并写入 occurrence 的 trigger-once 入口）与修复方向均与既有成员一致。",
+      "reason": "跨报告合并：466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。",
       "members": [
         "466:36473812582:1:F3",
         "478:36522310216:1:F3",
@@ -1295,7 +1305,7 @@
     },
     {
       "title": "allScopes/idsScope/databaseGrant 等组合子已在包内实现但未从 @nocobase/app-plugin-authorization/server 公开导出",
-      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。 577:F2（E30/E31/E34/E65）同样确认 scope.js 已实现 allScopes 而 server 入口 index.d.ts 只再导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠；同一导出缺口与同一修复方向。 674:F5（E8/E9/E10/E14）在 1.0.0-beta.55 复现同一导出面不一致：server/index.d.ts 导出 anyScope/condition/scopeAst/recordAccess，却遗漏实现中存在且语义清晰的 allScopes、idsScope、databaseGrant，应用在 service-authorization.ts 手写 databaseGrant 形状与 allOf，期望与修复方向（从 server 入口补导出）与既有成员一致。 707:F1（E1/E2/E28）在 1.0.0-beta.61 再次确认同一公开缺口：scope.d.ts 声明 allScopes 且 authorizer 内部使用，dist/server/index.js 只再导出 anyScope/condition/scopeAst，应用在 record-access.ts 自行实现 allOf；同一根因与同一修复方向。",
+      "reason": "跨报告合并：462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。",
       "members": [
         "462:36434301919:1:F2",
         "494:36641592184:1:F3",
@@ -1309,7 +1319,7 @@
     },
     {
       "title": "selection.records 只接受字符串 id，与框架自身推荐的整数自增主键不兼容",
-      "reason": "跨报告合并。475:F3（E1/E14/E15）、494:F1（E1/E4/E7/E49）、518:F1（E1/E9/E10/E14/E16）、530:F1（E1/E6）都显示 parseRecordSelection 要求 records 的 id 为非空字符串，idsScope 直接以其构造对主键的 $eq，而整数/increments 主键过滤只接受安全整数，于是数字 id 写入期抛 TypeError、字符串 id 查询期抛 INVALID_FILTER（500）；同一能力缺口。 577:F1（E27/E28/E65/E66）再次确认 parseRecordSelection 只接受非空字符串 id，整数自增主键集合无法用 selection.records([id]) 表达单条共享，应用只能改用自定义 recordAccess（E65 的 sharedDocument、E66 的等值条件）绕行；同一能力缺口与同一修复方向。 598:F2（E3/E1/E2/E4/E5/E6）进一步确认：parseRecordSelection 只接受非空字符串 id（E3），idsScope 将记录级选择原样展开为每个 id 的 $eq（E2），compileConstraints 在编译期不校验主键类型（E4），而 Repository 对 integer/increments 只接受 number 并抛 INVALID_FILTER（E6），rule-validation 对 records 选择不做主键类型校验（E5）；与既有成员同一运行期不兼容缺口与同一修复方向。",
+      "reason": "跨报告合并：475:F3（E1/E14/E15）、494:F1（E1/E4/E7/E49）、518:F1（E1/E9/E10/E14/E16）、530:F1（E1/E6）都显示 parseRecordSelection 要求 records 的 id 为非空字符串，idsScope 直接以其构造对主键的 $eq，而整数/increments 主键过滤只接受安全整数，于是数字 id 写入期抛 TypeError、字符串 id 查询期抛 INVALID_FILTER（500）；同一能力缺口。",
       "members": [
         "475:36498925234:1:F3",
         "494:36641592184:1:F1",
@@ -1321,7 +1331,7 @@
     },
     {
       "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
-      "reason": "跨报告合并。494:F2（E13/E14/E1/E7/E49）、518:F5（E24/E25/E40/E52）、530:F3（E2/E11/E18）都记录共享/限制/默认访问类 Skill 与 authorization 文档把 selection.records(ids) 当作单条记录交接的推荐写法，示例全为字符串主键，却未提示 records 仅接受非空字符串 id、整数自增主键集合会失败，也未给出 recordAccess 的等价写法；同一错误指引、同一修复方向（注明字符串约束并给整数主键对照示例）。554:F1（E1/E5/E15/E41/E43）显示共享 SKILL 与 authorization README 以 records(['quote-7']) 推荐单条记录共享，而 db SKILL 默认 collection.increments('id') 生成整数主键，parseRecordSelection 要求每个 id 为非空字符串，照做会抛 TypeError: Invalid record selection，指引同样未提示，故归入本组。 577:F3（E45/E27）显示共享规则 SKILL 以 selection.records(['quote-7']) 演示单条记录选择，却未提示 records 仅接受非空字符串 id，照做在整数主键上抛 TypeError('Invalid record selection')；同一错误指引与同一修复方向。 598:F3（E25/E26/E27/E28/E29）显示 nocobase-db SKILL 迁移示例默认 increments(\"id\")（E25/E26）、database-and-data.md 称其对普通表可用（E29），而共享/限制规则 Skill 只用 selection.records([字符串 id]) 演示（E27/E28），均未提示记录级选择需要字符串友好主键；同一指引缺口与同一修复方向。 688:F2（E6/E13/E77）再次确认共享/限制 Skill 用字符串 id 示例演示 selection.records 却未说明 parseRecordSelection 要求每个 id 为非空字符串：本搭建最初用 increments('id')，共享单条记录时失败，改用 collection.string('id') 后才能共享；同一指引缺口与同一修复方向（注明字符串约束并给整数主键对照写法），故并入。",
+      "reason": "跨报告合并：494:F2（E13/E14/E1/E7/E49）、518:F5（E24/E25/E40/E52）、530:F3（E2/E11/E18）都记录共享/限制/默认访问类 Skill 与 authorization 文档把 selection.records(ids) 当作单条记录交接的推荐写法，示例全为字符串主键，却未提示 records 仅接受非空字符串 id、整数自增主键集合会失败，也未给出 recordAccess 的等价写法；同一错误指引、同一修复方向（注明字符串约束并给整数主键对照示例）。",
       "members": [
         "494:36641592184:1:F2",
         "518:36938133650:1:F5",
@@ -1334,7 +1344,7 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。 715:F4（E35/E49/E1/E5）在 1.0.0-beta.61 复现同一缺口：README/Skill 仅以逻辑入口（/core、/permission-sets、/sharing-rules 等）描述 API，但 package.json exports 把插件子路径映射到 dist/plugins/<name>/index.js，物理 dist 顶层并无对应目录；代理按 dist/<subpath> 猜测（cat dist/sharing-rules/plugin.js、dist/restriction-rules/、dist/default-access/builder.d.ts）得到空输出/exit 1，与既有成员描述的公开入口/物理布局缺对照、无效探测同一根因，修复方向（补对照说明并只用公开子路径）一致。 本次新增 732:38643271089:1:F5（E16/E28/E36/E41/E57/E58/E59）在 1.0.0-beta.61 记录同一缺口：@nocobase/db 的公开入口物理位置为 dist/src/index.js，而 @nocobase/repository-input 与 @nocobase/app-client 为扁平 dist/index.js，Agent 按 dist/src 猜测 repository-input 类型失败（退出码 2）、并枚举 @nocobase/db-testing/app-testing 的 dist；exports 映射虽能正确解析，但缺少公开导入路径与包内物理布局的对照说明，触发条件（按物理路径直读）、缺口（入口/声明位置未文档化）与改进方向（统一布局或在 Skill 中说明走 exports）与既有成员一致。",
+      "reason": "跨报告合并：461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
@@ -1347,7 +1357,7 @@
     },
     {
       "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
-      "reason": "跨报告合并。460:F3（E50/E54/E55/E12）、490:F2（E19/E22/E23/E44）、492:F1（E16/E27/E28/E29/E49）、541:F2（E15/E18/E37/E41）都显示 checkCookieWriteOrigin 对带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN，而 protecting-routes.md / server-routes.md / testing.md 只讲 401、未提 CSRF，相关说明仅在部署参考；同一指引缺口。541:F2 进一步给出 testing.md「Testing a route」缺少匹配 Origin 与 APP_PUBLIC_ORIGIN 设置的证据。 578:F1（E16/E17/E18/E19）进一步显示 protecting-routes.md 的“Testing a protected route”配方只写复用 sign-up 的 set-cookie，未提 cookie 写请求需 Origin/可信原点，照做得到 403 INVALID_CSRF_ORIGIN，应用只能在测试 request() 助手中补 origin 头；同为写请求 Origin/CSRF 指引缺失。 575:F3（E28/E38/E51）显示 testing.md 的路由测试示例只演示 GET，未说明带 Cookie 的 POST/PATCH 在缺匹配 Origin 时会被 403 INVALID_CSRF_ORIGIN 拒绝，应用只能在测试 harness 设置 APP_PUBLIC_ORIGIN；与前述同属「cookie 写请求的 Origin/CSRF 校验指引缺失」这一缺口与同一修复方向（在测试/路由指引中注明需匹配 Origin 或 APP_PUBLIC_ORIGIN）。 598:F4（E30/E31）显示 protecting-routes.md 已记录带 cookie 写请求的 INVALID_CSRF_ORIGIN（E31），但 testing.md 在路由/权限边界测试处未提 Origin/CSRF 前提也未交叉引用（E30），应用遇 403 后手工补 Origin；同一指引缺口与同一修复方向。 611:F1（E23/E27/E24/E25）显示 app-development 的 testing.md 只演示 createAppTest 与 signIn，未提 cookie 写请求需可信 Origin，且测试应用默认无 publicOrigin；Agent 对受保护路由发 POST/PATCH 得到 403 INVALID_CSRF_ORIGIN，只能从 auth.js 的 checkCookieWriteOrigin 反推并自设 publicOrigin 与 origin 头；与前述同属测试/路由指引缺少 cookie 写请求 Origin/CSRF 前置说明这一缺口与同一修复方向。 本次新增 708:F3（E33/E36/E37/E47/E38）在 1.0.0-beta.61 显示 app-development 的 server-routes.md 只说明 auth.required() 的 401、未提 cookie 写入的 Origin/Referer 校验，app/AGENTS.md 的“加 HTTP 端点”路由表也未指向 authentication Skill，Agent 首轮 cookie PATCH 即得 403 INVALID_CSRF_ORIGIN 后自行配置 trustedOrigins 并补写文档；709:F2（E33/E34/E35）显示 testing.md 与 app-testing README 的整应用示例只调用 GET、未说明 cookie 写请求需要 Origin 匹配 app.publicOrigin/trustedOrigins 或 APP_PUBLIC_ORIGIN，按指引为写接口写测试会先失败。两者的缺口、受影响指引与修复方向（在路由/测试指引中注明 cookie 写请求的可信 Origin/APP_PUBLIC_ORIGIN）与既有成员一致，故并入。 本次新增 725:F6（E25/E23/E24/E36）在 1.0.0-beta.61 复现同一指引缺口：nocobase-app-development/references/testing.md:52-73 的整应用测试示例只用 signIn 会话断言 GET /orders 的 200/401，未说明 cookie 写请求需要可信 Origin；CSRF 规则仅写在 app-plugin-authentication 的 protecting-routes.md:44 与 user-lifecycle-and-deployment.md:126，agent 未读到，首个写测试 403 INVALID_CSRF_ORIGIN 后才自行补记。触发条件（按测试指引编写写路由测试）、公开缺口（指引未提示 Origin/APP_PUBLIC_ORIGIN）与修复方向（增补说明与最小示例/链接）与既有成员一致。 本次新增 740:F1（E24/E22/E23/E59/E34）在 1.0.0-beta.61 复现同一缺口：references/testing.md 的整应用测试示例只发起 GET，未说明 cookie 认证的写请求需在 createAppTest 的 config.auth 设置 trustedOrigins 并携带匹配 Origin 头；按示例写 POST/PATCH 会得到 403 INVALID_CSRF_ORIGIN（E59），应用只能在测试 harness 里自行配置 auth.trustedOrigins 并补 Origin（E34）。触发条件、受影响指引与修复方向（在 testing.md 注明可信 Origin/trustedOrigins）与既有成员一致，故并入。",
+      "reason": "跨报告合并：460:F3（E50/E54/E55/E12）、490:F2（E19/E22/E23/E44）、492:F1（E16/E27/E28/E29/E49）、541:F2（E15/E18/E37/E41）都显示 checkCookieWriteOrigin 对带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN，而 protecting-routes.md / server-routes.md / testing.md 只讲 401、未提 CSRF，相关说明仅在部署参考；同一指引缺口。",
       "members": [
         "460:36434284393:1:F3",
         "490:36575632059:1:F2",
@@ -1365,7 +1375,7 @@
     },
     {
       "title": "basePath/API 前缀下未命中的 GET 回落到 SPA index.html，缺失接口被伪装成 200",
-      "reason": "跨报告合并。464:F3（E17/E7）与 490:F1（E7/E8/E26）都显示 registerSpaRoutes 以 router.get(`${basePath}/*`) 作兜底，未匹配的 /api/* GET 返回 200 text/html 而非 JSON 404；同一运行时行为与同一修复方向（API 前缀排除 SPA 兜底）。",
+      "reason": "跨报告合并：464:F3（E17/E7）与 490:F1（E7/E8/E26）都显示 registerSpaRoutes 以 router.get(`${basePath}/*`) 作兜底，未匹配的 /api/* GET 返回 200 text/html 而非 JSON 404；同一运行时行为与同一修复方向（API 前缀排除 SPA 兜底）。",
       "members": [
         "464:36470549639:1:F3",
         "490:36575632059:1:F1"
@@ -1373,7 +1383,7 @@
     },
     {
       "title": "写动作（create/update 及自定义 handler）回读需在同一权限声明 read，授权指引未说明",
-      "reason": "跨报告合并。493:F1（E14/E29/E4/E33）与 496:F3（E10/E14）都显示 composeDatabasePolicies 默认 read:false，而 Repository.createOne 插入后以读策略校验并回读，仅授予 create 会抛 READ_FORBIDDEN/500；repository-routes.md/fluent-registration.md/runtime-api.md 只在快捷路由示例中隐式出现 read+update，未把该约束写成规则，同一根因与同一修复方向（指引要求写动作同时授予 read 字段）。597:F2（E21/E22）同样指向该缺口：runtime-api.md 只要求自定义 handler 绑定返回的 conditions.database 策略，repository-routes.md 的 projectData.update([...]) 示例隐式演示 read 与 update 同权限，却未说明写后读回在 read:false 时会抛 READ_FORBIDDEN，应用因此对 start/complete 只声明 update 并被迫以 ticketWritePolicy 手工合并 view 的 read 与动作的 write，与前述成员同属“写后读回需要 read 声明”的指引缺口与同一修复方向。 646:F3（E7/E8/E9/E10/E11/E31/E32）同样证明 composeDatabasePolicies 以 read:false 起底、createOne/updateOne 在写校验后仍需经 rootReadContext 解析读上下文，read===false 时 resolveReadNode 抛 READ_FORBIDDEN，而授权指引的 quoteData 示例都是 read+update 同授、未点明写读耦合，应用补 .read('*') 后才通过；同一根因、同一期望（指引显式要求写动作同时声明 read）与同一修复方向，故并入。 699:F2（E8/E27/E34）在 1.0.0-beta.61 再确认同一缺口：createOne 写入后经 validateSelect/readContext 回读新行，策略 read:false 时 resolveReadNode 抛 READ_FORBIDDEN；repository-routes.md 示例只给 view/edit、未说明 create 需同时授予 read，应用只能在 create 策略追加 .read('*')，与既有成员同一根因（写动作回读依赖 read）与同一修复方向。",
+      "reason": "跨报告合并：493:F1（E14/E29/E4/E33）与 496:F3（E10/E14）都显示 composeDatabasePolicies 默认 read:false，而 Repository.createOne 插入后以读策略校验并回读，仅授予 create 会抛 READ_FORBIDDEN/500；repository-routes.md/fluent-registration.md/runtime-api.md 只在快捷路由示例中隐式出现 read+update，未把该约束写成规则，同一根因与同一修复方向（指引要求写动作同时授予 read 字段）。",
       "members": [
         "493:36641586376:1:F1",
         "496:36641602107:1:F3",
@@ -1384,7 +1394,7 @@
     },
     {
       "title": "Repository 对空 filter 的 INVALID_FILTER 只能在运行期发现，Skill 未对称说明",
-      "reason": "单条保留：460:F4 的 E26/E28 显示 findOne/单条 mutation 对空 filter 抛 INVALID_FILTER，而 Skill 只说明 updateMany/deleteMany，属独立缺口，与组合过滤示例缺失（495:F3）根因不同。 本次新增 741:F2（E6/E8/E19/E25，1.0.0-beta.61）显示 Repository.findMany({ filter: {} }) 在 filterShorthandToAst 中对空对象 shorthand 抛 RepositoryError INVALID_FILTER（Filter shorthand must not be empty，repository.js:947）；nocobase-db SKILL.md L246-258 只说明 filter 接受 builder/JSON AST 且 updateMany/deleteMany 拒绝空作用域，未提示无筛选时不能传空 shorthand，应用只能改为省略 filter 键。与既有成员同属“空 filter 只在运行期被拒绝、指引未对称说明”的缺口与同一修复方向（补充无筛选的正确写法），故合并；与 495:F3 的“缺少组合过滤示例”根因不同。",
+      "reason": "跨报告合并：460:F4 的 E26/E28 显示 findOne/单条 mutation 对空 filter 抛 INVALID_FILTER，而 Skill 只说明 updateMany/deleteMany，属独立缺口，与组合过滤示例缺失（495:F3）根因不同。",
       "members": [
         "460:36434284393:1:F4",
         "741:38810828230:1:F2"
@@ -1392,7 +1402,7 @@
     },
     {
       "title": "nocobase-db Skill 提供 aggregate/groupBy 却缺少按外键合计的最小示例，应用改用 JS reduce 或探查 dist",
-      "reason": "跨报告合并。460:F6（E27/E33/E75）显示 Repository.aggregate/groupBy 已实现且 Skill 方法清单列出，但示例未在“按父记录求金额合计”场景演示，应用只好用 findMany + JS reduce 求和；596:F2（E2/E13/E44）在 1.0.0-beta.55 复现同一缺口：Skill 只列方法名，缺少 aggregate: a => a.sum('amount') 的可复制示例，代理只能读 @nocobase/repository-input / @nocobase/db 的 .d.ts，并因猜错路径 cat 失败。两者触发条件（客户维度金额合计/分组统计）、期望（Skill 直接给出聚合最小示例）、实际（示例缺失需自行推断）与修复方向（在 Repository/Query 章节补充 aggregate+sum/groupBy 示例）一致，属同一指引缺口，故合并。跨版本仅表明同一缺口在两版均存在，不据此认定新版仍有缺陷或旧问题已修复。",
+      "reason": "跨报告合并：460:F6（E27/E33/E75）显示 Repository.aggregate/groupBy 已实现且 Skill 方法清单列出，但示例未在“按父记录求金额合计”场景演示，应用只好用 findMany + JS reduce 求和；596:F2（E2/E13/E44）在 1.0.0-beta.55 复现同一缺口：Skill 只列方法名，缺少 aggregate: a => a.sum('amount') 的可复制示例，代理只能读 @nocobase/repository-input / @nocobase/db 的 .d.ts，并因猜错路径 cat 失败。",
       "members": [
         "460:36434284393:1:F6",
         "596:37453030096:1:F2"
@@ -1400,42 +1410,42 @@
     },
     {
       "title": "dist-only 发布让源码级排障困难",
-      "reason": "单条保留：461:F6 的 E45/E48/E54/E55 关注包不发布源码、sourcemap 无 sourcesContent 的排障成本，与指引未给入口（461:F4）根因不同，单独保留。",
+      "reason": "单独保留：461:F6 的 E45/E48/E54/E55 关注包不发布源码、sourcemap 无 sourcesContent 的排障成本，与指引未给入口（461:F4）根因不同，单独保留。",
       "members": [
         "461:36434293992:1:F6"
       ]
     },
     {
       "title": "condition() 不按字段类型收窄运算符，布尔字段误用 $eq 只在查询期报错",
-      "reason": "单条保留：462:F3 的 E2/E20/E22/E24/E70 显示条件构造不做字段类型收窄，属独立类型/诊断缺口。",
+      "reason": "单独保留：462:F3 的 E2/E20/E22/E24/E70 显示条件构造不做字段类型收窄，属独立类型/诊断缺口。",
       "members": [
         "462:36434301919:1:F3"
       ]
     },
     {
       "title": "FILE_COLUMNS 未从 @nocobase/app-plugin-file/server 公开导出",
-      "reason": "单条保留：463:F3 的 E67/E83 显示文件列契约未导出、应用被迫复制，属独立导出缺口。",
+      "reason": "单独保留：463:F3 的 E67/E83 显示文件列契约未导出、应用被迫复制，属独立导出缺口。",
       "members": [
         "463:36434310207:1:F3"
       ]
     },
     {
       "title": "AI LLM 密钥 .env 占位符仅在 pnpm dev 展开，pnpm start 下变为空串",
-      "reason": "单条保留：464:F4 的 E15 记录 config.yml 占位符在 pnpm start 下不合并 .env 的独立运行时缺陷。",
+      "reason": "单独保留：464:F4 的 E15 记录 config.yml 占位符在 pnpm start 下不合并 .env 的独立运行时缺陷。",
       "members": [
         "464:36470549639:1:F4"
       ]
     },
     {
       "title": "数据工具对未授权/非两段式资源 id 静默跳过，症状指向数据库配置",
-      "reason": "单条保留：464:F5 的 E15 记录数据工具静默跳过裸集合名导致误诊，属独立诊断缺口。",
+      "reason": "单独保留：464:F5 的 E15 记录数据工具静默跳过裸集合名导致误诊，属独立诊断缺口。",
       "members": [
         "464:36470549639:1:F5"
       ]
     },
     {
       "title": "跨包/跨主题端到端路径与示例缺失，接入链条分散",
-      "reason": "跨报告合并。464:F6（E6/E9/E12）显示迁移/接口/授权/页面四段指引各自完整却无统一端到端清单；541:F5（E8/E9/E29/E34）显示 database-and-data、migrations 把细节委派给 nocobase-db SKILL，前端又指向庞大参考集，Agent 需自行拼接阅读路径。两者触发条件（跨库/服务端/授权/前端的完整业务功能）、期望（统一端到端入口）与实际（分片/分层且互相委派、无统一路径）一致，修复方向同为提供端到端最小路径/清单，属同一指引缺口。 579:F1（E35/E36/E41/E23）显示 Repository 路由的关键调用契约（filter/values 输入写在授权 Skill 的 repository-routes.md、cookie 写请求的 CSRF/Origin 写在认证 Skill 的 user-lifecycle-and-deployment.md）未在 app-development 的 server-routes 参考汇总，Agent 需跨读三份 Skill 才能拼出契约；与前述“跨包/跨主题指引分片、缺少统一入口”为同一缺口，故并入本组。",
+      "reason": "跨报告合并：464:F6（E6/E9/E12）显示迁移/接口/授权/页面四段指引各自完整却无统一端到端清单；541:F5（E8/E9/E29/E34）显示 database-and-data、migrations 把细节委派给 nocobase-db SKILL，前端又指向庞大参考集，Agent 需自行拼接阅读路径。两者触发条件（跨库/服务端/授权/前端的完整业务功能）、期望（统一端到端入口）与实际（分片/分层且互相委派、无统一路径）一致，修复方向同为提供端到端最小路径/清单，属同一指引缺口。",
       "members": [
         "464:36470549639:1:F6",
         "541:37156749449:1:F5",
@@ -1444,21 +1454,21 @@
     },
     {
       "title": "Scheduler 指引缺少面向管理员的受控立即执行说明",
-      "reason": "单条保留：466:F4 的 E14/E16/E30 直接证据锁定 operations.md 只建议开发期短 Cron，属文档缺口；与同报告 466:F3 的能力缺口按规则不得合并。",
+      "reason": "单独保留：466:F4 的 E14/E16/E30 直接证据锁定 operations.md 只建议开发期短 Cron，属文档缺口；与同报告 466:F3 的能力缺口按规则不得合并。",
       "members": [
         "466:36473812582:1:F4"
       ]
     },
     {
       "title": "nocobase-db SKILL 的 foreignKey 示例未给出 onDelete 合法小写枚举",
-      "reason": "单条保留：473:F1 的 E2/E4/E10 显示 onDelete 仅接受小写 ReferentialAction，属独立示例缺口。",
+      "reason": "单独保留：473:F1 的 E2/E4/E10 显示 onDelete 仅接受小写 ReferentialAction，属独立示例缺口。",
       "members": [
         "473:36498916248:1:F1"
       ]
     },
     {
       "title": "decimal 列在不同方言下的读取运行时类型未文档化，服务层易按 number 错型",
-      "reason": "跨报告合并。473:F2（E5/E6/E7/E19）显示 @nocobase/db 的解码器把 decimal 一律转字符串、而 @nocobase/db-sqlite 的方言落型不同，文档未提示读出的金额可能是 number 也可能是 string，服务层按 number/unknown 声明会在类型检查与算术处出错。646:F2（E4/E5/E6/E26/E27/E47）在同一 nocobase-db SKILL 上进一步确认 row-decoder 对 decimal 列一律经 decimalString 解码为 string|null、float/double 才转 Number，而 Skill 只列 decimal builder 与 precision/scale、未说明读取 JS 类型，应用按 number 声明导致列表显示破折号并在视图边界用 numberOrZero 归一。两者同属“decimal 读取运行时类型未文档化”的同一指引缺口、同一期望（补类型说明与归一示例），故合并。",
+      "reason": "跨报告合并：473:F2（E5/E6/E7/E19）显示 @nocobase/db 的解码器把 decimal 一律转字符串、而 @nocobase/db-sqlite 的方言落型不同，文档未提示读出的金额可能是 number 也可能是 string，服务层按 number/unknown 声明会在类型检查与算术处出错。",
       "members": [
         "473:36498916248:1:F2",
         "646:37621545718:1:F2"
@@ -1466,14 +1476,14 @@
     },
     {
       "title": "客户端缺少共享的数据加载 hook，应用需自行实现 loading/错误/取消",
-      "reason": "单条保留：473:F6 的 E31/E33/E51 显示 app-client 不提供请求状态 hook，属独立能力缺口。",
+      "reason": "单独保留：473:F6 的 E31/E33/E51 显示 app-client 不提供请求状态 hook，属独立能力缺口。",
       "members": [
         "473:36498916248:1:F6"
       ]
     },
     {
       "title": "db 包 README 宣称 Repository/Select AST 等“当前不可调用”，与已发布导出和 Skill 用法矛盾",
-      "reason": "跨报告合并（含本次新增 616:F6）。474:F2（E23/E24）指出 packages/@nocobase/db/README.zh-CN.md 的“当前边界”称 Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用，并把验证指南链接到不存在的 docs/zh-CN/agent/verification.md；616:F6（E20/E21/E18）在 1.0.0-beta.55 复核同一段“当前边界”，并给出反证——@nocobase/db 包根 dist/src/index.js 已导出 buildRepositoryPolicy/normalizeRepositoryPolicy/narrowRepositoryPolicy，app-server README 也以 defineRepositoryApiRoutes/Repository 策略为推荐用法。两条触发条件（读者据 README 判断可用 API）、期望（文档与已发布导出、Skill 用法一致）与现实（README 断言不可调用且链接失效）一致，修复落点同为更新该 README 的“当前边界”并交叉链接，故并为一组。",
+      "reason": "跨报告合并：474:F2 与 616:F6 均指出 @nocobase/db 的 README.zh-CN.md“当前边界”宣称 Repository/Select AST 等不可调用并链接到不存在的验证文档，而包根已导出 Repository 策略且 Skill 也按该能力说明用法；同一错误文档、同一修复落点。",
       "members": [
         "474:36498921009:1:F2",
         "616:37567947893:1:F6"
@@ -1481,7 +1491,7 @@
     },
     {
       "title": "应用 provider/boot 与主开发指引未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
-      "reason": "跨报告合并。475:F4（E26/E28/E29/E17）显示 services-and-jobs 示例在 provider 的 register/boot 中直接 resolve 由插件提供的可选 token（authorizationToken），未装配插件时 ServiceContainer.resolve 抛 “is not registered”，app-server 逻辑测试在 LibraryProvider.boot 失败；532:F3（E10/E11/E22/E44/E54）显示 AI 员工 Skill 的 server-runs.md 在 boot() 直接 container.resolve(aiManagerToken)，宿主未注册该插件时 token 未绑定，boot 抛错使应用无法启动。两者同为“示例未用 container.has() 守卫可选插件 token”的指引缺口，期望（缺失时跳过注册）与修复方向（先 has 再 resolve）一致。 570:F2（E17/E18/E6）显示主开发指引 server-routes.md/services-and-jobs.md 未提及守卫，应用在 routes 与 provider 直接 resolve(authorizationToken) 时在未注册插件的嵌入式组合下抛 “Service ... is not registered”，只能自行加 container.has 守卫才通过；与前述成员同一指引缺口、同一触发条件（未装配可选插件）和同一修复方向（先 has 再 resolve，缺失时跳过或降级）。",
+      "reason": "跨报告合并：475:F4（E26/E28/E29/E17）显示 services-and-jobs 示例在 provider 的 register/boot 中直接 resolve 由插件提供的可选 token（authorizationToken），未装配插件时 ServiceContainer.resolve 抛 “is not registered”，app-server 逻辑测试在 LibraryProvider.boot 失败；532:F3（E10/E11/E22/E44/E54）显示 AI 员工 Skill 的 server-runs.md 在 boot() 直接 container.resolve(aiManagerToken)，宿主未注册该插件时 token 未绑定，boot 抛错使应用无法启动。",
       "members": [
         "475:36498925234:1:F4",
         "532:37074018017:1:F3",
@@ -1490,7 +1500,7 @@
     },
     {
       "title": "认证 Skill 未在账号创建路径复述用户名 3–30 长度约束，创建期无校验提示",
-      "reason": "跨报告合并。475:F5（E23/E24/E25）显示种子直接 INSERT user/account 绕过 Better Auth 校验，2 字符用户名到登录才以 422 USERNAME_TOO_SHORT 暴露，创建阶段无提示；647:F4（E13/E15/E16/E55）显示 authentication SKILL 的 3–30 用户名长度规则只写在 initialAdmin 段，user-lifecycle 的 create/update 方法表只写“归一化为小写”、未复述约束，用 2 字符用户名（如 hr）调用 userAdministrationService.create 时 Better Auth 抛 Username is too short。两者同属“用户名校验规则未在账号创建处说明”的同一指引缺口，修复方向一致（在创建路径复述/前置校验长度），故合并。",
+      "reason": "跨报告合并：475:F5（E23/E24/E25）显示种子直接 INSERT user/account 绕过 Better Auth 校验，2 字符用户名到登录才以 422 USERNAME_TOO_SHORT 暴露，创建阶段无提示；647:F4（E13/E15/E16/E55）显示 authentication SKILL 的 3–30 用户名长度规则只写在 initialAdmin 段，user-lifecycle 的 create/update 方法表只写“归一化为小写”、未复述约束，用 2 字符用户名（如 hr）调用 userAdministrationService.create 时 Better Auth 抛 Username is too short。",
       "members": [
         "475:36498925234:1:F5",
         "647:37621553234:1:F4"
@@ -1498,77 +1508,77 @@
     },
     {
       "title": "授权 scope 与默认连接 Repository 的集合命名口径不一致，以不透明 500 暴露",
-      "reason": "单条保留：477:F1 的 E57/E58/E61/E60/E72 显示限定名与逻辑名不一致导致 INVALID_FILTER/500，属运行时能力缺口；与同报告 477:F3 的文档缺口按规则不得合并。",
+      "reason": "单独保留：477:F1 的 E57/E58/E61/E60/E72 显示限定名与逻辑名不一致导致 INVALID_FILTER/500，属运行时能力缺口；与同报告 477:F3 的文档缺口按规则不得合并。",
       "members": [
         "477:36498932902:1:F1"
       ]
     },
     {
       "title": "授权指引未显式约束 scope 集合名与 Repository 逻辑名一致",
-      "reason": "单条保留：477:F3 的 E62/E63/E57 显示指引缺少集合命名一致性约束，属独立文档缺口。",
+      "reason": "单独保留：477:F3 的 E62/E63/E57 显示指引缺少集合命名一致性约束，属独立文档缺口。",
       "members": [
         "477:36498932902:1:F3"
       ]
     },
     {
       "title": "AI 知识库插件客户端在应用挂载路径下请求错误 API 基址，Settings 页 404",
-      "reason": "单条保留：478:F1 的 E5/E1/E7 显示插件客户端绑定错误基址导致 404，属运行时缺陷；与同报告 478:F2 的指引缺口按规则不得合并。",
+      "reason": "单独保留：478:F1 的 E5/E1/E7 显示插件客户端绑定错误基址导致 404，属运行时缺陷；与同报告 478:F2 的指引缺口按规则不得合并。",
       "members": [
         "478:36522310216:1:F1"
       ]
     },
     {
       "title": "AI 知识库指引的 /v2/api 基址示例在非根挂载下会误导",
-      "reason": "单条保留：478:F2 的 E3/E4/E7 显示指引未说明运行时基址解析，属独立文档缺口。",
+      "reason": "单独保留：478:F2 的 E3/E4/E7 显示指引未说明运行时基址解析，属独立文档缺口。",
       "members": [
         "478:36522310216:1:F2"
       ]
     },
     {
       "title": "内置 recordsIOwn 的文档暗示可用 params.field 适配任意归属列，实际要求列名恰为 ownerId",
-      "reason": "单条保留：493:F2 的 E10/E13/E28/E34 显示 requiredFields 固定 ownerId，属独立文档与实现不一致缺口。",
+      "reason": "单独保留：493:F2 的 E10/E13/E28/E34 显示 requiredFields 固定 ownerId，属独立文档与实现不一致缺口。",
       "members": [
         "493:36641586376:1:F2"
       ]
     },
     {
       "title": "create 回读权限不足时缺少指向性指引与诊断",
-      "reason": "单条保留：493:F4 的 E11/E14/E29/E43 显示 READ_FORBIDDEN 缺修复提示，属独立诊断缺口，与 493:F1 的根因说明不同。",
+      "reason": "单独保留：493:F4 的 E11/E14/E29/E43 显示 READ_FORBIDDEN 缺修复提示，属独立诊断缺口，与 493:F1 的根因说明不同。",
       "members": [
         "493:36641586376:1:F4"
       ]
     },
     {
       "title": "AppRouterFactory 返回未参数化 Hono，类型化环境无法在贡献边界声明",
-      "reason": "单条保留：495:F2 的 E64/E69/E82 显示工厂返回类型为 BlankEnv，属独立类型能力缺口。",
+      "reason": "单独保留：495:F2 的 E64/E69/E82 显示工厂返回类型为 BlankEnv，属独立类型能力缺口。",
       "members": [
         "495:36641597342:1:F2"
       ]
     },
     {
       "title": "nocobase-db Skill 说明了 filter 契约但缺少组合过滤示例",
-      "reason": "单条保留：495:F3 的 E71/E77/E82 显示缺少 and/or/in 组合示例导致 TS2769，属独立示例缺口。",
+      "reason": "单独保留：495:F3 的 E71/E77/E82 显示缺少 and/or/in 组合示例导致 TS2769，属独立示例缺口。",
       "members": [
         "495:36641597342:1:F3"
       ]
     },
     {
       "title": "认证 Skill 的路由示例无法通过类型检查",
-      "reason": "单条保留：495:F6 的 E68/E64/E69 显示认证 Skill 直接返回 typed Hono 与另一参考矛盾，属独立错误指引；与同报告 495:F2 按规则不得合并。",
+      "reason": "单独保留：495:F6 的 E68/E64/E69 显示认证 Skill 直接返回 typed Hono 与另一参考矛盾，属独立错误指引；与同报告 495:F2 按规则不得合并。",
       "members": [
         "495:36641597342:1:F6"
       ]
     },
     {
       "title": "授权 Skill 示例使用顶层 router.use('*') 与泄漏警告冲突并污染其他 API 路由",
-      "reason": "单条保留：496:F2 的 E10/E22/E54/E12 显示通配中间件作用于整个 /api 前缀，属独立错误指引。",
+      "reason": "单独保留：496:F2 的 E10/E22/E54/E12 显示通配中间件作用于整个 /api 前缀，属独立错误指引。",
       "members": [
         "496:36641602107:1:F2"
       ]
     },
     {
       "title": "数据库 Skill 迁移示例声明非空 createdAt，却未说明 Repository 不自动填时间戳且 createOne 示例省略该字段",
-      "reason": "跨报告合并。496:F4（E17/E18/E16/E14）显示 nocobase-db SKILL 迁移示例 collection.datetime('createdAt', { nullable: false }) 无默认值，同一 Skill 的 createOne 示例只写 name/owner，普通 repository 写入不自动补时间戳，照抄得到 NOT NULL constraint failed；647:F3（E1/E2/E3/E4/E24/E27）进一步显示 Repository 策略只把 defaultValue/db.generated/autoIncrement/optimisticLock 视为可自动取值来源、没有 createdAt/updatedAt 自动注入分支，迁移示例与 Repository 章节均未提示写入方须自带时间戳，应用只能用 createStamp/updateStamp 绕行。两者同一示例缺口与同一修复方向（在迁移/Repository 章节说明并给出统一 stamp helper），故合并。",
+      "reason": "跨报告合并：496:F4（E17/E18/E16/E14）显示 nocobase-db SKILL 迁移示例 collection.datetime('createdAt', { nullable: false }) 无默认值，同一 Skill 的 createOne 示例只写 name/owner，普通 repository 写入不自动补时间戳，照抄得到 NOT NULL constraint failed；647:F3（E1/E2/E3/E4/E24/E27）进一步显示 Repository 策略只把 defaultValue/db.generated/autoIncrement/optimisticLock 视为可自动取值来源、没有 createdAt/updatedAt 自动注入分支，迁移示例与 Repository 章节均未提示写入方须自带时间戳，应用只能用 createStamp/updateStamp 绕行。",
       "members": [
         "496:36641602107:1:F4",
         "647:37621553234:1:F3"
@@ -1576,28 +1586,28 @@
     },
     {
       "title": "nocobase-db Skill 的 Builder 示例未演示 belongsTo，导致关系元数据缺失",
-      "reason": "单条保留：504:F4 的 E4/E17/E18/E32 显示只建外键缺关系元数据，属独立示例完整度缺口。",
+      "reason": "单独保留：504:F4 的 E4/E17/E18/E32 显示只建外键缺关系元数据，属独立示例完整度缺口。",
       "members": [
         "504:36787382191:1:F4"
       ]
     },
     {
       "title": "文档称 OOXML 失败会显示错误，但 Worker 静默挂起不触发该回退",
-      "reason": "单条保留：507:F4 的 E5/E1/E11 显示文档契约只覆盖抛错型失败，属独立错误说明缺口；与 OOXML 超时能力缺口根因不同。",
+      "reason": "单独保留：507:F4 的 E5/E1/E11 显示文档契约只覆盖抛错型失败，属独立错误说明缺口；与 OOXML 超时能力缺口根因不同。",
       "members": [
         "507:36787396720:1:F4"
       ]
     },
     {
       "title": "技能可强化“上传路由由 defineFileRepositoryApiRoutes 暴露”的正面表述以避免误判",
-      "reason": "单条保留：507:F5 的 E10/E48/E6 显示应用误判插件无上传路由并重复实现，属独立正面表述缺口。",
+      "reason": "单独保留：507:F5 的 E10/E48/E6 显示应用误判插件无上传路由并重复实现，属独立正面表述缺口。",
       "members": [
         "507:36787396720:1:F5"
       ]
     },
     {
       "title": "AI 知识库兼容路由仅要求认证并缺少角色/资源 ACL 授权",
-      "reason": "跨报告合并。509:F2（E17/E26）显示 security.md 明确兼容路由只要求已认证会话，不强制角色、归属、资源 ACL 或管理权限，需应用自建授权代理；533:F3（E9/E10）进一步给出代码证据：router.js 仅挂 requireAuthentication，security.md 同样承认不强制角色/所有权/资源 ACL。两者触发条件（已认证但无管理权限的账号访问知识库路由）、期望（服务端按角色/资源策略拒绝）与实际（只要登录即可读写）一致，修复方向同为提供可组合的服务端授权策略或把授权代理列为必做。",
+      "reason": "跨报告合并：509:F2（E17/E26）显示 security.md 明确兼容路由只要求已认证会话，不强制角色、归属、资源 ACL 或管理权限，需应用自建授权代理；533:F3（E9/E10）进一步给出代码证据：router.js 仅挂 requireAuthentication，security.md 同样承认不强制角色/所有权/资源 ACL。两者触发条件（已认证但无管理权限的账号访问知识库路由）、期望（服务端按角色/资源策略拒绝）与实际（只要登录即可读写）一致，修复方向同为提供可组合的服务端授权策略或把授权代理列为必做。",
       "members": [
         "509:36811890057:1:F2",
         "533:37094050741:1:F3"
@@ -1605,14 +1615,14 @@
     },
     {
       "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
-      "reason": "单条保留：519:F3 的 E9/E22/E19/E16 显示两份 Skill 指令不可同时满足，属独立文档冲突；与同报告 519:F4 按规则不得合并。",
+      "reason": "单独保留：519:F3 的 E9/E22/E19/E16 显示两份 Skill 指令不可同时满足，属独立文档冲突；与同报告 519:F4 按规则不得合并。",
       "members": [
         "519:36938138067:1:F3"
       ]
     },
     {
       "title": "指引未说明逻辑名与物理表/列名的映射，Agent 绕过框架用原始 SQL 驱动并以逻辑名查询失败",
-      "reason": "跨报告合并。528:F5（E6/E44）、630:F7（E26/E77）与 700:F3（E29/E33/E15）指向同一缺口：nocobase-db 指引只零散说明逻辑名到物理名由 underscored/tablePrefix 决定，却没有给出受支持的只读 schema/表结构探查路径，也没有把这一映射与原生 SQL 的列名规则讲清；实现 Agent 因此绕过框架，用 better-sqlite3/sqlite3 直接对已迁移库执行 SQL 并沿用逻辑集合/字段名，分别得到 no such column: customerId（528）、no such table: meetingRooms（630）、no such column: dueAt（700，逻辑 dueAt 的物理列为 due_at）。触发条件（框架外原始 SQL 引用逻辑名/核对实际结构）、实际行为（物理名不匹配报错）与修复方向（指引明确物理命名规则并给出框架内省/只读结构检查的推荐途径）一致，故合并。",
+      "reason": "跨报告合并：528:F5（E6/E44）、630:F7（E26/E77）与 700:F3（E29/E33/E15）指向同一缺口：nocobase-db 指引只零散说明逻辑名到物理名由 underscored/tablePrefix 决定，却没有给出受支持的只读 schema/表结构探查路径，也没有把这一映射与原生 SQL 的列名规则讲清；实现 Agent 因此绕过框架，用 better-sqlite3/sqlite3 直接对已迁移库执行 SQL 并沿用逻辑集合/字段名，分别得到 no such column: customerId（528）、no such table: meetingRooms（630）、no such column: dueAt（700，逻辑 dueAt 的物理列为 due_at）。",
       "members": [
         "528:37073999569:1:F5",
         "630:37590168713:1:F7",
@@ -1621,7 +1631,7 @@
     },
     {
       "title": "文件 Skill 未命名 defineHttpMiddleware/addHttpMiddleware，保护 <accessPath>/* 内容路径缺少可执行机制",
-      "reason": "跨报告合并。531:F3（E40/E44/E43）与 689:F2（E7/E1/E16/E17/E10/E11/E12/E13/E30/E31）指向同一指引缺口：file 插件 Skill 要求应用在每个贡献自有路径上注册认证/授权并禁止 use('*')，却未点名 @nocobase/app-server 公开的 defineHttpMiddleware + addHttpMiddleware，也未说明插件路由由 addServerPlugins 先于应用路由挂载、应用 router 无法包住它；两者触发条件（保护 <accessPath>/* 或插件公开路径）与修复方向（在 file Skill 与 server-routes.md 写明该公共钩子与挂载顺序）一致。与 519:F3 的“指引互相冲突”属错误说明、519:F4 属能力缺口不同，故分别保留。",
+      "reason": "跨报告合并：531:F3（E40/E44/E43）与 689:F2（E7/E1/E16/E17/E10/E11/E12/E13/E30/E31）指向同一指引缺口：file 插件 Skill 要求应用在每个贡献自有路径上注册认证/授权并禁止 use('*')，却未点名 @nocobase/app-server 公开的 defineHttpMiddleware + addHttpMiddleware，也未说明插件路由由 addServerPlugins 先于应用路由挂载、应用 router 无法包住它；两者触发条件（保护 <accessPath>/* 或插件公开路径）与修复方向（在 file Skill 与 server-routes.md 写明该公共钩子与挂载顺序）一致。",
       "members": [
         "531:37074013613:1:F3",
         "689:38089377827:1:F2"
@@ -1629,35 +1639,35 @@
     },
     {
       "title": "权限集标题解码对非 JSON 字符串无保护，可令应用启动崩溃",
-      "reason": "单条保留：532:F1（E1/E2/E3/E4/E49）显示 decodeAuthorizationTitle 对任意字符串先 JSON.parse，permissionSetFromRow 直接调用，AuthorizationProvider.start 经 storedGrantProblems 无条件遍历，裸 title 行会以 SyntaxError 中止整个启动；这是权限集标题解码的运行时缺陷，与其它文档/CSRF/路由指引缺口无共同根因，单独保留。",
+      "reason": "单独保留：532:F1（E1/E2/E3/E4/E49）显示 decodeAuthorizationTitle 对任意字符串先 JSON.parse，permissionSetFromRow 直接调用，AuthorizationProvider.start 经 storedGrantProblems 无条件遍历，裸 title 行会以 SyntaxError 中止整个启动；这是权限集标题解码的运行时缺陷，与其它文档/CSRF/路由指引缺口无共同根因，单独保留。",
       "members": [
         "532:37074018017:1:F1"
       ]
     },
     {
       "title": "server-routes 的 use(path) 鉴权示例未说明只覆盖精确路径，参数化/兄弟子路径漏保护",
-      "reason": "单条保留：532:F2（E14/E15/E23/E51/E52）显示 server-routes.md 的 “An authenticated endpoint” 示例以 router.use('/orders', auth.required()) 表达资源受保护，但 Hono use(path) 只匹配精确路径，/documents/:id 未被覆盖，应用须改为逐路由挂中间件；这是示例对 use(path) 作用域说明不足的独立缺口，与 496:F2 的顶层 use('*') 越界泄漏、CSRF 指引缺失等虽同涉路由鉴权但根因与症状不同，单独保留。",
+      "reason": "单独保留：532:F2（E14/E15/E23/E51/E52）显示 server-routes.md 的 “An authenticated endpoint” 示例以 router.use('/orders', auth.required()) 表达资源受保护，但 Hono use(path) 只匹配精确路径，/documents/:id 未被覆盖，应用须改为逐路由挂中间件；这是示例对 use(path) 作用域说明不足的独立缺口，与 496:F2 的顶层 use('*') 越界泄漏、CSRF 指引缺失等虽同涉路由鉴权但根因与症状不同，单独保留。",
       "members": [
         "532:37074018017:1:F2"
       ]
     },
     {
       "title": "SQLite 将 JS Date 绑定为 epoch 毫秒，与 datetime 文本比较静默失配",
-      "reason": "单条保留：533:F2（E6/E16）显示 db-sqlite 精确整数客户端把 Date 绑定为 value.valueOf() 的 epoch 毫秒，与库中以 ISO 文本存储的 datetime 列比较时条件恒不成立且不报错，导致超期提醒静默失效；这是 SQLite 绑定层时间归一化的独立运行时缺陷，与 decimal 类型、createdAt 未自动填充、权限/路由/预览等其它缺口无共同根因，单独保留。",
+      "reason": "单独保留：533:F2（E6/E16）显示 db-sqlite 精确整数客户端把 Date 绑定为 value.valueOf() 的 epoch 毫秒，与库中以 ISO 文本存储的 datetime 列比较时条件恒不成立且不报错，导致超期提醒静默失效；这是 SQLite 绑定层时间归一化的独立运行时缺陷，与 decimal 类型、createdAt 未自动填充、权限/路由/预览等其它缺口无共同根因，单独保留。",
       "members": [
         "533:37094050741:1:F2"
       ]
     },
     {
       "title": "AI 员工聊天界面安装步骤未内联，应用未安装聊天扩展",
-      "reason": "单条保留：533:F5（E11/E12）显示聊天前端由 registry 项 nocobase-ai 提供、安装步骤只写在 references/chat-surfaces.md，而 SKILL.md 未内联这一必做步骤，Agent 只读 SKILL.md 便漏装，最终只有状态页；属独立指引缺口，与 AI 员工 .env 占位符/数据工具（464:F4/F5）、可选依赖守卫（532:F3）根因不同，单独保留。",
+      "reason": "单独保留：533:F5（E11/E12）显示聊天前端由 registry 项 nocobase-ai 提供、安装步骤只写在 references/chat-surfaces.md，而 SKILL.md 未内联这一必做步骤，Agent 只读 SKILL.md 便漏装，最终只有状态页；属独立指引缺口，与 AI 员工 .env 占位符/数据工具（464:F4/F5）、可选依赖守卫（532:F3）根因不同，单独保留。",
       "members": [
         "533:37094050741:1:F5"
       ]
     },
     {
       "title": "文件内容字节路由默认公开且缺少受支持的受保护/主体感知接入点，应用被迫逐路径自挂鉴权或重写字节路由",
-      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）、543:F2（E3/E4/E16/E22）、649:F5（E54/E55/E56/E57）均记录 app-plugin-file 的 content 字节路由固定绑定公开的 unwritablePolicy、刻意绕过 exposure Policy，框架没有一等的主体感知/逐记录鉴权或内容读取入口；应用只能在贡献前自挂顺序敏感守卫，或重写整套字节路由（重复 UUID 校验、ownerId 过滤、安全头与流式逻辑）。545:F4（E28/E30/E32）与 664:F1（E1/E2/E13）在同一 routes.js 注释与类型上复现：内容路由默认 public、认证授权归应用所有，FileRepositoryApiExposure/DefineFileRepositoryApiRoutesOptions 没有 restricted/属主/鉴权钩子，应用必须逐 accessPath 补挂 authentication.required()+授权，遗漏即按 UUID 公开可读。五条的触发条件（用内容路由提供受业务规则约束的/私有附件）、受影响 API（defineFileRepositoryApiRoutes、ServerFileRepository、FileRepositoryApiExposure）与修复方向（提供可选的受限/主体感知内容鉴权入口，默认仍 public 以兼容）一致，故合并；文档未给出可执行机制（531:F3）属另一缺口，单列。 本次新增 681:F8（E1/E2/E3/E30/E31）在 1.0.0-beta.55 复现同一缺口：defineFileRepositoryApiRoutes 注释明确 accessPath 下的 content 字节路由为 public、认证授权由应用负责，应用须在 <accessPath>/* 自行安装 auth.required()，重复手工包裹是常见易漏点，与既有成员同一公开缺口与修复方向（提供声明式/可复用的受保护接入点）。",
+      "reason": "跨报告合并：519:F4（E5/E7/E19/E20/E24）、543:F2（E3/E4/E16/E22）、649:F5（E54/E55/E56/E57）均记录 app-plugin-file 的 content 字节路由固定绑定公开的 unwritablePolicy、刻意绕过 exposure Policy，框架没有一等的主体感知/逐记录鉴权或内容读取入口；应用只能在贡献前自挂顺序敏感守卫，或重写整套字节路由（重复 UUID 校验、ownerId 过滤、安全头与流式逻辑）。",
       "members": [
         "519:36938138067:1:F4",
         "543:37156754926:1:F2",
@@ -1669,21 +1679,21 @@
     },
     {
       "title": "nocobase-db Skill 未说明 uuid 主键无数据库默认值时须由调用方提供 id",
-      "reason": "单条保留：543:F5（E10/E18/E20/E24）显示 collection.uuid(\"id\").primary() 未声明数据库默认值时，createdRecordSelector 只为 autoIncrement/increments 回填生成的 id，createOne 省略 id 会抛 INVALID_UNIQUE_SELECTOR，应用只能每次显式 randomUUID()；Skill 的边界清单仅提醒不要假设 id 存在，属独立指引缺口，与 createdAt 未自动填充、用户名长度、decimal 类型等其它文档问题根因不同，单独保留。",
+      "reason": "单独保留：543:F5（E10/E18/E20/E24）显示 collection.uuid(\"id\").primary() 未声明数据库默认值时，createdRecordSelector 只为 autoIncrement/increments 回填生成的 id，createOne 省略 id 会抛 INVALID_UNIQUE_SELECTOR，应用只能每次显式 randomUUID()；Skill 的边界清单仅提醒不要假设 id 存在，属独立指引缺口，与 createdAt 未自动填充、用户名长度、decimal 类型等其它文档问题根因不同，单独保留。",
       "members": [
         "543:37156754926:1:F5"
       ]
     },
     {
       "title": "QueryAdapter 条件方法返回新对象，但 nocobase-db Skill 未说明不可变语义",
-      "reason": "单条保留：541:F1（E1/E2/E6/E41）显示 adapter.js 的 where()/whereRef() 等条件方法均 return this.clone(...)，是不可变 API；Skill 第 4 节只列出与 Knex 的差异（无两参数 where、无 orWhere）却未提该语义，丢弃返回值会静默丢失条件。其余查询类发现（空 filter、组合过滤示例、运算符收窄）根因不同，无同根因成员可并。",
+      "reason": "单独保留：541:F1（E1/E2/E6/E41）显示 adapter.js 的 where()/whereRef() 等条件方法均 return this.clone(...)，是不可变 API；Skill 第 4 节只列出与 Knex 的差异（无两参数 where、无 orWhere）却未提该语义，丢弃返回值会静默丢失条件。其余查询类发现（空 filter、组合过滤示例、运算符收窄）根因不同，无同根因成员可并。",
       "members": [
         "541:37156749449:1:F1"
       ]
     },
     {
       "title": "任务加载器的相对扩展名重写对 file:// 失效，源码态不解析 .js→.ts 且错误不可操作",
-      "reason": "跨报告合并。544:F5（E7/E8/E21）显示 @nocobase/db 的 task-loader 允许 .ts 任务文件并以原生 import 加载，但 __rewriteRelativeImportExtension 只处理以 ./ 或 ../ 开头的字符串、对 file:/// URL 不生效，源码态下不解析 .js→.ts，失败仅抛原生 ERR_MODULE_NOT_FOUND，缺少项目特定提示（capability-gap、suspected）。597:F3（E1）从同一函数给出确认证据：importTaskDefinition 传入 pathToFileURL(filePath).href（file:// 绝对 URL），该重写正则永不匹配、函数恒等返回成为死代码，故 TS 任务源的扩展名解析实际交给 Node；两份证据引用同一段代码（sha256 4f27b0cc…），属同一根因（file:// URL 下相对扩展名重写失效），修复方向一致（对 file:// 也做替换并为 loader 提供可操作错误/解析），故合并。",
+      "reason": "跨报告合并：544:F5（E7/E8/E21）显示 @nocobase/db 的 task-loader 允许 .ts 任务文件并以原生 import 加载，但 __rewriteRelativeImportExtension 只处理以 ./ 或 ../ 开头的字符串、对 file:/// URL 不生效，源码态下不解析 .js→.ts，失败仅抛原生 ERR_MODULE_NOT_FOUND，缺少项目特定提示（capability-gap、suspected）。",
       "members": [
         "544:37156757587:1:F5",
         "597:37453035816:1:F3"
@@ -1691,105 +1701,105 @@
     },
     {
       "title": "nocobase-db Skill 未说明 datetime 字段拒绝 date-only 字符串输入",
-      "reason": "单条保留：545:F2（E8/E10/E11）显示 normalizeTemporalValue 对 datetime 字段的裸 YYYY-MM-DD 抛 RepositoryError(INVALID_MUTATION)，要求 V1 时间值且至多毫秒精度，而 nocobase-db SKILL.md 未提示该输入边界，应用只能自写 normalizeTemporal 做归一。该缺口属时间字段值格式的独立文档问题，与 decimal 方言返回类型未文档化（473:F2）、SQLite 将 Date 绑定为 epoch 毫秒（533:F2）、uuid 主键需调用方提供 id（543:F5）等根因不同，无可合并成员，故单独保留。",
+      "reason": "单独保留：545:F2（E8/E10/E11）显示 normalizeTemporalValue 对 datetime 字段的裸 YYYY-MM-DD 抛 RepositoryError(INVALID_MUTATION)，要求 V1 时间值且至多毫秒精度，而 nocobase-db SKILL.md 未提示该输入边界，应用只能自写 normalizeTemporal 做归一。",
       "members": [
         "545:37172547326:1:F2"
       ]
     },
     {
       "title": "无权限模型应用的最小授权做法在指引中缺失且口径不一致",
-      "reason": "单独保留。552:F4（E28/E29/E35/E38）显示 authorization.md 把首个页面的 authz 取值之一 skip 列为可选，而 app-plugin-authorization 的 client-development.md 又要求业务页 never skip；对“明确不使用授权插件、无多级权限区分”的应用，两份指引缺少一致的最小端点/页面声明口径。其余发现均不涉及 authz 的 skip 取值或最小授权接入，证据不足以并入任何既有组，故单独保留。",
+      "reason": "单独保留：552:F4（E28/E29/E35/E38）显示 authorization.md 把首个页面的 authz 取值之一 skip 列为可选，而 app-plugin-authorization 的 client-development.md 又要求业务页 never skip；对“明确不使用授权插件、无多级权限区分”的应用，两份指引缺少一致的最小端点/页面声明口径。",
       "members": [
         "552:37238845336:1:F4"
       ]
     },
     {
       "title": "DatabaseManager 与 DatabaseConnection 的 repository 签名不一致，正常装配触发类型冲突",
-      "reason": "单条保留：555:F1（E13/E14/E61）显示 @nocobase/db 的 DatabaseManager.repository(collection, connection?) 与 DatabaseConnection.repository(collection) 同名不同参，Manager 还缺少 name/driver/dialect 等属性，把 Manager 传给期望 Connection 的 helper 在 verify-2 触发 TS2345；这是类型签名不一致的独立可用性缺口，与 AppRouterFactory 未参数化 Hono（495:F2）、dist 布局/入口等其它类型或指引问题根因不同，证据不足以并入任何既有组，故单独保留。",
+      "reason": "单独保留：555:F1（E13/E14/E61）显示 @nocobase/db 的 DatabaseManager.repository(collection, connection?) 与 DatabaseConnection.repository(collection) 同名不同参，Manager 还缺少 name/driver/dialect 等属性，把 Manager 传给期望 Connection 的 helper 在 verify-2 触发 TS2345；这是类型签名不一致的独立可用性缺口，与 AppRouterFactory 未参数化 Hono（495:F2）、dist 布局/入口等其它类型或指引问题根因不同，证据不足以并入任何既有组，故单独保留。",
       "members": [
         "555:37238852759:1:F1"
       ]
     },
     {
       "title": "知识库检索不是权限边界，需应用自建授权代理但缺少可直接复用的实现示例",
-      "reason": "单条保留：556:F4（E56/E42/E54）显示 AI 知识库 security.md 已如实披露兼容路由只要求认证、不强制角色/所有权/资源 ACL，且检索实现（knowledge-base-feature.js 的 search）仅按 knowledgeBaseKeys+enabled 过滤、不接收调用者身份，capabilities.md 也强调模型参数与 UI affordance 都不是授权；文档已说明边界并要求应用自建授权代理，但未给出可直接复用的“检索前按记录范围过滤/加代理”示例。这属缺实现示例的指引缺口，与既有能力缺口组（509:F2+533:F3，要求插件内建服务端授权/ACL 与写策略）在期望（补一份可抄的检索前代理示例 vs 服务端强制拒绝）与修复方向（补文档示例 vs 加运行时策略钩子）上不同，且与同报告其它发现无关，故单独保留。",
+      "reason": "单独保留：556:F4（E56/E42/E54）显示 AI 知识库 security.md 已如实披露兼容路由只要求认证、不强制角色/所有权/资源 ACL，且检索实现（knowledge-base-feature.js 的 search）仅按 knowledgeBaseKeys+enabled 过滤、不接收调用者身份，capabilities.md 也强调模型参数与 UI affordance 都不是授权；文档已说明边界并要求应用自建授权代理，但未给出可直接复用的“检索前按记录范围过滤/加代理”示例。",
       "members": [
         "556:37238854983:1:F4"
       ]
     },
     {
       "title": "withPolicy 绑定运行时 policyFor 结果时丢失记录字段类型，应用被迫双重断言",
-      "reason": "570:F3（E4/E10/E19）显示 authz.database.policyFor 返回通用 RepositoryPolicy，repository.withPolicy 经 PolicyRecord<TRecord,TPolicy> 无法保留集合字面量字段类型，应用只能在 bindPolicy 中用 as unknown as RepositoryOperations<TicketRow> 恢复类型。触发条件（把运行时策略交给 withPolicy）、期望（绑定后仍保留记录字段类型）与实际（字段退化为可选/通用类型）均与既有分组不同，属独立的框架类型可用性缺口，故单独保留。",
+      "reason": "单独保留：570:F3（E4/E10/E19）显示 authz.database.policyFor 返回通用 RepositoryPolicy，repository.withPolicy 经 PolicyRecord<TRecord,TPolicy> 无法保留集合字面量字段类型，应用只能在 bindPolicy 中用 as unknown as RepositoryOperations<TicketRow> 恢复类型。",
       "members": [
         "570:37332578227:1:F3"
       ]
     },
     {
       "title": "FileUploadField 的 repository prop 要求完整 ClientFileRepository，组件实际只调用 uploadOne/deleteOne",
-      "reason": "单条保留：578:F3（E4/E5/E6/E9）显示 registry/component-ui/types.ts 把 FileUploadFieldProps.repository 声明为完整 ClientFileRepository（RemoteRepository<FileRecord> & {uploadOne,uploadMany}），而 file-upload-field.tsx 实际只调用 repository.uploadOne，removeOnDelete 时才调用 deleteOne；SKILL 允许应用为 FileUploadField 提供自有上传端点，但此时应用只能以部分对象 as unknown as 断言为 ClientFileRepository。触发条件（传入只实现 uploadOne/deleteOne 的应用自有仓库）、期望（props 只要求组件实际调用的方法）与实际（要求完整契约、需强制断言）不一致，属独立的组件类型契约缺口，与文件列契约未导出（463:F3）、受保护内容读取入口缺失（519:F4/543:F2）、上传路由正面表述（507:F5）等根因不同，故单独保留。",
+      "reason": "单独保留：578:F3（E4/E5/E6/E9）显示 registry/component-ui/types.ts 把 FileUploadFieldProps.repository 声明为完整 ClientFileRepository（RemoteRepository<FileRecord> & {uploadOne,uploadMany}），而 file-upload-field.tsx 实际只调用 repository.uploadOne，removeOnDelete 时才调用 deleteOne；SKILL 允许应用为 FileUploadField 提供自有上传端点，但此时应用只能以部分对象 as unknown as 断言为 ClientFileRepository。",
       "members": [
         "578:37394457519:1:F3"
       ]
     },
     {
       "title": "开发服务器启动前置条件缺少快速默认值",
-      "reason": "单条保留：579:F6（E47）的 retro 记录显示空模板直接运行 pnpm dev 会因缺少 config.yml 或 AUTH_SECRET 而退出，而数据库迁移/种子却可在无该配置下运行；期望给出缺配置时的明确指引或开发默认值，实际以“未配置”错误退出，应用只能手工设 AUTH_SECRET/APP_SERVER_PORT 绕行。这是开发服务器启动前置条件的独立开发体验/指引缺口，与 .env 占位符展开（464:F4）、可选依赖 token 守卫（475:F4 等）、种子账号创建等根因均不同，故单独保留。",
+      "reason": "单独保留：579:F6（E47）的 retro 记录显示空模板直接运行 pnpm dev 会因缺少 config.yml 或 AUTH_SECRET 而退出，而数据库迁移/种子却可在无该配置下运行；期望给出缺配置时的明确指引或开发默认值，实际以“未配置”错误退出，应用只能手工设 AUTH_SECRET/APP_SERVER_PORT 绕行。这是开发服务器启动前置条件的独立开发体验/指引缺口，与 .env 占位符展开（464:F4）、可选依赖 token 守卫（475:F4 等）、种子账号创建等根因均不同，故单独保留。",
       "members": [
         "579:37394462061:1:F6"
       ]
     },
     {
       "title": "@nocobase/db 的 check 约束在 knex/sqlite 上被静默忽略，声明成功却无 DDL",
-      "reason": "单条保留：575:F1（E1/E2/E3/E19/E29）显示公共类型与 addConstraint 接受 type=check，但 knex 适配器 buildConstraint 的 check 分支只留注释后 break，既不生成 DDL 也不报错，而 dropConstraint 却能 dropChecks；应用迁移注释只能记录该限制并将金额非负退回 service/表单。该静默数据完整性缺口与既有的外键示例缺 onDelete（473:F1）、belongsTo 示例缺失（504:F4）等文档示例问题根因不同，也无相同根因的其它成员，故单独保留。",
+      "reason": "单独保留：575:F1（E1/E2/E3/E19/E29）显示公共类型与 addConstraint 接受 type=check，但 knex 适配器 buildConstraint 的 check 分支只留注释后 break，既不生成 DDL 也不报错，而 dropConstraint 却能 dropChecks；应用迁移注释只能记录该限制并将金额非负退回 service/表单。",
       "members": [
         "575:37394443207:1:F1"
       ]
     },
     {
       "title": "模板 DataTable 未透传 DataTablePagination 的 showSelectedCount，无行选择列表固定显示选中计数",
-      "reason": "单条保留：575:F2（E26/E36/E37）显示模板 DataTablePagination 已提供 showSelectedCount（默认 true），但模板 DataTable 渲染它时只传 table 与 pageSizeOptions，页面无法关闭该摘要，无行选择列表固定显示 0 of N row(s) selected.，只能改模板组件。这与 FileUploadField 的 repository prop 过宽（578:F3）等组件契约问题根因不同，也无相同根因的其它成员，故单独保留。",
+      "reason": "单独保留：575:F2（E26/E36/E37）显示模板 DataTablePagination 已提供 showSelectedCount（默认 true），但模板 DataTable 渲染它时只传 table 与 pageSizeOptions，页面无法关闭该摘要，无行选择列表固定显示 0 of N row(s) selected.，只能改模板组件。",
       "members": [
         "575:37394443207:1:F2"
       ]
     },
     {
       "title": "DatabaseSharingRuleStore.list() 无过滤/分页参数，应用须全量拉取后自行筛选",
-      "reason": "单条保留：577:F4（E43/E44/E68）显示分享规则 store 的 list() 不接受任何过滤/分页参数，应用的 listShares 只能先全量 list() 再按 SHARE_KEY_PREFIX 前缀在内存中筛选；这是 store 查询下推能力缺口，与既有导出缺口、文档指引缺口及能力缺口各组的根因和修复方向均不同，证据不足以并入任何既有组，故单独保留。",
+      "reason": "单独保留：577:F4（E43/E44/E68）显示分享规则 store 的 list() 不接受任何过滤/分页参数，应用的 listShares 只能先全量 list() 再按 SHARE_KEY_PREFIX 前缀在内存中筛选；这是 store 查询下推能力缺口，与既有导出缺口、文档指引缺口及能力缺口各组的根因和修复方向均不同，证据不足以并入任何既有组，故单独保留。",
       "members": [
         "577:37394452688:1:F4"
       ]
     },
     {
       "title": "授权 Skill 缺少紧凑的公开 API 速查，代理易陷入 dist 源码探查",
-      "reason": "单条保留：577:F8（E36/E37/E38）显示授权 Skill 把 selection 形态、policyFor/withPolicy、recordAccess 注册、composite action 与字段/关系能力分散在 SKILL.md 与多份 references 中，缺少一页式“任务→公开入口”索引，代理需反复探查 dist 源码。证据仅涉及技能资料的组织方式，与“dist 物理布局/公开入口未说明”组的根因（未给出已发布路径与映射）及“跨包端到端路径缺失”组的根因（跨包接线清单缺失）均不同，故单独保留。",
+      "reason": "单独保留：577:F8（E36/E37/E38）显示授权 Skill 把 selection 形态、policyFor/withPolicy、recordAccess 注册、composite action 与字段/关系能力分散在 SKILL.md 与多份 references 中，缺少一页式“任务→公开入口”索引，代理需反复探查 dist 源码。证据仅涉及技能资料的组织方式，与“dist 物理布局/公开入口未说明”组的根因（未给出已发布路径与映射）及“跨包端到端路径缺失”组的根因（跨包接线清单缺失）均不同，故单独保留。",
       "members": [
         "577:37394452688:1:F8"
       ]
     },
     {
       "title": "模板首页示例违反自身 L1 页面结构规则，却被工作流要求作为新页面范本",
-      "reason": "单条保留：594:F1 的 E16/E7 显示 ui-guidelines L1 [Must] 与 page.md §2 要求业务页面使用 PageContainer+PageHeader，E15/E14 显示模板 home.tsx 与照抄它的 pipeline-smoke.tsx 都是手写 section+h1，E19 又要求 Quick change 照抄既有页面。属模板示例与自身指引冲突的独立错误指引缺口，与同报告 594:F2 的分流缺口、其他页面/测试指引缺口根因均不同，故单独保留。",
+      "reason": "单独保留：594:F1 的 E16/E7 显示 ui-guidelines L1 [Must] 与 page.md §2 要求业务页面使用 PageContainer+PageHeader，E15/E14 显示模板 home.tsx 与照抄它的 pipeline-smoke.tsx 都是手写 section+h1，E19 又要求 Quick change 照抄既有页面。",
       "members": [
         "594:37432779834:1:F1"
       ]
     },
     {
       "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面导向 page.md",
-      "reason": "单条保留：594:F2 的 E18/E19 显示 ui-workflow.md 的 full workflow 只覆盖加载数据/含表单/含浮层的 new page，E17/E35 显示唯一把“新建页面”映射到 page.md §1/§2/§6 的入口在 frontend-dev.md，E29/E36 显示 Agent 只读 ui-workflow.md 便判为 quick change；属分流决策表的独立指引缺口。与同报告 594:F1 的模板示例冲突按“同一报告不得合并”规则分开，与跨包端到端缺口根因不同，故单独保留。",
+      "reason": "单独保留：594:F2 的 E18/E19 显示 ui-workflow.md 的 full workflow 只覆盖加载数据/含表单/含浮层的 new page，E17/E35 显示唯一把“新建页面”映射到 page.md §1/§2/§6 的入口在 frontend-dev.md，E29/E36 显示 Agent 只读 ui-workflow.md 便判为 quick change；属分流决策表的独立指引缺口。",
       "members": [
         "594:37432779834:1:F2"
       ]
     },
     {
       "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少判定指引",
-      "reason": "单条保留：594:F4 的 E32 显示 frontend/references/testing.md 只建议复制 page-harness.test.tsx，E22 显示 renderWithApp 在 MemoryRouter 中挂载真实 app runtime/providers，E20 显示应用改用 @nocobase/i18n/testing 轻量 Provider，E24 未给出两类 harness 的适用场景；属测试 harness 选择指引的独立缺口，与既有 Origin/CSRF 测试指引缺口、跨包端到端路径缺失根因不同，故单独保留。",
+      "reason": "单独保留：594:F4 的 E32 显示 frontend/references/testing.md 只建议复制 page-harness.test.tsx，E22 显示 renderWithApp 在 MemoryRouter 中挂载真实 app runtime/providers，E20 显示应用改用 @nocobase/i18n/testing 轻量 Provider，E24 未给出两类 harness 的适用场景；属测试 harness 选择指引的独立缺口，与既有 Origin/CSRF 测试指引缺口、跨包端到端路径缺失根因不同，故单独保留。",
       "members": [
         "594:37432779834:1:F4"
       ]
     },
     {
       "title": "测试请求助手（app-testing request / authentication signIn）未注入可信 Origin，cookie 写测试被 CSRF 拒绝",
-      "reason": "跨报告合并。597:F4（E17）显示 @nocobase/app-testing 的 createTestApp 暴露的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer；649:F3（E47/E46/E48/E65）显示 @nocobase/app-plugin-authentication 的 signIn()/TestSession 返回的 fetch 同样不设置 Origin，而同插件 checkCookieWriteOrigin 要求携带 cookie 的写请求带可信 Origin/Referer，测试中的 create 请求以 403 INVALID_CSRF_ORIGIN 失败。两者同为测试请求助手未注入可信 Origin 的脚手架缺口（usability-improvement），修复方向一致（默认注入可关闭的 Origin 或在遇到 CSRF 失败时给出可操作提示），故合并。 本次新增 709:F1（E29/E30/E37/E44）在 1.0.0-beta.61 显示 @nocobase/app-plugin-authentication 的 signIn() 返回 fetch 只设置 cookie 头、从不设置 Origin，而 checkCookieWriteOrigin 对带 cookie 的非 GET/HEAD/OPTIONS 请求要求可信 Origin/Referer、否则 403 INVALID_CSRF_ORIGIN，createTestApp 也不自动设置 APP_PUBLIC_ORIGIN，按 testing.md/README 的 signIn(...).fetch(...) 示例发写请求会失败；与既有成员同为测试请求助手未注入可信 Origin 的脚手架缺口与修复方向。 本次新增 725:F5（E22/E25/E36）在 1.0.0-beta.61 复现同一框架缺口：packages/@nocobase/app-plugin-authentication/dist/server/testing.js 的 signIn() 返回会话 fetch，只把 cookie 头合并进请求、不设置 Origin；而 auth.js 的 checkCookieWriteOrigin 对带 cookie 的 POST/PATCH/DELETE 在缺少 Origin/Referer 时返回 403 INVALID_CSRF_ORIGIN。应用需设置 APP_PUBLIC_ORIGIN 并手动为每个写请求加 origin 头（tests/logic/devices-api.test.ts:60-93、server/AGENTS.md:43-48）。触发条件（signIn 会话发写请求）、公开缺口（测试助手默认不带可信 Origin）与修复方向（fetch 默认携带 TEST_ORIGIN 或文档化 origin 选项）与既有成员一致。 本次新增 740:F2（E22/E23/E59）在 1.0.0-beta.61 复现同一脚手架缺口：testing.js 中 TEST_ORIGIN 已定义并用于拼 apiRoot，但 signIn() 返回的 TestSession.fetch 只设置 cookie 头、不发送 Origin，带 cookie 的写请求被 checkCookieWriteOrigin 以 403 INVALID_CSRF_ORIGIN 拒绝。触发条件（用 signIn 会话发写请求）、缺口（测试助手不注入可信 Origin）与修复方向（fetch 默认发送 TEST_ORIGIN 或文档明确）与既有成员一致，故并入。",
+      "reason": "跨报告合并：597:F4（E17）显示 @nocobase/app-testing 的 createTestApp 暴露的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer；649:F3（E47/E46/E48/E65）显示 @nocobase/app-plugin-authentication 的 signIn()/TestSession 返回的 fetch 同样不设置 Origin，而同插件 checkCookieWriteOrigin 要求携带 cookie 的写请求带可信 Origin/Referer，测试中的 create 请求以 403 INVALID_CSRF_ORIGIN 失败。",
       "members": [
         "597:37453035816:1:F4",
         "649:37621548882:1:F3",
@@ -1800,7 +1810,7 @@
     },
     {
       "title": "应用开发/前端指引体量过大且入口分散，缺少按任务的最小阅读集与精简路由",
-      "reason": "单条保留。596:F3（E35/E22/E24/E26/E31）显示 app-development 前端 references 合计约 4672 行，列表/表单/子路由/组件获取分别落在 table.md、form.md、child-routes.md、shadcn.md 等，实现轮一次性加载后发生上下文溢出；期望按任务类型给出规模可控的最小阅读路径。其根因是前端文档体量与单轮加载预算（volume），与既有“技能分层深、互相委派、缺统一入口”（541:F5）的导航结构根因、以及“授权 Skill 缺紧凑公开 API 速查”（577:F8）的入口索引缺口均不同，修复方向也不同，故单独保留。 671:F4（E87/E83/E16）进一步确认同一文档加载边界问题：nocobase-app-development 的 references/ 含 76 个示例文件，授权作用域/scopeKey 语义需跨多页拼接，实现轮多次逐个 wc -l/读取后耗尽上下文；其期望的“按任务最小阅读集/短索引”与 596:F3 完全一致。",
+      "reason": "跨报告合并：596:F3（E35/E22/E24/E26/E31）显示 app-development 前端 references 合计约 4672 行，列表/表单/子路由/组件获取分别落在 table.md、form.md、child-routes.md、shadcn.md 等，实现轮一次性加载后发生上下文溢出；期望按任务类型给出规模可控的最小阅读路径。",
       "members": [
         "596:37453030096:1:F3",
         "671:37859673090:1:F4"
@@ -1808,14 +1818,14 @@
     },
     {
       "title": "child-routes.md 对子路由 path 的说明会让绝对子路径被误用，未提示父段会被前置",
-      "reason": "单条保留。child-routes.md 用“new 与 /new 行为相同”弱化相对语义，未说明父段会被前置，应用据指引把 /documents/:id 写在 /documents 下被解析为 /documents/documents/:id，属该指引特有的文档误导。与 532:F2（server-routes 的 use(path) 鉴权覆盖）分属前端子路由 path 拼接与后端鉴权覆盖两个根因；同报告 600:F3 记录框架侧静默拼接，按“同报告不得合并”须分开保留。",
+      "reason": "单独保留：child-routes.md 用“new 与 /new 行为相同”弱化相对语义，未说明父段会被前置，应用据指引把 /documents/:id 写在 /documents 下被解析为 /documents/documents/:id，属该指引特有的文档误导。与 532:F2（server-routes 的 use(path) 鉴权覆盖）分属前端子路由 path 拼接与后端鉴权覆盖两个根因；同报告 600:F3 记录框架侧静默拼接，按“同报告不得合并”须分开保留。",
       "members": [
         "600:37453053696:1:F2"
       ]
     },
     {
       "title": "app-client 的 resolveRouteTree 对以父段开头或以 / 开头的子路由 path 静默拼接父段，不校验也不告警",
-      "reason": "单条保留。resolveRouteTree 仅剥离前导斜杠再前置 parentPath，对会重复父段的路径照常注册且不抛错/告警，而同文件对缺失 path、非法 componentLoader、重复子 id 均有校验，属框架解析期缺少 path 语义校验。与同报告 600:F2（文档误导）同因不同侧，按“同报告不得合并”单独保留。 新增 666:F6（E75/E76/E82）：plugins.js 解析子路由时 normalize 后直接 `${parentPath}${relative}`，不把以 / 开头的子项当绝对路径；child-routes.md 只说明子路由相对父路由声明，应用按“分组带 path + 子项以 / 开头”书写会被静默双重前缀，直到让分组不带 path 才恢复。与 600:F3 同为解析期缺少 path 语义校验、无告警的根因，故合并。",
+      "reason": "跨报告合并：resolveRouteTree 仅剥离前导斜杠再前置 parentPath，对会重复父段的路径照常注册且不抛错/告警，而同文件对缺失 path、非法 componentLoader、重复子 id 均有校验，属框架解析期缺少 path 语义校验。与同报告 600:F2（文档误导）同因不同侧，按“同报告不得合并”单独保留。",
       "members": [
         "600:37453053696:1:F3",
         "666:37725948781:1:F6"
@@ -1823,7 +1833,7 @@
     },
     {
       "title": "nocobase-db/migrations 指引未说明迁移与种子的相对导入说明符规则（.ts 说明符与自包含约束）",
-      "reason": "跨报告合并。613:F3（E75/E76）只证明 nocobase-db Skill 的 migrations/seeds 小节缺少“相对导入必须写 .ts 说明符、构建期由 rewriteRelativeImportExtensions 改写”这一规则（dev-config 的 server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions）。612:F2（E60/E53/E54/E72）在同一 nocobase-db SKILL 与 migrations.md 上进一步确认 task-loader 以原生动态 import 加载任务模块、不注册 TS 传输器，因此 seed 源码内的跨文件 .js 值导入不会被重写；文档既未点明说明符规则，也未把“自包含/仅 import type”与值导入区分，测试 harness 下报 Cannot find module，代理只能改为内联数据。两者的触发条件（源码加载路径下按 ESM 习惯写 .js 相对说明符）、期望（指引给出可运行的说明符/自包含规则）与修复落点（nocobase-db SKILL 与 migrations.md）一致，属同一“缺说明”缺口；与“授权 Skill 种子示例使用 .js 相对说明符”的“错误说明”以及“任务加载器对 file:// 重写失效”的框架缺陷均不同，故合并单列。",
+      "reason": "跨报告合并：613:F3（E75/E76）只证明 nocobase-db Skill 的 migrations/seeds 小节缺少“相对导入必须写 .ts 说明符、构建期由 rewriteRelativeImportExtensions 改写”这一规则（dev-config 的 server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions）。",
       "members": [
         "613:37542338892:1:F3",
         "612:37542332629:1:F2"
@@ -1831,21 +1841,21 @@
     },
     {
       "title": "非法用户名经 better-auth APIError 冒泡为 500 INTERNAL_ERROR，users 路由未映射为 INVALID_ARGUMENT",
-      "reason": "单独保留。612:F3（E65/E66/E64/E67）显示 app-plugin-authentication 的 create 只对 username 做 trim/lowercase，格式约束来自 better-auth 的 username 插件；app-plugin-users 的 /api/users 错误映射只覆盖 UserAdministrationError 与 PermissionSetLastAssignmentError，未识别的 better-auth APIError 冒泡为 500 INTERNAL_ERROR。它与既有“演示账号用户名需满足认证最小长度，创建阶段无校验提示”（475:F5，属缺文档/长度约束）的根因与修复位置不同，也与记录选择、create 回读等其他 500 缺陷不同，故独立保留。",
+      "reason": "单独保留：612:F3（E65/E66/E64/E67）显示 app-plugin-authentication 的 create 只对 username 做 trim/lowercase，格式约束来自 better-auth 的 username 插件；app-plugin-users 的 /api/users 错误映射只覆盖 UserAdministrationError 与 PermissionSetLastAssignmentError，未识别的 better-auth APIError 冒泡为 500 INTERNAL_ERROR。",
       "members": [
         "612:37542332629:1:F3"
       ]
     },
     {
       "title": "分配到 authenticated 默认受众的权限集会从直接角色选择器消失，users 技能未说明该可见后果",
-      "reason": "单独保留。612:F4（E63/E59）显示 app-plugin-users 的 permission-set-scope.js directRoleState 会先收集 subject.type='authenticated'、id='*' 的分配，再把它们从直接角色候选中过滤掉，而 users 技能虽解释 hasAuthenticatedDefaultAccess 语义却未点明这一可见后果。现有分组中没有同一根因（默认受众过滤）或同一指引位置（nocobase-app-plugin-users SKILL）的成员，与权限集标题解码、权限集公开入口等缺陷不同，故独立保留。",
+      "reason": "单独保留：612:F4（E63/E59）显示 app-plugin-users 的 permission-set-scope.js directRoleState 会先收集 subject.type='authenticated'、id='*' 的分配，再把它们从直接角色候选中过滤掉，而 users 技能虽解释 hasAuthenticatedDefaultAccess 语义却未点明这一可见后果。",
       "members": [
         "612:37542332629:1:F4"
       ]
     },
     {
       "title": "Skill 内部 references 路径/目录说明不明，Agent 猜测路径失败",
-      "reason": "跨报告合并。616:F7（E5/E6/E43）显示应用开发 Skill 的能力映射与 authorization.md 只写“authorization Skill 的 references/code-and-seeds.md / client-development.md”而未给出从应用根开始的完整路径，实现阶段因此出现文件不存在的工具错误。755:F4（E14/E16/E39/E23/E59/E61）显示 sharing/restriction Skill 把包 README 指定为完整参考、未说明本 Skill 不设 references/，agent 按既有 Skill 目录习惯执行 ls .agents/skills/.../references 返回 No such file or directory（code 2），对 nocobase-db/references 的同类探测也失败。两者同一缺口：Skill 未把实际参考位置（完整引用路径或是否存在 references 目录）说清，导致 agent 按惯例探测不存在路径；修复方向均是补全引用路径或在 Skill 中明确参考在包 README。与 dist 布局组不同（后者是包公开入口/物理 dist 映射），也与跨包端到端接线组不同。",
+      "reason": "跨报告合并：616:F7（E5/E6/E43）显示应用开发 Skill 的能力映射与 authorization.md 只写“authorization Skill 的 references/code-and-seeds.md / client-development.md”而未给出从应用根开始的完整路径，实现阶段因此出现文件不存在的工具错误。",
       "members": [
         "616:37567947893:1:F7",
         "755:39068136400:1:F4"
@@ -1853,98 +1863,98 @@
     },
     {
       "title": "站内通知收件箱页面仅开发期可用，生产消息中心无现成 UI",
-      "reason": "单条保留。616:F8（E15/E16）显示 @nocobase/app-plugin-notification-in-app 的 README 明确自带客户端收件箱页面仅开发期存在、生产构建不含该路由，Skill/映射表未突出“生产消息中心需应用自建”，导致 Agent 误以为启用插件即得到消息中心。该缺口是插件能力/文档未显著标注，与“AI 员工聊天界面安装步骤未内联”（533:F5，属安装步骤缺失）等其余条目根因不同，故单独保留。",
+      "reason": "单独保留：616:F8（E15/E16）显示 @nocobase/app-plugin-notification-in-app 的 README 明确自带客户端收件箱页面仅开发期存在、生产构建不含该路由，Skill/映射表未突出“生产消息中心需应用自建”，导致 Agent 误以为启用插件即得到消息中心。该缺口是插件能力/文档未显著标注，与“AI 员工聊天界面安装步骤未内联”（533:F5，属安装步骤缺失）等其余条目根因不同，故单独保留。",
       "members": [
         "616:37567947893:1:F8"
       ]
     },
     {
       "title": "shadcn 依赖步骤缺少 lockfile 同步命令",
-      "reason": "单条保留。630:F5（E37/E38/E54/E57）显示 shadcn.md 要求把 CLI 引入的包移到 devDependencies 并恢复 @nocobase/i18n 的 ^ 范围，却未要求重新生成 pnpm-lock，随后 frozen-lockfile 校验以 ERR_PNPM_OUTDATED_LOCKFILE 失败，repair 轮需自行执行 pnpm install --lockfile-only 同步。现有分组中没有同一根因（依赖变更后缺少 lockfile 同步步骤）或同一指引位置（shadcn.md / AGENTS.md 添加依赖章节）的成员，故独立保留。",
+      "reason": "单独保留：630:F5（E37/E38/E54/E57）显示 shadcn.md 要求把 CLI 引入的包移到 devDependencies 并恢复 @nocobase/i18n 的 ^ 范围，却未要求重新生成 pnpm-lock，随后 frozen-lockfile 校验以 ERR_PNPM_OUTDATED_LOCKFILE 失败，repair 轮需自行执行 pnpm install --lockfile-only 同步。",
       "members": [
         "630:37590168713:1:F5"
       ]
     },
     {
       "title": "授权 composite 决策经 require() 恒被拒绝为 conditional，指引未显著说明应改用 can()/authorize()",
-      "reason": "单条保留：647:F2 的 E6/E7/E10/E12/E25/E50 显示 authorization.js 对复合资源只有所有底层 check 都 permit 才返回 permit，否则返回带 conditions 的 conditional，而 require() 对非 permit 抛 AuthorizationDeniedError（403 PERMISSION_DENIED）；runtime-api.md 仅在第 135–137 行末句提示该语义，SKILL 与 core-api 的 require 行未把 composite+require 组合讲清，应用按 SKILL 步骤 4 实现后 departments/employees/leave-requests 整组 403、dashboard/notifications 未走 require 反而 200，排查成本高。属独立的授权指引可用性缺口，与其他分组的根因与修复位置不同，故单独保留。",
+      "reason": "单独保留：647:F2 的 E6/E7/E10/E12/E25/E50 显示 authorization.js 对复合资源只有所有底层 check 都 permit 才返回 permit，否则返回带 conditions 的 conditional，而 require() 对非 permit 抛 AuthorizationDeniedError（403 PERMISSION_DENIED）；runtime-api.md 仅在第 135–137 行末句提示该语义，SKILL 与 core-api 的 require 行未把 composite+require 组合讲清，应用按 SKILL 步骤 4 实现后 departments/employees/leave-requests 整组 403、dashboard/notifications 未走 require 反而 200，排查成本高。",
       "members": [
         "647:37621553234:1:F2"
       ]
     },
     {
       "title": "createAppTest 未为测试应用注入 auth.secret，testing.md 整应用示例照抄即启动失败",
-      "reason": "单条保留：649:F2 的 E58/E59/E48 显示 @nocobase/app-testing 的 createTestAppConfig/testAppConfigValues 只把调用方 config 合并进数据库连接，createTestApp 也未设置 auth.secret，而 app-plugin-authentication 启动时要求 config.secret；testing.md 的整应用示例只传 createServer、不展示 secret，照抄即报应用未配置。属测试库缺少默认测试 secret 注入的独立框架易用性缺口，与既有测试分组的 Origin/CSRF、vitest globals 根因不同，故单独保留。",
+      "reason": "单独保留：649:F2 的 E58/E59/E48 显示 @nocobase/app-testing 的 createTestAppConfig/testAppConfigValues 只把调用方 config 合并进数据库连接，createTestApp 也未设置 auth.secret，而 app-plugin-authentication 启动时要求 config.secret；testing.md 的整应用示例只传 createServer、不展示 secret，照抄即报应用未配置。",
       "members": [
         "649:37621548882:1:F2"
       ]
     },
     {
       "title": "testing.md 整应用示例使用裸 expect，与模板 vitest 未开 globals 的配置不一致",
-      "reason": "单条保留：649:F4 的 E48/E60/E65 显示 testing.md 示例直接使用裸 expect(...)，而模板 app/vitest.config.ts 未设置 globals:true，运行时报 ReferenceError: expect is not defined。属文档示例与模板测试配置不一致的独立指引缺口，与同报告的 Origin、secret 缺口根因不同，故单独保留。",
+      "reason": "单独保留：649:F4 的 E48/E60/E65 显示 testing.md 示例直接使用裸 expect(...)，而模板 app/vitest.config.ts 未设置 globals:true，运行时报 ReferenceError: expect is not defined。属文档示例与模板测试配置不一致的独立指引缺口，与同报告的 Origin、secret 缺口根因不同，故单独保留。",
       "members": [
         "649:37621548882:1:F4"
       ]
     },
     {
       "title": "根路由不继承 /api 的应用级 onError 兜底，指引未点明需自带错误翻译",
-      "reason": "单条保留。651:37621552258:1:F2 的原始证据显示：application/index.js 只为 /api 路由安装 api.onError，随后 this.router.route(\"/\", router) 挂载根贡献，外层 router 无错误翻译；server-routes.md 仅说明根路由不在 /api 下，未提醒其不继承 /api 的 api.onError，导致未映射领域错误变成不透明 500。其触发条件（根路由抛出未识别领域错误）、期望（指引提醒自带 onError/映射 ApiError）与修复位置（server-routes.md 与应用错误装配）与其它关于 server-routes 鉴权覆盖（532:F2）、API 前缀 SPA 兜底（464:F3/490:F1）、认证 Skill 类型示例（495:F6）等发现均不同，证据不足以并入其它组，故单独保留。",
+      "reason": "单独保留：651:37621552258:1:F2 的原始证据显示：application/index.js 只为 /api 路由安装 api.onError，随后 this.router.route(\"/\", router) 挂载根贡献，外层 router 无错误翻译；server-routes.md 仅说明根路由不在 /api 下，未提醒其不继承 /api 的 api.onError，导致未映射领域错误变成不透明 500。",
       "members": [
         "651:37621552259:1:F2"
       ]
     },
     {
       "title": "后台重复任务的归属在两份 Skill 之间缺少交叉引用，易误选裸 setInterval",
-      "reason": "单条保留。650:F7 的证据显示，app-development 的 services-and-jobs.md 决策表把“按间隔重复、无人通过 UI 跟踪”的任务指向 ScheduleExecutor，而同一文档的 provider 生命周期又把 start() 描述为 listeners/pollers 的用途，两处未互相提示，Agent 因此直接实现裸 setInterval。其触发条件（实现周期性后台任务）、期望（明确区分进程内监听器与可调度重复任务）、实际行为（无交叉引用而误选）与修复方向（增补交叉引用）均与既有 Scheduler 能力缺口（缺立即执行入口）、Scheduler 管理员立即执行指引等发现不同，证据只支持这一条独立的文档缺口，故单独保留。",
+      "reason": "单独保留：650:F7 的证据显示，app-development 的 services-and-jobs.md 决策表把“按间隔重复、无人通过 UI 跟踪”的任务指向 ScheduleExecutor，而同一文档的 provider 生命周期又把 start() 描述为 listeners/pollers 的用途，两处未互相提示，Agent 因此直接实现裸 setInterval。",
       "members": [
         "650:37621552128:1:F7"
       ]
     },
     {
       "title": "授权 Skill 仅记录 composite 路径，公共 catalog 资源类型/grantBacked 缺指引",
-      "reason": "单条保留：648:F4 的 E17 显示 authorization.md 只要求业务操作走 composite 并绑定 conditions.database 策略、禁止 collection 级或内存过滤，而 E12/E13 证明 core 公共导出 ResourceTypeRegistry/ResourceItems/grantBacked 的 catalog 资源类型路径，E28 显示冻结应用据此声明 office catalog 资源类型并用 grantBacked 兜底、记录范围改由 service 侧 readOwn 过滤；共同指向授权 Skill 未文档化 catalog 路径及其适用边界。该缺口与 composite 下 require() 行为、withPolicy 类型丢失等既有根因不同，且与同报告 648:F6 无关，故单独保留。",
+      "reason": "单独保留：648:F4 的 E17 显示 authorization.md 只要求业务操作走 composite 并绑定 conditions.database 策略、禁止 collection 级或内存过滤，而 E12/E13 证明 core 公共导出 ResourceTypeRegistry/ResourceItems/grantBacked 的 catalog 资源类型路径，E28 显示冻结应用据此声明 office catalog 资源类型并用 grantBacked 兜底、记录范围改由 service 侧 readOwn 过滤；共同指向授权 Skill 未文档化 catalog 路径及其适用边界。",
       "members": [
         "648:37621548015:1:F4"
       ]
     },
     {
       "title": "页面在异步保存后关闭 overlay 缺少受支持范式，应用自建 RouteOverlayBridge",
-      "reason": "单条保留：648:F6 的 E24 显示 overlay.md 规定 useRouteOverlay 只能在 overlay 内部调用、只给出把 close 拆成子组件的写法，E30/E31 显示应用在页面层调用 hook 导致自定义表单路由加载失败，只能新增 RouteOverlayBridge/useRouteOverlayRef 才能通过验证；这是模板/指引缺少页面级异步关闭 overlay 的受支持路径，与同报告 648:F4 的授权指引缺口根因不同，故单独保留。",
+      "reason": "单独保留：648:F6 的 E24 显示 overlay.md 规定 useRouteOverlay 只能在 overlay 内部调用、只给出把 close 拆成子组件的写法，E30/E31 显示应用在页面层调用 hook 导致自定义表单路由加载失败，只能新增 RouteOverlayBridge/useRouteOverlayRef 才能通过验证；这是模板/指引缺少页面级异步关闭 overlay 的受支持路径，与同报告 648:F4 的授权指引缺口根因不同，故单独保留。",
       "members": [
         "648:37621548015:1:F6"
       ]
     },
     {
       "title": "@nocobase/app-plugin-authorization/server 入口只重导出部分 core 授权类型，消费方需自行判断类型来源",
-      "reason": "单条保留：646:F6（E58/E31/E12）显示 server 入口从 @nocobase/authorization/core 只重导出 Authorization、AuthorizationContext、AuthorizationEnv、AuthorizationPlugin，未重导出 AuthorizationDecision、CompositeResourceConditions 等同样常用的类型，应用 access.ts 因此从两个根导入类型、repair-1 还曾错从 server 根导入。该条的定向复核因证据预算超限未完成（feedbackReview=insufficient），其根因（公开入口重导出面不完整）与现有“公开入口/dist 布局缺说明”“授权 Skill 缺 API 速查”“公共 catalog 资源类型缺指引”等组并不完全一致，证据不足以确认同一缺口，故单独保留。",
+      "reason": "单独保留：646:F6（E58/E31/E12）显示 server 入口从 @nocobase/authorization/core 只重导出 Authorization、AuthorizationContext、AuthorizationEnv、AuthorizationPlugin，未重导出 AuthorizationDecision、CompositeResourceConditions 等同样常用的类型，应用 access.ts 因此从两个根导入类型、repair-1 还曾错从 server 根导入。",
       "members": [
         "646:37621545718:1:F6"
       ]
     },
     {
       "title": "知识库检索仅做向量相似度过滤，缺少词法回退与结构化空结果/低置信契约",
-      "reason": "单条保留：652:F6 的 E24/E25/E26 显示 KnowledgeBaseFeatureImpl.search 最终调用 LocalVectorStoreService.search，只执行 similaritySearchWithScore 并按 score 过滤（ai-employee 默认 topK:3、score:0.6），既无词法/混合检索回退，也没有结构化的空结果或低置信信号，调用方只能自行兜底。触发条件（问题与语料无关或分数低于阈值）、期望（返回空结果或明确低置信标记）与修复方向（补结构化结果契约或提供词法混合检索选项）均为检索能力缺口，与既有分组中 556:F4（检索不是授权边界、缺授权代理示例）的根因和修复方向不同，且与同报告 652:F10 按规则不得合并，故单独保留。",
+      "reason": "单独保留：652:F6 的 E24/E25/E26 显示 KnowledgeBaseFeatureImpl.search 最终调用 LocalVectorStoreService.search，只执行 similaritySearchWithScore 并按 score 过滤（ai-employee 默认 topK:3、score:0.6），既无词法/混合检索回退，也没有结构化的空结果或低置信信号，调用方只能自行兜底。",
       "members": [
         "652:37621554092:1:F6"
       ]
     },
     {
       "title": "知识库插件 Skill 未被开发流程触发，缺少引用与触发提示",
-      "reason": "单条保留：652:F10 的 E27/E28 显示 nocobase-app-plugin-ai-knowledge-base Skill 已列出 embedding→向量数据库→存储→知识库→文档→员工绑定的依赖链，并给出命中测试等端到端检查，但 9 次 agent-history 调用中未见读取该 Skill，AGENTS.md/安装输出也未提供触发提示，导致 Agent 未沿既定能力链接入向量检索。该条为 suspected 且定向复核未完成，证据仅支持“Skill 未被引用/触发”这一独立指引缺口，与 533:F5（聊天界面安装步骤未内联）、616:F7（Skill 内部引用路径歧义）等根因不同，且与同报告 652:F6 按规则不得合并，故单独保留。",
+      "reason": "单独保留：652:F10 的 E27/E28 显示 nocobase-app-plugin-ai-knowledge-base Skill 已列出 embedding→向量数据库→存储→知识库→文档→员工绑定的依赖链，并给出命中测试等端到端检查，但 9 次 agent-history 调用中未见读取该 Skill，AGENTS.md/安装输出也未提供触发提示，导致 Agent 未沿既定能力链接入向量检索。",
       "members": [
         "652:37621554092:1:F10"
       ]
     },
     {
       "title": "插件 registry 语言字典缺少组件引用的键，非英文语言回落到英文",
-      "reason": "单条保留。665:F3（E37/E38）显示 @nocobase/app-plugin-ai-employee 的 registry nocobase-ai/locales en-US.js 与 zh-CN.js 两个字典都缺少 tool.output 与 businessReport.chartFailed/previewUnavailable/failed；E41 的 business-report-renderer 仍用这些键调用 useAITranslate，E39 说明 useAITranslate 未命中字典时回落到调用方传入的内联英文，E42 表明应用侧副本补齐后中文才正确。触发条件（切中文渲染这些组件）、期望（四个键显示中文）与实际（回落到英文）一致，均指向插件自带字典副本缺键同一缺口，修复方向（补齐 registry 字典并加键集合断言）一致。现有分组中没有其它 i18n/翻译键缺失发现（其余入口/路径发现针对包定位而非字典键），且与其同报告的 665:F4 属不同根因，故单独保留。",
+      "reason": "单独保留：665:F3（E37/E38）显示 @nocobase/app-plugin-ai-employee 的 registry nocobase-ai/locales en-US.js 与 zh-CN.js 两个字典都缺少 tool.output 与 businessReport.chartFailed/previewUnavailable/failed；E41 的 business-report-renderer 仍用这些键调用 useAITranslate，E39 说明 useAITranslate 未命中字典时回落到调用方传入的内联英文，E42 表明应用侧副本补齐后中文才正确。",
       "members": [
         "665:37700965959:1:F3"
       ]
     },
     {
       "title": "字段类型与过滤能力（布尔/string-text 算子白名单）的映射未在 nocobase-db 指引说明",
-      "reason": "跨报告合并。665:F4（E29/E30/E31/E35）显示 @nocobase/db 的 validateFilterNode 在算子不属于 OPERATORS_BY_TYPE[field.type] 时抛 FIELD_CAPABILITY_NOT_SUPPORTED，boolean 仅允许 $isTruly/$isFalsy/$empty/$notEmpty（$eq/$ne 查询期报错），而 nocobase-db SKILL 只讲 Query 不读元数据与三参 where，通篇没有按字段类型的算子白名单。726:F4（E130/E131/E132）在 1.0.0-beta.61 指向同一校验函数与同一错误码：FilterBuilder 类型签名把 string()/text()/number()/date() 区分为不同能力分组，对 text 字段误用 string 能力同样报错，而指引未说明该映射。本次新增 739:F5（E69/E71/E29）在 1.0.0-beta.61 给出同一根因的第三条证据：repository.js 的 OPERATORS_BY_TYPE 对 boolean 仅声明 $isTruly/$isFalsy 等，repository-input 的 FilterOperator 联合类型也列出这两个布尔算子，以 $eq 表达布尔筛选返回 400 并造成真实测试失败，修复方向与上两条一致（补文档说明或给出指向性错误）。成员均指向字段类型→允许算子的白名单缺口，故合并。",
+      "reason": "跨报告合并：665:F4（E29/E30/E31/E35）显示 @nocobase/db 的 validateFilterNode 在算子不属于 OPERATORS_BY_TYPE[field.type] 时抛 FIELD_CAPABILITY_NOT_SUPPORTED，boolean 仅允许 $isTruly/$isFalsy/$empty/$notEmpty（$eq/$ne 查询期报错），而 nocobase-db SKILL 只讲 Query 不读元数据与三参 where，通篇没有按字段类型的算子白名单。",
       "members": [
         "665:37700965959:1:F4",
         "726:38481213917:1:F4",
@@ -1953,7 +1963,7 @@
     },
     {
       "title": "Workflow 公开契约不含激活/启用，源码托管应用须访问包内方法并直写工作流状态表",
-      "reason": "单条保留：666:F4 的证据（E69/E70/E72/E77）显示 @nocobase/app-plugin-workflow 的公开 token 仅暴露 registerInstruction/trigger，公开的 WorkflowServiceContract 不包含 discoverArtifacts/ensureArtifactMaterialized，也没有“激活并启用某工作流”的公开方法；Skill 虽说明 Artifact 的构建、同步、启用、调用是彼此独立的阶段，但应用 Provider 只能把 workflowServiceToken 断言为私有运行时接口、调用包内方法，并直接 updateMany/updateOne workflows 表把 revision 置 current 且 enabled。该“公开契约缺少启用/激活能力”的根因在既有分组中没有对应成员（旧的分流/通知类发现与工作流服务契约无关），无可合并对象，故单独保留。 674:F3（E1/E3/E4/E5/E6）在 1.0.0-beta.55 复现同一公开契约缺口：workflowServiceToken 的 WorkflowServiceContract 只有 registerInstruction/trigger，物化与启用版本的 WorkflowService 由未导出的 internalWorkflowServiceToken 引用，SKILL 又禁止绕过插件内部与直写物化表，应用只能自定义结构 cast 并直接更新 workflows 表标记 current/enabled；触发条件、期望与修复方向一致。",
+      "reason": "跨报告合并：666:F4 的证据（E69/E70/E72/E77）显示 @nocobase/app-plugin-workflow 的公开 token 仅暴露 registerInstruction/trigger，公开的 WorkflowServiceContract 不包含 discoverArtifacts/ensureArtifactMaterialized，也没有“激活并启用某工作流”的公开方法；Skill 虽说明 Artifact 的构建、同步、启用、调用是彼此独立的阶段，但应用 Provider 只能把 workflowServiceToken 断言为私有运行时接口、调用包内方法，并直接 updateMany/updateOne workflows 表把 revision 置 current 且 enabled。",
       "members": [
         "666:37725948781:1:F4",
         "674:37879768670:1:F3"
@@ -1961,56 +1971,56 @@
     },
     {
       "title": "nocobase-db Skill 未说明 datetime 输入形状与 createdAt/updatedAt 的写入责任",
-      "reason": "单条保留：666:F5 是一处跨两个根因的写入语义文档缺口。E73 证明 Repository 仅接受完整 V1 时间值，date-only 与 datetime-local 部分值抛 INVALID_MUTATION，应用因此自写 normalizeDateTime（E80）；E74 的迁移示例只声明 createdAt 为 not null，E81 显示框架不自动填充 createdAt/updatedAt、应用自写 stamped/touched。既有 545:F2 只覆盖“datetime 拒绝 date-only 字符串”，496:F4/647:F3 只覆盖“时间戳由写入方自带”，本条各匹配一半；并入任一组都会把另一不同根因混入，故单独保留。",
+      "reason": "单独保留：666:F5 是一处跨两个根因的写入语义文档缺口。E73 证明 Repository 仅接受完整 V1 时间值，date-only 与 datetime-local 部分值抛 INVALID_MUTATION，应用因此自写 normalizeDateTime（E80）；E74 的迁移示例只声明 createdAt 为 not null，E81 显示框架不自动填充 createdAt/updatedAt、应用自写 stamped/touched。",
       "members": [
         "666:37725948781:1:F5"
       ]
     },
     {
       "title": "defineAIEmployee 无法声明 enabledTools，注册期员工工具边界缺失",
-      "reason": "单条保留：AIEmployeeOptions/toBuiltInEmployee 只有 skills/tools，公开 registerEmployee 不传内部 sourceSettings，enabledTools/enabledSkills 无法在注册声明中表达，运行时的工具外边界却由 skillSettings.enabledTools 决定，未保存选择时会放行全部 GENERAL 内置工具；应用只能注册后 getEmployee 再 upsertEmployee 写 allow-list（E7/E8/E9/E10/E12）。这是能力缺口，与同报告 F2 的文档误导根因不同（同报告发现不得合并），现有分组也无同类能力缺口，故单独保留。",
+      "reason": "单独保留：AIEmployeeOptions/toBuiltInEmployee 只有 skills/tools，公开 registerEmployee 不传内部 sourceSettings，enabledTools/enabledSkills 无法在注册声明中表达，运行时的工具外边界却由 skillSettings.enabledTools 决定，未保存选择时会放行全部 GENERAL 内置工具；应用只能注册后 getEmployee 再 upsertEmployee 写 allow-list（E7/E8/E9/E10/E12）。",
       "members": [
         "673:37859683993:1:F1"
       ]
     },
     {
       "title": "Employee Skill 完成检查「声明即工具列表」与实际运行时工具边界不一致",
-      "reason": "单条保留：SKILL.md 完成检查与 api-reference 把声明 tools 视为员工的精确工具集（E1/E5），但运行时外边界是 skillSettings.enabledTools，未声明时 isToolSelected 会放行全部 GENERAL 工具（E3/E10），导致开发者漏掉最小权限收紧与负例验证（E12）。这是错误/不完整指引，与同报告 F1 的能力缺口根因不同（同报告不得合并），现有文档类分组均不涉及 AI 员工工具边界，故单独保留。",
+      "reason": "单独保留：SKILL.md 完成检查与 api-reference 把声明 tools 视为员工的精确工具集（E1/E5），但运行时外边界是 skillSettings.enabledTools，未声明时 isToolSelected 会放行全部 GENERAL 工具（E3/E10），导致开发者漏掉最小权限收紧与负例验证（E12）。这是错误/不完整指引，与同报告 F1 的能力缺口根因不同（同报告不得合并），现有文档类分组均不涉及 AI 员工工具边界，故单独保留。",
       "members": [
         "673:37859683993:1:F2"
       ]
     },
     {
       "title": "类型化 seed 记录与 Repository 的 RepositoryRecord 索引签名约束冲突",
-      "reason": "单条保留：以 interface 声明的业务记录没有隐式 string 索引签名，传给 Repository.createOne 时会因 MutationValuesInput/ScalarCreateValues 约束报 TS2769，改为 type alias 才通过（E33/E35），db SKILL 的 seed 示例只用对象字面量未覆盖该情形。属于 Repository 泛型约束与 TypeScript 索引签名的交互问题，与既有导出面、withPolicy 类型丢失、decimal 类型等分组根因不同，且无其他报告同类证据，故单独保留。",
+      "reason": "单独保留：以 interface 声明的业务记录没有隐式 string 索引签名，传给 Repository.createOne 时会因 MutationValuesInput/ScalarCreateValues 约束报 TS2769，改为 type alias 才通过（E33/E35），db SKILL 的 seed 示例只用对象字面量未覆盖该情形。",
       "members": [
         "673:37859683993:1:F6"
       ]
     },
     {
       "title": "共享规则 Skill 未说明何时应自建共享表而非使用 defineSharingRule",
-      "reason": "单条保留：sharing-rules Skill 只说明共享规则向已持有该动作的主体追加所选记录、不能全选（E13），未说明主体本无该动作或需要独立共享实体时该自建共享表还是使用 defineSharingRule；应用自建 ticket_shares 并在查询层合并，材料无法判断是能力不匹配还是未发现更合适的接入方式（E11/E14/E15）。属缺说明而非错误说明，与其他共享/授权能力缺口（DatabaseSharingRuleStore.list、文件字节路由默认公开等）根因不同，故单独保留。",
+      "reason": "单独保留：sharing-rules Skill 只说明共享规则向已持有该动作的主体追加所选记录、不能全选（E13），未说明主体本无该动作或需要独立共享实体时该自建共享表还是使用 defineSharingRule；应用自建 ticket_shares 并在查询层合并，材料无法判断是能力不匹配还是未发现更合适的接入方式（E11/E14/E15）。属缺说明而非错误说明，与其他共享/授权能力缺口（DatabaseSharingRuleStore.list、文件字节路由默认公开等）根因不同，故单独保留。",
       "members": [
         "674:37879768670:1:F6"
       ]
     },
     {
       "title": "QueryAdapter.select() 将返回类型收窄为 Row，单列查询需显式泛型",
-      "reason": "单条保留：681:F6 的 E15/E16/E33 显示 @nocobase/db 的 QueryAdapter.select() 签名把泛型 TResult 覆盖为 Row，select('id').executeTakeFirst() 被推导为 unknown，种子代码只能补 executeTakeFirst<{ id: string }> 才通过类型检查。这是查询构建器返回类型推导缺口，与 QueryAdapter 条件方法不可变语义（541:F1）、seed 记录索引签名冲突（673:F6）等根因不同，证据不足以并入任何既有组，故单独保留。",
+      "reason": "单独保留：681:F6 的 E15/E16/E33 显示 @nocobase/db 的 QueryAdapter.select() 签名把泛型 TResult 覆盖为 Row，select('id').executeTakeFirst() 被推导为 unknown，种子代码只能补 executeTakeFirst<{ id: string }> 才通过类型检查。",
       "members": [
         "681:38001009392:1:F6"
       ]
     },
     {
       "title": "server-routes 指引未说明贡献 router 的 onError 在 api.route('/') 合并后被丢弃",
-      "reason": "单条保留：681:F7 的 E9/E13/E36 显示应用在 api.route('/', router) 之前安装应用级 api.onError，贡献 router 自己的 onError 在合并挂载后被丢弃，错误翻译只能前移到 handler/应用层，而 server-routes.md 的“抽取 router 再挂载”示例只讲依赖注入、未说明 onError 的生效层级。该缺口与 651:F2（根路由不继承 /api 的 api.onError）虽同处 server-routes.md 且都涉及 onError，但触发条件（api 贡献 router 合并 vs 根路由）、受影响段落（205–234 vs 179–201）与修复方向（说明合并会丢弃 router.onError vs 提醒根路由需自带 onError）不同，属同一文件中的不同根因，单独保留。",
+      "reason": "单独保留：681:F7 的 E9/E13/E36 显示应用在 api.route('/', router) 之前安装应用级 api.onError，贡献 router 自己的 onError 在合并挂载后被丢弃，错误翻译只能前移到 handler/应用层，而 server-routes.md 的“抽取 router 再挂载”示例只讲依赖注入、未说明 onError 的生效层级。",
       "members": [
         "681:38001009392:1:F7"
       ]
     },
     {
       "title": "@nocobase/* 部分包未从 exports 导出 ./package.json，按包名解析包元数据失败",
-      "reason": "单条保留：690:F4（E22 包 exports 片段、E45 实现日志）显示 @nocobase/authorization 的 exports 只列出 ./、./core 与插件子路径，缺少 \"./package.json\"，按包名解析包元数据时抛 ERR_PACKAGE_PATH_NOT_EXPORTED，而同仓库的 @nocobase/app-plugin-ai-employee 导出了 ./package.json，行为不一致。触发条件为按包名解析元数据、期望遵循 Node 约定可读取、修复落在 package.json 增加导出项；该缺口与“文档未说明公开入口与 dist 布局”（461:F4 等）、“server 入口只重导出部分 core 类型”（646:F6）等指引/类型导出缺口的根因与修复位置不同，且本条的定向复核为 insufficient、置信为 suspected，证据不足以确认与其他条目同一缺口，故单独保留。 本次新增 740:F7（E45/E14）在 1.0.0-beta.61 复现同一 exports 缺口：按包名 require('@nocobase/app-server/package.json') 因该包 exports 映射未导出 ./package.json 而抛 ERR_PACKAGE_PATH_NOT_EXPORTED；触发条件（按包名解析包元数据）、期望（遵循 Node 约定可读）、实际与修复方向（在 exports 增加 ./package.json 或在文档给出读取方式）与 690:F4 完全一致，仅包不同，故并入并改用通用标题。",
+      "reason": "跨报告合并：690:F4（E22 包 exports 片段、E45 实现日志）显示 @nocobase/authorization 的 exports 只列出 ./、./core 与插件子路径，缺少 \"./package.json\"，按包名解析包元数据时抛 ERR_PACKAGE_PATH_NOT_EXPORTED，而同仓库的 @nocobase/app-plugin-ai-employee 导出了 ./package.json，行为不一致。",
       "members": [
         "690:38089380163:1:F4",
         "740:38810821322:1:F7"
@@ -2018,21 +2028,21 @@
     },
     {
       "title": "聊天 UI 仅有 registry 文件拷贝式安装，生成应用缺一等/本地安装命令",
-      "reason": "单条保留：690:F5（E12 registry item、E13 chat-surfaces.md 安装章节、E60 实现日志）显示 nocobase-ai 以 registry 文件拷贝交付，生成应用唯一可用的是 Option 1 的多行 node 脚本；agent 先按 components.json 的 @nocobase → ui.nocobase.com 尝试 `shadcn add @nocobase/nocobase-ai`，因线上 registry 返回 SPA HTML 报 Unexpected token \"<\" 后才改走离线 Option 1。根因是缺少可直接执行的一等/本地安装命令（交付与安装体验缺口），触发条件、期望与修复方向均与 533:F5“SKILL.md 未内联安装步骤导致漏装”不同（虽同处 chat-surfaces.md），也不同与 630:F5 的 shadcn lockfile 同步缺口，故单独保留。",
+      "reason": "单独保留：690:F5（E12 registry item、E13 chat-surfaces.md 安装章节、E60 实现日志）显示 nocobase-ai 以 registry 文件拷贝交付，生成应用唯一可用的是 Option 1 的多行 node 脚本；agent 先按 components.json 的 @nocobase → ui.nocobase.com 尝试 `shadcn add @nocobase/nocobase-ai`，因线上 registry 返回 SPA HTML 报 Unexpected token \"<\" 后才改走离线 Option 1。",
       "members": [
         "690:38089380163:1:F5"
       ]
     },
     {
       "title": "模板侧边栏折叠测试间歇性失败（证据不足待核实）",
-      "reason": "单条保留：689:F5 仅凭 retro 自述全量运行偶发失败、隔离运行与 15 次重复通过（E43），应用副本的 client-shell.test.tsx 已将 data-state 断言包在 waitFor（E37），而模板原始断言与全量失败日志不在快照内，无法独立核对模板是否存在该 flaky 缺陷；证据 confidence=suspected，按规则不猜测、单独保留。",
+      "reason": "单独保留：689:F5 仅凭 retro 自述全量运行偶发失败、隔离运行与 15 次重复通过（E43），应用副本的 client-shell.test.tsx 已将 data-state 断言包在 waitFor（E37），而模板原始断言与全量失败日志不在快照内，无法独立核对模板是否存在该 flaky 缺陷；证据 confidence=suspected，按规则不猜测、单独保留。",
       "members": [
         "689:38089377827:1:F5"
       ]
     },
     {
       "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
-      "reason": "跨报告合并。701:F3（E26/E27/E28/E32）、709:F3（E23/E24/E28）、725:F4（E11/E12/E13/E31）、733:F4（E9/E10/E11/E19）与 749:F3（E15/E16/E17/E18/E19/E26）均显示 @nocobase/db 内部已有 isUniqueConstraintViolation（跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等），但该 helper 未从包入口导出，repository-input 的 RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项；普通 createOne 路径直接外抛原始驱动异常，recognizeApiError 无法映射为 409，应用只能在 create 前 exists 预检并在 catch 后重查，并发窗口仍会把冲突暴露成不透明 500。本次新增 757:F3（E11/E12/E13/E14/E25/E27）在 1.0.0-beta.61 再现同一公开错误模型缺口：executeCreateOne 不捕获唯一冲突，仅 executeUpsertOne 使用内部 helper，且应用 devices 服务同样以 exists+createOne 预检兜底；触发条件（并发重复键写入）、期望（可类型判定的唯一冲突 RepositoryError 并映射 409）与修复方向（导出判定函数或将冲突纳入 RepositoryErrorCode 并映射）均与既有成员一致，故合并。",
+      "reason": "跨报告合并：701:F3（E26/E27/E28/E32）、709:F3（E23/E24/E28）、725:F4（E11/E12/E13/E31）、733:F4（E9/E10/E11/E19）与 749:F3（E15/E16/E17/E18/E19/E26）均显示 @nocobase/db 内部已有 isUniqueConstraintViolation（跨驱动识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等），但该 helper 未从包入口导出，repository-input 的 RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项；普通 createOne 路径直接外抛原始驱动异常，recognizeApiError 无法映射为 409，应用只能在 create 前 exists 预检并在 catch 后重查，并发窗口仍会把冲突暴露成不透明 500。",
       "members": [
         "701:38106776639:1:F3",
         "709:38179339282:1:F3",
@@ -2044,42 +2054,42 @@
     },
     {
       "title": "语言偏好写入固定单键 localStorage，同一浏览器 profile 内不同账号共享，且指引未说明该作用域限制",
-      "reason": "单条保留。E5 显示 app-client 的 LOCALE_STORAGE_KEY 固定为单键 'nocobase.locale'，readStoredLocale/writeStoredLocale 无用户维度；E6 切换语言时先写该键再 notifyServerLocale，服务端语言保存在请求会话（E8/E11/E12），E21 的 Skill 也按 localStorage + 会话描述。根因是持久化作用域未按用户/登录态隔离，且指引未明确该限制与按用户隔离的接入方式。该可用性改进与其他语言相关发现（如 665:F3 语言字典缺键）根因不同，故单独保留。",
+      "reason": "单独保留：E5 显示 app-client 的 LOCALE_STORAGE_KEY 固定为单键 'nocobase.locale'，readStoredLocale/writeStoredLocale 无用户维度；E6 切换语言时先写该键再 notifyServerLocale，服务端语言保存在请求会话（E8/E11/E12），E21 的 Skill 也按 localStorage + 会话描述。",
       "members": [
         "701:38106776639:1:F4"
       ]
     },
     {
       "title": "FilterOperator 缺少 $in，idsScope 无法用单个成员判断表达 id 集合，只能展开为逐 id $eq",
-      "reason": "单条保留。699:F6 的证据 E4 显示 packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js 的 idsScope 因 FilterOperator 没有集合成员操作符（$includes 仅子串匹配）而把 id 集合展开为多个 $eq，语义正确但大集合过滤条件冗长。这是过滤操作符集合的可用性缺口，与既有“allScopes/idsScope 未公开导出”（组5）、布尔字段算子白名单/condition 运算符收窄等根因不同，证据不足以并入其他问题，故单独保留。",
+      "reason": "单独保留：699:F6 的证据 E4 显示 packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js 的 idsScope 因 FilterOperator 没有集合成员操作符（$includes 仅子串匹配）而把 id 集合展开为多个 $eq，语义正确但大集合过滤条件冗长。",
       "members": [
         "699:38106772246:1:F6"
       ]
     },
     {
       "title": "Scheduler 授权目录只注册 settings 项，路由却校验 page 资源，按插件目录授权访问 API 仍 403",
-      "reason": "单条保留（本次新发现）。708:F2（E4/E5/E6/E28/E46）显示 Scheduler 插件 authorization.js 只向 settings 目录注册 scheduler.schedules/read，而 routes/index.js 在全部 schedule API 前要求 {type:'page',id:'scheduler.schedules'}/access，否则 403 SCHEDULE_ACCESS_REQUIRED；授权核心的 settings.grant 产出 type 'settings'、page.grant 产出 type 'page'，二者无跨类型映射，因此仅按插件授权目录授予的读权限无法满足路由的 page 校验。operations.md 也确认插件不贡献页面、管理页由应用自建并声明 page 授权，应用只能声明 authz:'skip' 并依赖服务端 403 兜底。该问题是 Scheduler 授权资源类型注册与路由校验不一致的运行时缺陷，与既有 Scheduler 立即执行入口缺失分组及其它授权导出/指引类分组的触发条件、API 位置和修复方向均不同，故单独成组。",
+      "reason": "单独保留：708:F2 显示 Scheduler 的 authorization.js 只在 settings 目录注册 scheduler.schedules/read，而路由校验的是 type:'page' 的 scheduler.schedules 访问，settings 与 page 授权无跨类型映射，按插件目录授权仍 403；属授权资源类型注册不一致的独立运行时缺陷。",
       "members": [
         "708:38179335515:1:F2"
       ]
     },
     {
       "title": "delete 授权 builder 无法附加 Record Access，且指引未说明该限制",
-      "reason": "单独保留。DatabasePermissionBuilder.delete() 只返回 operation(\"delete\", {})，不接受 recordAccess 参数，operation 又为私有（E3）；ReadPermissionBuilder 有 recordAccess(...) 而 delete 没有对应方法（E4），authorizer 对未配置任何正 scope 的 grant 以 NO_RECORD_ACCESS 拒绝（E5/E7），README 亦如此说明，指引 fluent-registration.md 仅写 delete() takes no fields，应用只能手写 grant JSON（E30）。这是 delete builder 的能力缺口与对应文档缺口，其他成员均未涉及 delete 附加 Record Access 的路径，故单独保留。",
+      "reason": "单独保留：DatabasePermissionBuilder.delete() 只返回 operation(\"delete\", {})，不接受 recordAccess 参数，operation 又为私有（E3）；ReadPermissionBuilder 有 recordAccess(...) 而 delete 没有对应方法（E4），authorizer 对未配置任何正 scope 的 grant 以 NO_RECORD_ACCESS 拒绝（E5/E7），README 亦如此说明，指引 fluent-registration.md 仅写 delete() takes no fields，应用只能手写 grant JSON（E30）。",
       "members": [
         "707:38179331777:1:F2"
       ]
     },
     {
       "title": "模板 app/AGENTS.md 声称内置 Users 管理页面，与 users 插件实际能力不符",
-      "reason": "单独保留。模板 app/AGENTS.md 的 Default template scope 段称唯一内置 provider 会在 Users 页面把 Authorization Permission Sets 暴露为直接角色（E24），但 users Skill 明确没有用户管理页面、client 仅贡献邀请页，应用因此改用 UsersClient 自建 Staff 页（E23）。这是模板文档对框架能力的错误说明，与其他指引/能力缺口的根因不同，故单独保留。",
+      "reason": "单独保留：模板 app/AGENTS.md 的 Default template scope 段称唯一内置 provider 会在 Users 页面把 Authorization Permission Sets 暴露为直接角色（E24），但 users Skill 明确没有用户管理页面、client 仅贡献邀请页，应用因此改用 UsersClient 自建 Staff 页（E23）。",
       "members": [
         "707:38179331777:1:F3"
       ]
     },
     {
       "title": "无 config.yml 时 secrets 前置说明未覆盖 CLI/createTestApp，testing.md 整应用示例也缺 secrets/publicOrigin/Origin",
-      "reason": "跨报告合并。716:38329379899:1:F3 的 E37/E38/E39 显示 database-connections.md 只对 pnpm dev/pnpm start 说明 secrets 前置，未覆盖同样启动完整 provider 注册表的 CLI（如 db sample）与 createTestApp，testing.md 也未提，导致 ApplicationNotConfiguredError 被误判；756:39068139542:1:F5 的 E29/E30 显示 testing.md 的 createAppTest 示例只传 createServer，未给 secrets.keys 与 app.publicOrigin，也未说明 cookie 写请求要带匹配 Origin，应用必须自加 TEST_CONFIG 与 origin 头，否则启动失败或写请求 403 INVALID_CSRF_ORIGIN。两者同属整应用测试/CLI 最小配置前置在指引中缺失，修复方向均是把 secrets 与 publicOrigin/Origin 写进 testing.md 的最小示例，故合并；F5 的 Origin 部分虽与 CSRF 指引相关，但其测试启动与最小配置缺口与本组一致。",
+      "reason": "跨报告合并：716:38329379899:1:F3 的 E37/E38/E39 显示 database-connections.md 只对 pnpm dev/pnpm start 说明 secrets 前置，未覆盖同样启动完整 provider 注册表的 CLI（如 db sample）与 createTestApp，testing.md 也未提，导致 ApplicationNotConfiguredError 被误判；756:39068139542:1:F5 的 E29/E30 显示 testing.md 的 createAppTest 示例只传 createServer，未给 secrets.keys 与 app.publicOrigin，也未说明 cookie 写请求要带匹配 Origin，应用必须自加 TEST_CONFIG 与 origin 头，否则启动失败或写请求 403 INVALID_CSRF_ORIGIN。",
       "members": [
         "716:38329379899:1:F3",
         "756:39068139542:1:F5"
@@ -2087,7 +2097,7 @@
     },
     {
       "title": "SeedContext.repository 声明为方法，Skill 种子示例的解构/方法简写触发 unbound-method lint",
-      "reason": "跨报告合并。716:F4、717:F1、740:F3、741:F1 与 756:39068139542:1:F2 的证据均指向同一冲突：@nocobase/db 的 SeedContext.repository 以非 this:void 方法声明，而 nocobase-db Skill 的 seed 示例写成 async run({ repository }) 解构并调用（或对象方法简写），触发框架默认 typescript-eslint recommended-type-checked 的 unbound-method。717:F1 的 E9/E10/E12/E28/E36/E37、740:F3 的 E12/E11/E58/E31、741:F1 的 E18/E40 均显示 lint 复现与改用 run(context)+context.repository 的绕行；756:F2 的 E20/E19/E49 同样记录照抄示例后被 lint 拒绝并改成箭头函数。根因、受影响示例与修复方向一致，故并入。",
+      "reason": "跨报告合并：716:F4、717:F1、740:F3、741:F1 与 756:39068139542:1:F2 的证据均指向同一冲突：@nocobase/db 的 SeedContext.repository 以非 this:void 方法声明，而 nocobase-db Skill 的 seed 示例写成 async run({ repository }) 解构并调用（或对象方法简写），触发框架默认 typescript-eslint recommended-type-checked 的 unbound-method。",
       "members": [
         "716:38329379899:1:F4",
         "717:38329383614:1:F1",
@@ -2098,7 +2108,7 @@
     },
     {
       "title": "i18n 语言偏好为会话级单例，同账号多标签页会互相覆盖服务端语言",
-      "reason": "跨报告合并。725:F7（E5/E7）与 766:F3（E1–E4）均指向 @nocobase/app-plugin-i18n 把语言偏好保存在服务端 session 的单一 LOCALE_SESSION_KEY，PUT /i18n/locale 为替换式写入；README 也记载同账号多标签页会互相覆盖。766:F3 进一步复现：标签 A 切到中文后，标签 B 的接口返回也变中文而界面仍为英文，期望与修复方向一致（按标签页/请求隔离语言，或在 README/Skill 中显著说明该边界）。701:F4 仍单列：它聚焦 app-client 固定单键 localStorage 被同一浏览器 profile 的不同账号共享，是客户端持久化键缺少用户维度的问题，与本组服务端 session 单例的根因和修复面不同。",
+      "reason": "跨报告合并：725:F7（E5/E7）与 766:F3（E1–E4）均指向 @nocobase/app-plugin-i18n 把语言偏好保存在服务端 session 的单一 LOCALE_SESSION_KEY，PUT /i18n/locale 为替换式写入；README 也记载同账号多标签页会互相覆盖。766:F3 进一步复现：标签 A 切到中文后，标签 B 的接口返回也变中文而界面仍为英文，期望与修复方向一致（按标签页/请求隔离语言，或在 README/Skill 中显著说明该边界）。",
       "members": [
         "725:38481207536:1:F7",
         "766:39165532645:1:F3"
@@ -2106,128 +2116,142 @@
     },
     {
       "title": "自转换/提醒无条件刷新 changedAtField，破坏“进入状态时间”语义，缺少可保留该字段的声明方式",
-      "reason": "单条保留。726:F3（E102/E103/E105/E163/E168）显示 @nocobase/lifecycle/dist/plan.js 的 planTransition 在每次转移（含 from=to 的自转换）都无条件写入 changedAtField=now 与递增 version；runtime.js 的 runTriggers 又按 changedAtField 计算 idle 记录。应用把 24 小时提醒实现为自转换后，statusChangedAt 被重置，按状态时间衡量的超时工单在提醒后从看板消失，只能改用 createdAt 规避。触发条件（对处于某状态的记录执行自转换后再按 changedAtField 计算停留时长/超时）、期望（提醒不应改变“进入状态的时间”）、实际（changedAtField 被无条件刷新）与修复方向（允许触发器/转移声明保留 changedAtField 或拆分两类时间字段）均自成一类；既有分组中没有相同根因或相同受影响 API（@nocobase/lifecycle 的 changedAtField 写入语义）的成员，故单独保留。",
+      "reason": "单独保留：726:F3（E102/E103/E105/E163/E168）显示 @nocobase/lifecycle/dist/plan.js 的 planTransition 在每次转移（含 from=to 的自转换）都无条件写入 changedAtField=now 与递增 version；runtime.js 的 runTriggers 又按 changedAtField 计算 idle 记录。",
       "members": [
         "726:38481213917:1:F3"
       ]
     },
     {
       "title": "授权/用户指引未说明内置默认权限集不可作为可指派应用角色，缺少创建用户并分配角色的最小示例",
-      "reason": "单条保留。726:F5（E122/E123/E124/E168）显示 @nocobase/app-plugin-users 的 createMember→validateCreateRoleScopes 会经 requireDirectRole 校验应用角色，只接受 app 作用域内可指派的权限集；把内置默认权限集 'member' 作为角色传入会抛 INVALID_ROLE_SCOPE_VALUE 'Unknown application role: member'，而授权 SKILL 只按“迁移→defineDatabasePermission/defineCompositeResource→middleware→客户端→种子→验证”的顺序说明，未给出“创建用户并分配角色”的最小示例或可指派角色清单来源。既有分组中，612:F4（旧分组 73）虽然同样涉及“默认权限集与可指派角色的边界”，但其根因是 directRoleState 把 authenticated 默认受众的集合从直接角色选择器过滤掉的可见后果，受影响代码路径（permission-set-scope.js 的 directRoleState vs users.js 的 createMember 校验）、指引位置（nocobase-app-plugin-users SKILL vs nocobase-app-plugin-authorization SKILL）与修复方向均不同，证据不足以支持与 612:F4 并为同一问题；其余相关发现（用户名长度、权限集标题解码、权限集可见性等）根因亦不同，故本组单独保留。",
+      "reason": "单独保留：726:F5（E122/E123/E124/E168）显示 @nocobase/app-plugin-users 的 createMember→validateCreateRoleScopes 会经 requireDirectRole 校验应用角色，只接受 app 作用域内可指派的权限集；把内置默认权限集 'member' 作为角色传入会抛 INVALID_ROLE_SCOPE_VALUE 'Unknown application role: member'，而授权 SKILL 只按“迁移→defineDatabasePermission/defineCompositeResource→middleware→客户端→种子→验证”的顺序说明，未给出“创建用户并分配角色”的最小示例或可指派角色清单来源。",
       "members": [
         "726:38481213917:1:F5"
       ]
     },
     {
       "title": "调度 Skill/参考缺少可直接复用的启用/停用 UI 接线示例",
-      "reason": "单独保留。732:38643271089:1:F4（E7/E8/E9/E25/E26/E31/E55）指出 scheduler 的 SKILL.md 与 references/operations.md 只给出 list/detail/occurrences/enable/disable 的路由、权限与错误码表，虽要求管理员可查看/启停，却没有任何客户端接线示例（组件、请求路径、就地更新），首轮应用据此只做了只读页，修复轮才新增 actions.tsx 调 POST enable/disable。与既有 Scheduler group 区分的理由：G\"Scheduler 没有公开的受控立即执行入口\"是能力缺口（缺 run-now API）；G\"Scheduler 指引缺少面向管理员的受控立即执行说明\"（466:F4）针对“立即执行”这一操作，而本条针对“启用/停用 UI 接线示例”这一不同指引位置与修复方向，根因、期望与实际均不同，按“同一文件不同根因/不同缺口分开、缺说明与错误说明区分”的判定规则不并入其它组。",
+      "reason": "单独保留：732:38643271089:1:F4（E7/E8/E9/E25/E26/E31/E55）指出 scheduler 的 SKILL.md 与 references/operations.md 只给出 list/detail/occurrences/enable/disable 的路由、权限与错误码表，虽要求管理员可查看/启停，却没有任何客户端接线示例（组件、请求路径、就地更新），首轮应用据此只做了只读页，修复轮才新增 actions.tsx 调 POST enable/disable。",
       "members": [
         "732:38643271089:1:F4"
       ]
     },
     {
       "title": "references/i18n.md 宣称 onError 会把 AppI18nError 自动转成含 localizedMessage 的 ApiError，与实现不符",
-      "reason": "单条保留。E6 显示 references/i18n.md:10 称 AppI18nError 会被 router 的 onError 转成带 localizedMessage 的 ApiError；但 E17 表明 @nocobase/app-server 的 recognizeApiError/toApiError 没有任何 AppI18nError 分支，E16 的 ApiError 映射表也不会自动补充本地化信息，AppI18nError 仅因带 4xx status 经 readStatusError 识别，ns/key/params 与译文会丢失。E5 的 plugin-i18n SKILL L212 已正确说明需应用自行注册 router.onError 并调用转换器，可见缺口是 i18n reference 的过度承诺（错误说明），而非框架缺少能力。该根因与既有 onError 兜底、i18n 语言作用域等条目都不同，故单独保留。",
+      "reason": "单独保留：E6 显示 references/i18n.md:10 称 AppI18nError 会被 router 的 onError 转成带 localizedMessage 的 ApiError；但 E17 表明 @nocobase/app-server 的 recognizeApiError/toApiError 没有任何 AppI18nError 分支，E16 的 ApiError 映射表也不会自动补充本地化信息，AppI18nError 仅因带 4xx status 经 readStatusError 识别，ns/key/params 与译文会丢失。",
       "members": [
         "733:38643278737:1:F3"
       ]
     },
     {
       "title": "自定义 handler 的写操作授权指引缺少显式规则与开发期校验",
-      "reason": "单条保留。734:F3（E7/E3/E23）显示 repository-routes.md 的「Enforcement and limits」只要求自定义 handler 绑定返回的 conditions.database 策略，未显式写明“handler 写库 ⇒ action 必须声明对应 update grant”，而 authorizeRepository 只在集成期校验映射为 Repository 路由的 action，不校验自定义 handler 的实际写入；浏览器验收中 Comment 对所有非 root 角色返回通用 403。该缺口是“自定义 handler 写操作所需的声明/校验规则缺失”，与组 11 中 597:F2 的“写后读回需声明 read”是同一文件里的不同根因，也与同报告 734:F4 的 snapshot 覆盖边界问题（另一根因）不同，故单独保留。",
+      "reason": "单独保留：734:F3（E7/E3/E23）显示 repository-routes.md 的「Enforcement and limits」只要求自定义 handler 绑定返回的 conditions.database 策略，未显式写明“handler 写库 ⇒ action 必须声明对应 update grant”，而 authorizeRepository 只在集成期校验映射为 Repository 路由的 action，不校验自定义 handler 的实际写入；浏览器验收中 Comment 对所有非 root 角色返回通用 403。",
       "members": [
         "734:38643285949:1:F3"
       ]
     },
     {
       "title": "Authorization.snapshot() 以 resolveConditions=false 求值，注释却声称不会显示服务端拒绝的动作",
-      "reason": "单条保留。734:F4（E2/E23）显示 authorization.js 的 snapshot() 注释声称“列出 can() 允许的 (type,id,action)，使客户端从不显示服务端拒绝的动作”，但内部以 authorizeWithGrants(..., false) 关闭条件解析，无法覆盖 handler 执行超出声明 grants 的写入；浏览器验收中 Comment 按钮可见却服务端 403。该问题是 Authorization.snapshot 的注释/覆盖边界与实现不符，与同报告 734:F3 的文档规则缺失（同报告不可合并）及组 11 的 read 回读缺口根因不同，故单独保留。",
+      "reason": "单独保留：734:F4（E2/E23）显示 authorization.js 的 snapshot() 注释声称“列出 can() 允许的 (type,id,action)，使客户端从不显示服务端拒绝的动作”，但内部以 authorizeWithGrants(..., false) 关闭条件解析，无法覆盖 handler 执行超出声明 grants 的写入；浏览器验收中 Comment 按钮可见却服务端 403。",
       "members": [
         "734:38643285949:1:F4"
       ]
     },
     {
       "title": "站内通知集成指引未提示应用需为 inbox 页面提供可发现入口",
-      "reason": "单条保留。734:F9（E14/E15/E22）显示 notification-in-app 的 SKILL Non-Goals 与 inbox-integration「Ownership and upgrades」都明确应用拥有 inbox 页面与路由，但未提醒还需提供导航/头部入口；应用 routes.ts 声明了 /inbox 却注明 Declares no navigation，验收时只能手输 URL 进入。该缺口是“集成检查清单缺少可发现入口”，与组 75 中 616:F8 的“插件自带页面仅开发期、生产消息中心 UI 需自建”（页面是否存在的问题）不是同一根因，故单独保留。",
+      "reason": "单独保留：734:F9（E14/E15/E22）显示 notification-in-app 的 SKILL Non-Goals 与 inbox-integration「Ownership and upgrades」都明确应用拥有 inbox 页面与路由，但未提醒还需提供导航/头部入口；应用 routes.ts 声明了 /inbox 却注明 Declares no navigation，验收时只能手输 URL 进入。",
       "members": [
         "734:38643285949:1:F9"
       ]
     },
     {
       "title": "Scheduler 插件不提供管理页面，应用须自建计划与运行记录页",
-      "reason": "单条保留：740:F4（E6/E3/E33/E35）在 1.0.0-beta.61 显示 @nocobase/app-plugin-scheduler 的 operations.md 声明插件不贡献页面、只有 HTTP 管理路由（list/detail/occurrences/enable/disable），插件的公开服务也只有 schedulerServiceToken（E3），因此应用必须自行实现 client/pages/scheduler/* 才能完成列表/启停/查看运行记录（E33，B01–B03 通过）。这是插件缺少可复用管理视图/页面的能力缺口（usability-improvement），与既有「Scheduler 没有公开的受控立即执行入口」（466:F3 等）及「调度 Skill/参考缺少可直接复用的启用/停用 UI 接线示例」（732:F4，属文档缺口）的根因与修复方向不同（前者需插件提供可选页面、后者需补文档示例），故单独保留。",
+      "reason": "单独保留：740:F4（E6/E3/E33/E35）在 1.0.0-beta.61 显示 @nocobase/app-plugin-scheduler 的 operations.md 声明插件不贡献页面、只有 HTTP 管理路由（list/detail/occurrences/enable/disable），插件的公开服务也只有 schedulerServiceToken（E3），因此应用必须自行实现 client/pages/scheduler/* 才能完成列表/启停/查看运行记录（E33，B01–B03 通过）。",
       "members": [
         "740:38810821322:1:F4"
       ]
     },
     {
       "title": "lifecycle.md §3 的 provider.start() 模式未说明 recover() 需要日志集合已由迁移创建",
-      "reason": "单条保留。742:F3（E2/E3/E7/E28）是 guidance-gap：指引 §3 推荐在 start() 中直接 await effectJobs().start()，但未说明该调用会经 recover()→takeBackStale()/listEffectRuns() 读取 lifecycleEffectRuns，迁移未应用时抛 RepositoryError。其根因是指引缺前置条件说明，与 742:F4 的框架错误处理根因不同；同报告不得合并。",
+      "reason": "单独保留：742:F3（E2/E3/E7/E28）是 guidance-gap：指引 §3 推荐在 start() 中直接 await effectJobs().start()，但未说明该调用会经 recover()→takeBackStale()/listEffectRuns() 读取 lifecycleEffectRuns，迁移未应用时抛 RepositoryError。",
       "members": [
         "742:38810835265:1:F3"
       ]
     },
     {
       "title": "@nocobase/lifecycle 启动恢复对日志集合缺失缺少降级或可操作诊断",
-      "reason": "单条保留。742:F4（E3/E4/E28）是 usability-improvement：JobsEffectDispatcher.start() 无条件 recover()，集合缺失时裸抛 RepositoryError 中止启动，属框架侧缺少降级/领域错误诊断；与 742:F3 的文档缺口根因不同，且同一报告不得合并。suspected 且需应用自行加容错，证据不足以并入其他组，故单独保留。",
+      "reason": "单独保留：742:F4（E3/E4/E28）是 usability-improvement：JobsEffectDispatcher.start() 无条件 recover()，集合缺失时裸抛 RepositoryError 中止启动，属框架侧缺少降级/领域错误诊断；与 742:F3 的文档缺口根因不同，且同一报告不得合并。suspected 且需应用自行加容错，证据不足以并入其他组，故单独保留。",
       "members": [
         "742:38810835265:1:F4"
       ]
     },
     {
       "title": "分享规则为持久配置，缺少“到期自动失效”的时间维度",
-      "reason": "单独保留。739:F6（E52/E49）显示 @nocobase/app-plugin-authz-sharing-rules 的分享规则以持久规则+分配表达，撤销依赖显式 delete/update，规则结构为 { key, resource, actions, title?, subjects, reason? }，没有任何有效期/到期字段，“只开放一段时间后自动失效”的临时共享只能由应用层记录到期时间并定时清理。触发条件（需要到点自然失效的临时共享）、期望（规则可声明有效期并到期自然不再生效）与修复方向（评估在 sharing-rules 中增加可选到期字段）均指向分享规则缺少时间维度这一能力缺口。既有 674:F6 虽同处 sharing-rules Skill，但聚焦“何时应自建共享表而非 defineSharingRule”，根因与修复方向不同；699:F6、577:F4 分别涉及过滤操作符与 store 查询下推，亦不同，故单独保留。",
+      "reason": "单独保留：739:F6（E52/E49）显示 @nocobase/app-plugin-authz-sharing-rules 的分享规则以持久规则+分配表达，撤销依赖显式 delete/update，规则结构为 { key, resource, actions, title?, subjects, reason? }，没有任何有效期/到期字段，“只开放一段时间后自动失效”的临时共享只能由应用层记录到期时间并定时清理。",
       "members": [
         "739:38810813995:1:F6"
       ]
     },
     {
       "title": "nocobase-db Skill 未说明 createOne 唯一约束冲突的失败形态与推荐处理",
-      "reason": "单条保留。749:F4（E24/E15/E18）显示 nocobase-db SKILL.md 只展示 collection.unique('orderNo') 与 Repository 方法边界，未说明普通 createOne 命中原生唯一约束时不会产生可类型判定的 RepositoryError，也未给出 upsertOne/预检查的取舍建议；应用因此只能自行阅读实现并写 exists 预检查。该缺口是同一报告 749:F3 所证实框架能力缺口的文档侧表现，因与 749:F3 属同一 report 不能同组，且其“缺说明”根因与其他数据库 Skill 缺说明条目（date-only、uuid 主键、时间戳责任等）所涉 API 与修复落点均不同，故单独保留。",
+      "reason": "单独保留：749:F4（E24/E15/E18）显示 nocobase-db SKILL.md 只展示 collection.unique('orderNo') 与 Repository 方法边界，未说明普通 createOne 命中原生唯一约束时不会产生可类型判定的 RepositoryError，也未给出 upsertOne/预检查的取舍建议；应用因此只能自行阅读实现并写 exists 预检查。",
       "members": [
         "749:38969428277:1:F4"
       ]
     },
     {
       "title": "错误本地化存在两条并行路径（AppI18nError→localizedMessage 与 reason→客户端翻译），指引未说明取舍",
-      "reason": "单条保留。749:F5（E20/E21/E23/E25）显示 nocobase-app-plugin-i18n SKILL 与前端 api.md 同时描述了“抛 AppI18nError 由 router.onError 转成带 localizedMessage 的 ApiError”和“客户端按 reason 分支翻译”两条本地化路径，但未说明何时应选哪一条；应用选择了 reason→客户端翻译路径（被 Skill 明确允许），可能造成实现风格分裂。该条目为“两条路径并存但缺少取舍说明”的指引缺口，与既有 733:F3（references/i18n.md 错误宣称 onError 会自动转换，属错误说明）根因不同（缺说明 vs 错误说明），与 i18n 语言作用域等条目亦无关，故单独保留。",
+      "reason": "单独保留：749:F5（E20/E21/E23/E25）显示 nocobase-app-plugin-i18n SKILL 与前端 api.md 同时描述了“抛 AppI18nError 由 router.onError 转成带 localizedMessage 的 ApiError”和“客户端按 reason 分支翻译”两条本地化路径，但未说明何时应选哪一条；应用选择了 reason→客户端翻译路径（被 Skill 明确允许），可能造成实现风格分裂。",
       "members": [
         "749:38969428277:1:F5"
       ]
     },
     {
       "title": "授权限制 Skill 缺少「共享 + 额外权限集 + 限制直接指派到用户」的单一端到端最小示例",
-      "reason": "单条保留。747:F4（E21/E22/E23/E64，另见复核引用的 E82/E37/E41）显示：nocobase-app-plugin-authz-restriction-rules 的 SKILL 已用文字说明「限制与共享/权限集的正向结果取交集，保密限制应直接指派到每个账号」（E21 L8/L18/L22），subjects 机制表也把「保密记录必须保持排除」指向 restriction 并注明共享与额外权限集不能重新打开（E23 L116/L119）；但唯一可运行的 Service API 示例以 org.team 为主题、只演示 recordAccess（E82），安装种子章节也只给 authorizationRestrictionRules/Assignments 两表与幂等写法（E22），未把「共享 + 额外权限集 + 限制直接指派到 user」连成一个最小可运行例；实现 Agent 因此在「保护权限集 / 启动期对账」等方案间反复权衡直至上下文溢出（E64），最终才以直接指派给 duzhe 落地（E37）并通过验收（E41）。该缺口是 restriction Skill 内缺少组合示例，与既有「跨包/跨主题端到端路径与示例缺失，接入链条分散」（464:F6/541:F5/579:F1）、「无权限模型应用最小授权口径不一致」（552:F4）、「授权 Skill 缺公开 API 速查」（577:F8）、「内置默认权限集不可作为可指派应用角色缺示例」（726:F5）在触发场景、受影响指引位置与修复方向（补 restriction 的反例→正解最小示例）上均不同，故单独保留。",
+      "reason": "单独保留：747:F4（E21/E22/E23/E64，另见复核引用的 E82/E37/E41）显示：nocobase-app-plugin-authz-restriction-rules 的 SKILL 已用文字说明「限制与共享/权限集的正向结果取交集，保密限制应直接指派到每个账号」（E21 L8/L18/L22），subjects 机制表也把「保密记录必须保持排除」指向 restriction 并注明共享与额外权限集不能重新打开（E23 L116/L119）；但唯一可运行的 Service API 示例以 org.team 为主题、只演示 recordAccess（E82），安装种子章节也只给 authorizationRestrictionRules/Assignments 两表与幂等写法（E22），未把「共享 + 额外权限集 + 限制直接指派到 user」连成一个最小可运行例；实现 Agent 因此在「保护权限集 / 启动期对账」等方案间反复权衡直至上下文溢出（E64），最终才以直接指派给 duzhe 落地（E37）并通过验收（E41）。",
       "members": [
         "747:38969414170:1:F4"
       ]
     },
     {
       "title": "Scheduler 列表对每条记录重复调用 targets.describe()，同一投影可能不一致",
-      "reason": "单条保留：756:39068139542:1:F1 的 E3 显示 DefaultSchedulerService.list() 在同一个 map 回调中分别于第 36/40 行调用 targets.describe()，每条 schedule 重复异步探测，且 targetState 与 targetSummary 可能来自不同快照；E5 的 operations 指引只描述管理 API 与权限，不涉及该运行时重复调用。这是插件 list()/get() 的实现缺陷，与 Scheduler 缺少立即执行入口、授权目录或管理页面等分组根因不同，故单列。",
+      "reason": "单独保留：756:39068139542:1:F1 的 E3 显示 DefaultSchedulerService.list() 在同一个 map 回调中分别于第 36/40 行调用 targets.describe()，每条 schedule 重复异步探测，且 targetState 与 targetSummary 可能来自不同快照；E5 的 operations 指引只描述管理 API 与权限，不涉及该运行时重复调用。",
       "members": [
         "756:39068139542:1:F1"
       ]
     },
     {
       "title": "SQLite 单连接池下事务内的外部读取会阻塞至连接获取超时，事务指引只讲回滚而未说明挂起模式",
-      "reason": "单独保留。758:F7 的证据显示 nocobase-db Skill 的事务章节只警告事务外的 db.query()/repository()/connection() 不会随事务回滚（E49），未说明默认 SQLite 池只有一个连接时，这类外部读取会等待事务占用的连接直到 acquire timeout，使请求看起来永久挂起；db-sqlite 的 configurePool 只包装 afterCreate 安装 decimal 聚合，既不设池大小也不设 acquire timeout（E50），而应用在事务内查询 manager 的 reopen 请求实测挂起超过 30 秒（E63），把查询移到事务提交后即恢复（E65）。触发条件（SQLite 默认单连接、事务内执行外部读取）、期望（指引明确阻塞/超时风险并给出提交后读取或只用回调连接的示例，或提供有界 acquire timeout）与修复方向均与既有“SQLite Date 绑定类型”“check 约束被忽略”“逻辑名/物理列名”等 SQLite 或事务相关条目不同，不能按同一根因合并，故单列。",
+      "reason": "单独保留：758:F7 的证据显示 nocobase-db Skill 的事务章节只警告事务外的 db.query()/repository()/connection() 不会随事务回滚（E49），未说明默认 SQLite 池只有一个连接时，这类外部读取会等待事务占用的连接直到 acquire timeout，使请求看起来永久挂起；db-sqlite 的 configurePool 只包装 afterCreate 安装 decimal 聚合，既不设池大小也不设 acquire timeout（E50），而应用在事务内查询 manager 的 reopen 请求实测挂起超过 30 秒（E63），把查询移到事务提交后即恢复（E65）。",
       "members": [
         "758:39068146241:1:F7"
       ]
     },
     {
       "title": "前端示例链接的层级被误读，但链接本身有效，不构成文档路径缺口",
-      "reason": "单条保留。766:F4 与既有“Skill 内部 references 路径/目录说明不明”组症状相似，但证据显示 api.md 的 example/list-page.md 相对链接可解析到真实存在的 references/frontend/references/example/list-page.md；实际失败命令漏掉了链接中明确写出的 example/ 段，属于执行时路径拼接失误，而非文档未给出真实引用路径或目录结构。根因不同，故不并入该组，也不与其他发现合并。",
+      "reason": "单独保留：766:F4 与既有“Skill 内部 references 路径/目录说明不明”组症状相似，但证据显示 api.md 的 example/list-page.md 相对链接可解析到真实存在的 references/frontend/references/example/list-page.md；实际失败命令漏掉了链接中明确写出的 example/ 段，属于执行时路径拼接失误，而非文档未给出真实引用路径或目录结构。",
       "members": [
         "766:39165532645:1:F4"
       ]
     },
     {
       "title": "单次 dist 路径猜测不足以证明公开入口或产物布局指引缺失",
-      "reason": "单条保留。766:F5 与既有“公开入口与已发布 dist 布局未文档化”组症状相似，但证据只记录了一次 dist/server/index.d.ts 猜测失败；包 README 的入口表和 testing.md 已给出 @nocobase/app-testing/server 说明符，exports 也正确映射到 dist/src。现有证据不足以支持“指引缺失或无效”的同一根因，故不并入该组。",
+      "reason": "单独保留：766:F5 与既有“公开入口与已发布 dist 布局未文档化”组症状相似，但证据只记录了一次 dist/server/index.d.ts 猜测失败；包 README 的入口表和 testing.md 已给出 @nocobase/app-testing/server 说明符，exports 也正确映射到 dist/src。现有证据不足以支持“指引缺失或无效”的同一根因，故不并入该组。",
       "members": [
         "766:39165532645:1:F5"
+      ]
+    },
+    {
+      "title": "生成的 config.yml 与共享 Prettier singleQuote 规则冲突，首次 format:check 失败",
+      "reason": "单独保留：765:F1 的证据显示 app-cli 的 yamlString 用 JSON.stringify 生成双引号 YAML 标量，而共享 Prettier 基线要求 singleQuote；config init 后首轮 format:check 仅在 config.yml 失败，只能把该生成文件加入 .prettierignore。属生成物与格式基线/默认排除清单之间的独立可用性缺口，与其它组无同一根因。",
+      "members": [
+        "765:39165528773:1:F1"
+      ]
+    },
+    {
+      "title": "Scheduler 不提供管理页面或立即执行入口，管理员只能自建页面并等待 cron 验证",
+      "reason": "单独保留：765:F3 同时主张 Scheduler 缺少管理页面与缺少立即执行入口两个能力面；既有组分别只覆盖其中一个，且该 finding 不可拆分、同报告 765:F1 已单列，故独立成组，避免把另一缺口混入。",
+      "members": [
+        "765:39165528773:1:F3"
       ]
     }
   ],
@@ -2235,9 +2259,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39169245583",
+    "runId": "39171712271",
     "attempt": 1,
     "controlSha": "159671742ca501d20347a005bebd1abac7629e28",
-    "completedAt": "2026-10-18T21:49:18.008Z"
+    "completedAt": "2026-10-18T22:22:12.354Z"
   }
 }
