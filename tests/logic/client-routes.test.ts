@@ -53,6 +53,11 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'documents' },
+      {
+        name: 'documents-administration',
+        authorizedAs: 'settings:documents.administration',
+      },
       { name: 'inbox', authorizedAs: null },
     ]);
   });
