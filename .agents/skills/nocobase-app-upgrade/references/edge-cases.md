@@ -98,25 +98,29 @@ Apply the agreed outcome to the manifest and composition roots together, then ve
 
 ## Migrations
 
-A release can ship a migration under `database/`. Copy it in like any added file, then `pnpm nocobase db apply`.
+A release can ship a migration under `database/`, and updated plugins can supply migrations without any application file changing. Copy new application migrations in like other added files, then follow [database upgrades](database-upgrades.md) before applying them or starting the application against retained data.
 
 Never edit a migration that arrives this way, and never edit one already run — a correction goes in a new migration. The user's own migrations and seeds stay byte for byte where they are; an upgrade never rewrites them.
 
-Template cleanup does not authorize deleting previously executed application migrations or seeds, even when they originally came from the template. Preserve their original package owner, paths, contents, and history; do not reset checksums, drop tables, or repoint history to another template. For directory or connection changes, follow [existing application migration rules](../../nocobase-app-development/references/migrations.md#existing-applications) and verify the original sources remain available in the deployment.
+Template cleanup does not authorize deleting previously executed application migrations or seeds, even when they originally came from the template. Preserve their original package owner, paths, contents, and history; do not reset checksums to hide unexplained drift, drop tables, or repoint history to another template. A documented upstream correction requires the separate checksum review in [database upgrades](database-upgrades.md#review-checksum-drift). For directory or connection changes, follow [existing application migration rules](../../nocobase-app-development/references/migrations.md#existing-applications) and verify the original sources remain available in the deployment.
 
 Unregistering a plugin leaves its records and migration history intact. Do not roll back a retired plugin's migrations after removing its sources; an intentional rollback requires restoring the original plugin version first.
 
 ## Documentation and generated directories
 
-`AGENTS.md`, `CLAUDE.md`, and `README.MD` ship with the template and may contain user additions. Take the template's version where the user wrote nothing and merge where they did.
+`AGENTS.md`, `CLAUDE.md`, `README.MD`, and the files under `.agents/rules/` ship with the template and may contain user additions. Take the template's version where the user wrote nothing and merge where they did. `.agents/rules/` is committed and application-owned: merge each file the target changes, keep every rules file the user added, and never replace the directory wholesale.
 
-Older template releases also shipped a committed `skills/` directory. A target release that moves those Skills into `@nocobase/app-skills` does not authorize deleting local changes. Compare each legacy file with the BASE template: an unchanged template copy may be removed only after install and `pnpm nocobase skills sync` produce the corresponding package-owned Skill under `.agents/skills/`; a modified or added file is application-owned and must be preserved. Keep a customized legacy directory with explicit links from `AGENTS.md`, or move its rules into `AGENTS.md` or another committed application-owned source after showing the user the exact relocation. Never silently fold custom content into a generated copy.
+`AGENTS.md` is a small always-on index of at most 32 KB that links to `.agents/rules/` and the synchronized Skills. When TARGET ships that index form and the project still has an older, long `AGENTS.md` with user edits, take TARGET's index and keep the user's application-specific additions by moving each into the matching `.agents/rules/<topic>.md`, or a new one linked from the index, rather than appending them to `AGENTS.md`. Show the user where each addition went.
+
+An application generated before templates shipped `.agents/rules/` ignores `/.agents/` wholesale in `.gitignore`, which keeps the rules out of version control. Replace that line with `/.agents/*` followed by `!/.agents/rules/`, keep `/.claude/skills/` ignored, and confirm with `git check-ignore -v .agents/rules/<file>` that a rules file is no longer ignored.
+
+Older template releases also shipped a committed `skills/` directory. A target release that moves those Skills into `@nocobase/app-skills` does not authorize deleting local changes. Compare each legacy file with the BASE template: an unchanged template copy may be removed only after install and `pnpm nocobase skills sync` produce the corresponding package-owned Skill under `.agents/skills/`; a modified or added file is application-owned and must be preserved. Keep a customized legacy directory with explicit links from `AGENTS.md`, or move its rules into `.agents/rules/` or another committed application-owned source after showing the user the exact relocation. Never silently fold custom content into a generated copy.
 
 Older releases may include `MIGRATION.md`. Treat it as historical context and verify each suggestion against BASE → TARGET and the project's state; never remove a capability that TARGET still provides solely because an old note says to. When TARGET removes the document, delete an unchanged template copy, but preserve or relocate the user's own operational notes before removing a customized copy.
 
 `.mcp.json`, `.cursor/mcp.json` and `.vscode/mcp.json` ship with the template and configure the shadcn MCP server for Claude Code, Cursor and VS Code. The user may have added servers of their own, or created one of these files before the template shipped it. Merge them as JSON objects, never by overwriting: take the template's entry under `mcpServers` (`servers` in `.vscode/mcp.json`) where the user's entry by that name is unchanged or missing, keep every other server and setting the user has, and ask before replacing a `shadcn` entry they changed.
 
-`.agents/skills/` is generated and gitignored. `pnpm nocobase skills sync` replaces each synchronized package-owned Skill directory wholesale, so never merge into or edit it. Local custom guidance belongs in committed application-owned files outside this generated directory.
+`.agents/skills/` is generated and gitignored. `pnpm nocobase skills sync` replaces each synchronized package-owned Skill directory wholesale, so never merge into or edit it. Local custom guidance belongs in committed application-owned files outside this generated directory, normally `.agents/rules/`.
 
 `config.yml`, optional generated `.env`, `.gitignore`, `.npmrc`, and `pnpm-workspace.yaml` were written by the generator or by `pnpm nocobase config init` and appear in no diff at all.
 
@@ -155,6 +159,7 @@ Template structure — where most of the delta lands
 Both sides edit these — the hardest decisions
   client/plugins.ts  server/plugins.ts  cli/plugins.ts
   package.json  config.example.yml  optional .env.example  AGENTS.md  CLAUDE.md
+  .agents/rules/
   .mcp.json  .cursor/mcp.json  .vscode/mcp.json
 
 Legacy application-owned guidance, when present
@@ -224,3 +229,19 @@ NocoBase Hub is discontinued, and with it `@nocobase/hub-cli` and the `pnpm noco
 2. Delete `.nocobase/hub.json` and the `HUB_*` variables in `.env` and any example environment file.
 3. Tell the user which CI steps and scripts published to a Hub, and that they need another deployment route: a deployment archive from `pnpm build --tar` installed with `@nocobase/app-installer`, or the application's `Dockerfile`, as the `nocobase-deployment` Skill describes. Ask before rewriting a pipeline; do not delete one silently.
 4. Ask the user to remove the saved Hub API keys from their credentials file themselves; never read or print them.
+
+## Permission editor source upgrades
+
+When the target template changes the permission workspace, reconcile `client/components/permission-editor.tsx`, its `permission-filter.tsx` input and declared UI primitives (including `checkbox` and `popover`), `client/pages/settings/permissions-model.ts`, the role form callback bindings, `permission-filters.tsx` and localized labels together. Resource rows use action checkboxes with scopes attached to their owning action; scope controls are not additional permissions. The optional `onEnabledBatchChange` reports one atomic batch for visible toggleable actions; bind it with one functional draft update that retains unknown grants, policies and scopes. Existing consumers without that callback retain individual action editing. Preserve application-specific resource registration, protected roles, save/revision checks and server authorization. Include a multi-action selection test and a test retaining existing scope policies. Registry source copies do not update themselves when the registry site publishes; bring this interaction in through the template source merge, preserving application customizations.
+
+## Standard process management source upgrades
+
+When TARGET introduces the preinstalled `flow-diagram`, `lifecycle-diagram` and workflow-management sources, merge those files, their React Flow/ELK client dependencies, standard DataTable and locale keys together. Add no workflow routes, menus or sample business data to an application that has no process. For applications with processes, inspect their actual management renderer and editor after the source merge; adding unused files alone does not upgrade a rendered page.
+
+Follow the target's [default process UI contract](../../nocobase-app-development/references/lifecycle-ui.md#default-diagram-and-configuration-contract). Reuse existing route ids, catalog aggregation, stored parameters/revisions, role grants and execution history. Adapt a legacy technical Mermaid fallback to the standard component when it was not an explicit user style choice, and connect declared authorized bindings to the same real parameter editor through `LifecycleDiagram.configuration`. Preserve intentional user visual customizations and application-owned behavior; do not overwrite a custom page wholesale. An npm 404 recorded in old maintenance notes is not evidence that a UI Registry item was unavailable. Remove such stale technical fallback explanations after verified migration.
+
+Verify the rendered directory/detail/history pages and parameter read/save behavior, including denied writes and snapshots, rather than considering the upgrade complete merely because graph source files exist. Report any required renderer/editor adaptation that remains unverified. A template upgrade carries source through reconciliation; a registry website release or dependency version bump alone never replaces an application's copied components.
+
+## Page permission label upgrades
+
+Reconcile `client/pages/settings/page-permissions.ts`, the role form's catalog adapter, the application-owned `page-permission-titles.ts` mapping, the localized unnamed-page fallback and `tests/logic/page-permission-titles.test.ts` together. Preserve existing mapping entries, route names, resource ids, actions, grants and policies; add translations for untitled page permissions rather than changing their authorization or adding breadcrumbs to overlays. Check the application's actual resolved routes in both languages, not just the bare template.

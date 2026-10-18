@@ -2,6 +2,12 @@
 
 Use `@nocobase/lifecycle` when a business record moves through stages that developers define in source: an expense report, a ticket, a contract, an order, a leave request. The record keeps its state in one of its own fields, every change is a transition declared in a definition, and the work a transition owes outside the database — mail, payments, calls to other systems — runs as effects after the transaction commits. There is no separate process instance, so the state is never kept in two places.
 
+Administrators can adjust code-declared business parameters without editing workflow structure. Proactively declare suitable approval departments, reviewer choices and thresholds as business parameters, even without an explicit configurability request. For declarations, snapshot/live reads and shared configuration editors, read [configurable lifecycle parameters](lifecycle-parameters.md).
+
+## Deliver workflow management by default
+
+Whenever application requirements include a process to develop, include workflow management pages alongside its business operations; users do not need to request a console separately. Reuse or extend existing management pages with the UI Library `workflow-management` block and follow [Lifecycle UI](lifecycle-ui.md) for the default layout and organization based on the workflow example. Deliver one Workflow management sidebar entry with in-page Definitions and Executions tabs, definition details with diagrams and declared parameter settings, and execution details with history and effects. The tab views have URL-backed child routes without sidebar `navigation`. Follow the scope exceptions in [system administration](system-administration.md#default-delivery). Keep workflow structure in source; management pages do not imply a visual designer.
+
 ## Choose it or something else
 
 | The requirement                                                                                   | Use                                                            |
@@ -13,6 +19,12 @@ Use `@nocobase/lifecycle` when a business record moves through stages that devel
 | Work that runs once in the background, or on a schedule, with no record state                     | [services and jobs](services-and-jobs.md)                      |
 
 A parent and its children can each have a lifecycle and point at each other by foreign key, such as a document and the tasks it distributes; a child's last transition can move the parent on in the same transaction.
+
+## Include process administration automatically
+
+Implement [the system settings delivery contract](system-settings.md) with every lifecycle: a directory of the application's real definitions, a definition diagram, supported parameter configuration and authorized execution history. Do not ask the user whether to include these administration surfaces. Use `@nocobase/lifecycle-diagram` for definitions and actual record progress, with the standard `@nocobase/flow-diagram` canvas beneath it. Respect an explicit request to omit the interface.
+
+The business record's page may show a diagram, state/actions/history, or a compact summary according to the task. This choice does not remove its administration entry. Preserve record-level permissions and source-owned structure; a definition diagram never fires a transition. Follow [diagram integration](#draw-an-interactive-lifecycle-diagram) and the [frontend workflow](frontend/ui-workflow.md).
 
 ## Rules that are never broken
 
@@ -376,6 +388,8 @@ return view.available.map((transition) => (
 
 Render the buttons from `view.available`, never from a hard-coded state check, so the page and the server use the same judgement. Translate titles and blocker messages by their stable `name` and `code`, as every user-visible string goes through a translation key. `fire` sends a fresh `requestId` and the version on screen; on `CONFLICT` tell the person the record changed and reload rather than retrying. On `INVALID_INPUT`, mark the fields in `error.problems`. The hook refreshes every 4 seconds by default; `refreshMs` changes it. Follow [the frontend workflow](frontend/ui-workflow.md) for the page itself.
 
+For browser request IDs, prefer the built-in lifecycle client, which already handles environments without `crypto.randomUUID()`. Custom submissions and parameter saves must not call it unconditionally: it requires a secure context and can be unavailable on HTTP test hosts. Use a shared helper that falls back to `crypto.getRandomValues(new Uint8Array(16))`, encoded as hex, or an existing HTTP-compatible ID utility. Generate one key per logical operation and reuse it with the same payload for transport retries; changed input or a new decision needs a new key. Verify submission with `randomUUID` unavailable, not only on localhost or HTTPS.
+
 ## 6. Tests
 
 Unit-test the definition with the test kit — a memory store, a fake clock and in-process effects — so waits, retries and refusals need no database:
@@ -426,3 +440,26 @@ States, transition, lifecycle and effect names are stored in the database. Addin
 | `INVALID_SET` on create                        | `values` set the state, timestamp or version; pass `{ state }` to `create()` to start in another initial state                                                                                        |
 
 The installed package's README lists its entries; the full guide, design notes and 28 worked recipes are in `packages/libs/lifecycle/docs/` of the NocoBase repository, and `packages/examples/app-plugin-lifecycle-example` and `packages/examples/app-plugin-office-flows-example` are complete working code.
+
+## Draw an interactive lifecycle diagram
+
+For workflow management lists, definition and execution details, diagram sizing and parameter form placement, read [Lifecycle UI](lifecycle-ui.md). Prefer a visible parameter form beside the diagram on management pages; provide contextual configuration for declared, authorized bindings by default through `LifecycleDiagram.configuration`, opening the same editor. Use the same editor and save contract for both. Read [configurable lifecycle parameters](lifecycle-parameters.md#management-pages-and-contextual-editors) for authorization, CAS conflicts and current-versus-historical values.
+
+When a page needs a lifecycle diagram, first reuse the template's preinstalled `#components/lifecycle-diagram`; otherwise install the UI Library's `@nocobase/lifecycle-diagram` component (React Flow + ELK) instead of building a canvas or turning Mermaid source into an interactive view. Read `pnpm exec shadcn view @nocobase/lifecycle-diagram-demo`, then install with `yes n | pnpm exec shadcn add @nocobase/lifecycle-diagram` and format the created files. It includes `@nocobase/flow-diagram`, which is also available alone for a generic directed graph. Follow [the UI Library guidance](frontend/references/styling.md#3-use-shadcn) and its [offline catalog](frontend/references/ui-library.md) for discovery and installation.
+
+Import `LifecycleDiagram` from `#components/lifecycle-diagram`. Pass the hook's `description.description`, an `ariaLabel`, `currentState: view.record.status` (use the lifecycle's own state field), and `availableTransitions: view.available.filter((item) => item.allowed).map((item) => item.name)`. Translate labels by stable state/transition names with `stateLabel` and `transitionLabel`; add the shared `flowDiagram` keys to your locale resources. Use `onStateClick` and `onTransitionClick` to open details, including effects, triggers and continuations from the description. Definitions remain in source and clicking the diagram never fires a transition; action buttons still follow `view.available`. Pass `history={view.history.transitions}` for visited paths; the component matches the exact transition, source and destination, including retries. `visitedStates` supplements node highlights only; never infer a traversed edge from the current state or visited endpoints. Pass a translated `endLabel` to display a separate decorative end marker after each explicit final state, without treating every state lacking outgoing transitions as final. Keep `toMermaid()` for documentation and export.
+
+`LifecycleDiagram` defaults to `direction="DOWN" autoHeight`. For direct `FlowDiagram` composition on a process page, set those props explicitly. Choose automatic height for a content-sized diagram, or a deliberately bounded canvas for the side-by-side management layouts in [Lifecycle UI](lifecycle-ui.md#diagram-sizing-and-visual-language). Fit the full routed graph, including outer edges and labels. A wide graph fitted into a short fixed-height panel makes its labels unreadable; verify the actual lifecycle in the target page.
+
+The label callbacks receive description objects, not name strings. Read `state.name` in `stateLabel` and `transition.name` in `transitionLabel` when building translation keys:
+
+```tsx
+stateLabel={(state) => t(`leaves.states.${state.name}`)}
+transitionLabel={(transition) => t(`leaves.transitions.${transition.name}`)}
+```
+
+Adapt the translation key prefix to the feature.
+
+Preserve the component’s application theme tokens: `--primary` for current, visited and available highlights, subdued neutral strokes for other edges, and card/foreground/border tokens for the canvas and labels. Current nodes use an accent border and ring, visited nodes a subtler accent border, and both retain the upstream textual status and icon so execution state does not rely on color alone. Labels stay on the routes; automatic transitions remain solid and may show `⚙` through `transitionLabel`. Do not introduce a separate palette or hard-coded accent color. Check light/dark themes and a changed application primary color when customizing the rendering.
+
+For narrow layouts, use `initialMinZoom={0.8}` to preserve readable node content, with pan and a full-graph Fit control. Do not add a minimap to standard process pages by default; `showMiniMap` remains opt-in for consumers that need it. `configuration` on LifecycleDiagram automatically exposes declared, authorized bindings through the real editor; `stateActions` (or `nodeActions` on FlowDiagram) adds custom controls; `nodeDescription` adds real policy summaries. Supply enough fixed node height for the content. Definition views show the latest configured policy, while record views identify their submission snapshot. Never invent reviewer names, policy values or execution highlights. Standard business process pages omit system-only technical edit paths without adding a technical display toggle; retain every business approval, rejection, withdrawal and resubmission path. Technical diagnostic views may expose the complete source description separately when explicitly needed.

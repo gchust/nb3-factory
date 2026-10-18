@@ -204,6 +204,12 @@ A page and the endpoints it calls must agree: the example's `/api/projects` is o
 
 **The resource id is the permission identifier**: the permission set page lists every route whose `authz` checks `page` `access`, keyed by `authz.resource.id` (deduplicated), under the Pages entry with its navigation groups in menu order. Stored grants reference that id, so changing it requires migrating them; renaming the route alone does not.
 
+### Permission display names
+
+Every application route that resolves to a `page` permission needs a non-empty, translated display name, including URL-addressable forms, dialogs, drawers and detail pages. Navigation/breadcrumb titles provide it where already appropriate. For a page that intentionally has neither (especially an overlay), add its existing application route `name` and a static application translation key to `client/pages/settings/page-permission-titles.ts`. This mapping labels permissions only; do not add a menu/breadcrumb or change a route name, `authz.resource.id`, inheritance, `'skip'` or stored grants to repair copy. Plugin routes retain their owning namespace and are not overridden by an application's same-named route.
+
+Provide English and Chinese text without unresolved interpolation placeholders. The permission catalog uses `pagePermissionResources()` and a localized unnamed-page/path fallback instead of exposing technical ids. That fallback is a diagnostic, not successful delivery: `tests/logic/page-permission-titles.test.ts` must pass against the application's actual resolved routes and locales; it rejects missing labels, stale mapping keys and untranslated keys. When fixing an existing app, preserve the complete resource/action identity list and grants, and verify display labels without rewriting authorization data.
+
 ## 5. Settings pages
 
 There is one kind of client route, `defineAppRoutes()`. The application has no separate settings area and no `/settings` or `/dev` prefix, and plugins contribute no settings pages: a page that configures something is an ordinary App page in the main navigation. Put such pages under a navigation group of their own, such as a Settings group at the end of the sidebar, and add the icons to the `lucide-react` import at the top of the file (here `Settings` and `SlidersHorizontal`):
@@ -274,6 +280,24 @@ Write `navigation` on the route. The application sidebar reads its menu entries 
 - Navigation group: write only `name`, `navigation` and `children`, without `componentLoader`. For groups and clickable parents, see [`child-routes.md`](child-routes.md).
 - Do not change the shell (`client/layouts/`) or the ServiceProvider to add a menu entry, and do not add a Refine resource for a menu. Refine resources produce no menu entries (see ["Loading data in a component" in `api.md`](api.md#loading-data-in-a-component) for what they are for); the home page entry is declared in the routes as well.
 - A new page with a menu entry usually touches four places: `client/routes.ts`, the page component, `client/locales/` and, for an App page that requires sign-in, the page grant list in `tests/logic/client-routes.test.ts` ([section 12](#12-update-the-route-test)).
+
+### A count beside an entry
+
+An entry can show how many things wait on the viewer behind it, such as unread messages or requests to decide. A count changes while the page is open, so it is not part of the route's `navigation`: the App layout reads it with the hook that keeps it current and passes it to `NavigationMenu` in `badges`, keyed by the route's `name`:
+
+```tsx
+// client/layouts/app-layout.tsx
+const { data: unread = 0 } = useInboxUnreadCount(); // @nocobase/app-plugin-notification-in-app/client/inbox
+
+<NavigationMenu
+  items={menuItems}
+  label={navigationLabel}
+  selectedKey={selectedKey}
+  badges={{ inbox: unread }}
+/>;
+```
+
+A number is something waiting; `{ count, live: true, hint }` is work under way, such as runs in progress, drawn in the primary color behind a pulsing dot, with `hint` (translated, such as "2 running") as its words. The menu does the rest: nothing at zero, "99+" above 99, the count in the entry's accessible name and tooltip, and in the collapsed sidebar a dot on the icon's corner. A count goes on a page entry the menu always shows — a top-level entry or a section's — not on a group or an entry inside a sub-menu. Which counts belong in the menu at all is guideline L8 of [`../ui-guidelines.md`](../ui-guidelines.md).
 
 ## 7. Back button and breadcrumbs
 
