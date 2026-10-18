@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo, Settings } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,42 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The application's own business page: the todo list `todos.check-expired` maintains. A role needs the
+    // `page:todos/access` grant to open it, and the same grant guards `GET /api/todos`.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+  },
+  {
+    // The scheduler plugin ships the service and its API but no page, so this is where its schedules are visible.
+    // Its routes check `page:scheduler.schedules/access`, so the page declares the same resource.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/schedules/index.js'),
+    name: 'schedules',
+    navigation: { title: 'navigation.schedules', icon: CalendarClock },
+    path: '/schedules',
+  },
+  {
+    // Application settings are an ordinary sidebar page here, not a separate settings area. The only setting is whether
+    // the scheduled task runs, so it reuses the Scheduler page's grant: whoever may see the plans may turn one off.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/settings/index.js'),
+    name: 'settings',
+    navigation: { title: 'navigation.settings', icon: Settings },
+    path: '/settings',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an

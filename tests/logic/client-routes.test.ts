@@ -53,6 +53,10 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      // The todo list and the scheduler views each need their page grant; the ids are what stored grants reference.
+      { name: 'todos', authorizedAs: 'todos' },
+      { name: 'schedules', authorizedAs: 'scheduler.schedules' },
+      { name: 'settings', authorizedAs: 'scheduler.schedules' },
       { name: 'inbox', authorizedAs: null },
     ]);
   });
