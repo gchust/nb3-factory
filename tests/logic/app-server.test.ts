@@ -741,6 +741,163 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('serves the seeded service desk workflow to the demo roles', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // A cookie-authenticated write is checked against the application's
+        // public origin, exactly as a browser request would be.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (username: string): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password: 'ServiceDesk#2026' }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    const alex = await signIn('alex.kim');
+    const dana = await signIn('dana.cole');
+    const morgan = await signIn('morgan.reed');
+
+    // The desk sees the seeded queue and the engineers it may assign to.
+    const dashboard = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/dashboard`,
+      { headers: { cookie: dana } },
+    );
+    expect(dashboard.status).toBe(200);
+    await expect(dashboard.json()).resolves.toMatchObject({
+      data: {
+        pendingAssignment: expect.any(Number),
+        processing: expect.any(Number),
+        workload: expect.any(Array),
+      },
+    });
+
+    const engineers = await requestApp(app, `${baseUrl}/api/engineers`, {
+      headers: { cookie: dana },
+    });
+    expect(engineers.status).toBe(200);
+    const engineerList = (await engineers.json()) as {
+      data: { id: string; name: string }[];
+    };
+    const assignee = engineerList.data.find(
+      (engineer) => engineer.name === 'Morgan Reed',
+    );
+    expect(assignee).toBeDefined();
+
+    // An employee raises a ticket and cannot assign it.
+    const created = await requestApp(app, `${baseUrl}/api/tickets`, {
+      method: 'POST',
+      headers: {
+        cookie: alex,
+        origin: 'http://localhost',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Keyboard types the wrong characters',
+        description: 'The keyboard layout changes after every reboot.',
+        urgency: 'normal',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const ticket = (await created.json()) as { data: { id: number } };
+
+    const forbidden = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/${ticket.data.id}/assign`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: alex,
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ assigneeId: assignee?.id }),
+      },
+    );
+    expect(forbidden.status).toBe(403);
+
+    // The desk assigns, the engineer resolves and the reporter confirms.
+    const assigned = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/${ticket.data.id}/assign`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: dana,
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ assigneeId: assignee?.id }),
+      },
+    );
+    expect(assigned.status).toBe(200);
+
+    const resolved = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/${ticket.data.id}/resolve`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: morgan,
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ resolution: 'Reset the keyboard layout.' }),
+      },
+    );
+    expect(resolved.status).toBe(200);
+
+    const confirmed = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/${ticket.data.id}/confirm`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: alex,
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      },
+    );
+    expect(confirmed.status).toBe(200);
+    await expect(confirmed.json()).resolves.toMatchObject({
+      data: { ticket: { status: 'closed' } },
+    });
+
+    // The startup overdue scan stamps each ticket it reminds the desk about,
+    // and a stamp only lands after the notification really went out.
+    const database = app.application.container.resolve(databaseManagerToken);
+    await expect
+      .poll(
+        async () => {
+          const rows = await database
+            .connection('main')
+            .repository<{ overdueNotifiedAt: string | null }>('tickets')
+            .findMany();
+          return rows.filter((row) => row.overdueNotifiedAt !== null).length;
+        },
+        { timeout: 5000, interval: 100 },
+      )
+      .toBeGreaterThan(0);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),
