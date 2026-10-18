@@ -1,5 +1,10 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import LibraryProvider, { libraryServiceToken } from './library.js';
 
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  LibraryProvider,
+];
+
+export { libraryServiceToken };
 export default serviceProviders;

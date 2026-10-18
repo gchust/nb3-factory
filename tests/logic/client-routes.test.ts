@@ -53,7 +53,16 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'library', authorizedAs: 'library.reader' },
+      { name: 'library-document', authorizedAs: 'library.reader' },
+      { name: 'library-manage', authorizedAs: 'library.librarian' },
+      { name: 'library-manage-new', authorizedAs: 'library.librarian' },
+      { name: 'library-manage-edit', authorizedAs: 'library.librarian' },
+      { name: 'library-manage-share', authorizedAs: 'library.librarian' },
+      { name: 'library-manage-document', authorizedAs: 'library.librarian' },
       { name: 'inbox', authorizedAs: null },
+      { name: 'admin-users', authorizedAs: 'unrestricted' },
+      { name: 'admin-user-permissions', authorizedAs: 'unrestricted' },
     ]);
   });
 
