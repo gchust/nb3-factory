@@ -1,6 +1,17 @@
 import type { Application } from '@nocobase/app-server/application';
-import type { AppRouteContribution } from '@nocobase/app-server/router';
+import {
+  defineApiRoutes,
+  type AppRouteContribution,
+} from '@nocobase/app-server/router';
 
-const routes: readonly AppRouteContribution<Application>[] = [];
+import { createMaterialsRouter } from './materials.js';
+
+/**
+ * Application-owned HTTP contributions. The materials router is mounted under `/api`; its own paths start with
+ * `/materials`.
+ */
+const routes: readonly AppRouteContribution<Application>[] = [
+  defineApiRoutes((app) => createMaterialsRouter(app)),
+];
 
 export default routes;

@@ -51,9 +51,19 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The materials pages share one page grant under the id `materials`, which the `material-editor` and
+    // `material-reader` permission sets reference. Staff administration is `unrestricted`: only root may open it.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'materials', authorizedAs: 'materials' },
+      { name: 'materials-new', authorizedAs: 'materials' },
+      { name: 'materials-edit', authorizedAs: 'materials' },
+      { name: 'materials-detail', authorizedAs: 'materials' },
+      { name: 'materials-detail-edit', authorizedAs: 'materials' },
+      { name: 'materials-detail-shares', authorizedAs: 'materials' },
+      { name: 'staff', authorizedAs: 'unrestricted' },
+      { name: 'staff-roles', authorizedAs: 'unrestricted' },
     ]);
   });
 
