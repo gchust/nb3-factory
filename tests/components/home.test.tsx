@@ -1,27 +1,26 @@
+import { ApiClientError } from '@nocobase/app-client';
 import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { DashboardResult } from '../../client/pages/tickets/types.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
+const { api } = vi.hoisted(() => ({
+  api: { request: vi.fn() },
 }));
 
 vi.mock('@nocobase/app-client', async (original) => ({
   ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+  useApiClient: () => api,
 }));
 
-// Strict: a key the locale lacks fails the test instead of rendering as text.
 const runtime = await createTestI18nRuntime({
   application: {
     namespace: '@nocobase/app-template-default',
@@ -29,146 +28,130 @@ const runtime = await createTestI18nRuntime({
   },
 });
 
-function I18n({ children }: { readonly children: ReactNode }): ReactElement {
-  return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
+function Providers({
+  children,
+}: {
+  readonly children: ReactNode;
+}): ReactElement {
+  return (
+    <TestI18nProvider runtime={runtime}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </TestI18nProvider>
+  );
 }
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
+const dashboard: DashboardResult = {
+  canCreate: true,
+  canAssign: true,
+  total: 12,
+  open: 3,
+  assigned: 2,
+  unassigned: 4,
+  resolved: 5,
+  closed: 2,
+  overdue: 1,
+  resolutionRate: 58.3,
+  byPriority: { low: 2, normal: 5, high: 3, urgent: 2 },
+  workload: [
+    {
+      id: 'user-2',
+      name: 'Grace Hopper',
+      email: 'grace@example.com',
+      active: 3,
+      overdue: 1,
+    },
+  ],
+  recent: [
+    {
+      id: 8,
+      title: 'Laptop will not start',
+      description: 'The power light blinks.',
+      status: 'assigned',
+      priority: 'high',
+      requesterId: 'user-1',
+      requesterName: 'Ada Lovelace',
+      assigneeId: 'user-2',
+      assigneeName: 'Grace Hopper',
+      slaDueAt: '2026-01-02T10:00:00.000Z',
+      assignedAt: '2026-01-01T10:00:00.000Z',
+      resolvedAt: null,
+      closedAt: null,
+      reopenedAt: null,
+      resolution: null,
+      attachments: [],
+      commentCount: 1,
+      overdue: false,
+      createdAt: '2026-01-01T09:00:00.000Z',
+      updatedAt: '2026-01-01T10:00:00.000Z',
+    },
+  ],
+};
 
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
-  });
-  return user;
-}
-
-describe('home page', () => {
+describe('service desk dashboard', () => {
   beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
+    api.request.mockReset();
   });
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows workload, resolution rate, and recent tickets', async () => {
+    api.request.mockResolvedValue({ data: dashboard });
+    render(<HomePage />, { wrapper: Providers });
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
+      await screen.findByRole('heading', {
+        level: 1,
+        name: enUS.serviceDesk.dashboard.title,
+      }),
+    ).toBeVisible();
+    expect(await screen.findByText('Laptop will not start')).toBeVisible();
+    expect(screen.getByText('58%')).toBeVisible();
+    expect(
+      screen.getByText(enUS.serviceDesk.dashboard.unassigned),
+    ).toBeVisible();
+    expect(screen.getByText('3 active')).toBeVisible();
+    expect(screen.getByText('1 overdue')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Laptop will not start/ }),
+    ).toHaveAttribute('href', '/tickets/8');
+    expect(
+      screen.getByRole('link', {
+        name: enUS.serviceDesk.ticket.new,
+      }),
+    ).toHaveAttribute('href', '/tickets/new');
   });
 
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
-
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
+  it('hides team-wide figures from someone who may not assign', async () => {
+    api.request.mockResolvedValue({
+      data: {
+        ...dashboard,
+        canAssign: false,
+        unassigned: 0,
+        workload: [],
+      },
     });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
+    render(<HomePage />, { wrapper: Providers });
 
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
+    expect(await screen.findByText('Laptop will not start')).toBeVisible();
+    expect(
+      screen.queryByText(enUS.serviceDesk.dashboard.unassigned),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(enUS.serviceDesk.dashboard.workload),
+    ).not.toBeInTheDocument();
+  });
+
+  it('explains a permission denial instead of showing an empty dashboard', async () => {
+    api.request.mockRejectedValue(
+      new ApiClientError('Forbidden', {
+        status: 403,
+        method: 'GET',
+        url: '/api/service-desk/dashboard',
       }),
     );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
+    render(<HomePage />, { wrapper: Providers });
 
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
     expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
-  });
-
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
-    );
-
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
-  });
-});
-
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
+      await screen.findByText(enUS.serviceDesk.dashboard.deniedTitle),
+    ).toBeVisible();
+    expect(screen.queryByText('58%')).not.toBeInTheDocument();
   });
 });

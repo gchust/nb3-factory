@@ -17,6 +17,9 @@ vi.mock('@nocobase/app-plugin-i18n/client', () => ({
   useSyncServerLocale: () => {},
 }));
 
+vi.mock('../../client/components/notification-bell.js', () => ({
+  NotificationBell: () => null,
+}));
 vi.mock('../../client/theme/index.js', () => ({ ThemeSettings: () => null }));
 vi.mock('../../client/layouts/components/user-menu.js', () => ({
   UserMenu: () => null,

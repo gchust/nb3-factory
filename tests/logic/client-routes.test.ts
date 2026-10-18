@@ -21,6 +21,9 @@ describe('app client routes', () => {
         '/register',
         '/forgot-password',
         '/reset-password',
+        '/tickets',
+        '/tickets/new',
+        '/users',
         // The page `deviceAuthorization()`'s verificationUri names, where a CLI's sign-in is approved.
         '/device',
       ]),
@@ -53,15 +56,20 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'service-desk' },
+      { name: 'ticket-new', authorizedAs: 'service-desk' },
+      { name: 'ticket-detail', authorizedAs: 'service-desk' },
+      { name: 'users', authorizedAs: 'service-desk.users' },
       { name: 'inbox', authorizedAs: null },
     ]);
   });
 
-  it('keeps the inbox out of the application navigation', () => {
-    // The inbox is reached from the header's inbox button, so it deliberately declares no menu entry.
+  it('keeps a navigation entry for the inbox', () => {
+    // The inbox lists every message a person received, so the application gives it a sidebar entry next to the
+    // header's notification bell; both lead to the same page.
     expect(
       applicationRoutes[0].routes.find((route) => route.name === 'inbox'),
-    ).not.toHaveProperty('navigation');
+    ).toHaveProperty('navigation.title', 'navigation.notifications');
   });
 });
 
