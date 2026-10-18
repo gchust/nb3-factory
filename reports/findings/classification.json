@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "56e0895292c52b4d6d1577a2ce2408ad974e5433f9dabb8609eed45cd51038c4",
+  "inputHash": "3de774753b12a873277e9ebbeb8f3c2b577bbe8c0a54c0e58b8c87d327c23ca6",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1206,6 +1206,21 @@
       "id": "758:39068146241:1:F7",
       "report": "758:39068146241:1",
       "fingerprint": "b36040d9e2a4f8ef1f28e16ed67c73d296a1ff00283128e778bc70204e8e33e0"
+    },
+    {
+      "id": "766:39165532645:1:F3",
+      "report": "766:39165532645:1",
+      "fingerprint": "9dd82293f5bd190fa2748df2972cd25668e932e0f693b8169b158914b24978c7"
+    },
+    {
+      "id": "766:39165532645:1:F4",
+      "report": "766:39165532645:1",
+      "fingerprint": "f6d2a681d77fe748657893a78bbd1d8f0b4b9e61e45735ccdc2419348b82bfb8"
+    },
+    {
+      "id": "766:39165532645:1:F5",
+      "report": "766:39165532645:1",
+      "fingerprint": "e413a9b1f5bff61c6fd181fe000d2f2c77d1ae9ed5bc7f608e407d1af480d5c7"
     }
   ],
   "groups": [
@@ -2082,10 +2097,11 @@
       ]
     },
     {
-      "title": "i18n 语言偏好为会话/浏览器级单例，同账号多标签页或同 profile 多账号会互相覆盖",
-      "reason": "单条保留。725:F7（E5/E7）指出 app-plugin-i18n 的语言偏好存于服务端 session（routes.js:36-49 用 PUT 替换式写入 LOCALE_SESSION_KEY），README.md:92 已明确记载该已知限制：同账号两个标签页会互相覆盖，标签 A 切到中文后标签 B 的请求也按中文返回而界面仍是英文；本次只验证了两个独立账号会话互不影响。其根因是服务端语言偏好缺少按标签/按请求隔离的机制（并需在文档中更醒目告警、给出 per-tab 存储或请求语言头替代方案），与本次其它发现（唯一冲突错误类型、signIn 助手缺 Origin、测试指引缺 CSRF 说明）根因、受影响 API 与修复方向均不同。既有分组 701:F4 虽同属 i18n 偏好作用域，但聚焦 app-client 固定单键 localStorage 跨账号共享（客户端持久化键无用户维度、要求按用户命名空间），与本条的服务端 session 单例根因和修复面不同，证据不足以支持并为同一问题，故单独保留。",
+      "title": "i18n 语言偏好为会话级单例，同账号多标签页会互相覆盖服务端语言",
+      "reason": "跨报告合并。725:F7（E5/E7）与 766:F3（E1–E4）均指向 @nocobase/app-plugin-i18n 把语言偏好保存在服务端 session 的单一 LOCALE_SESSION_KEY，PUT /i18n/locale 为替换式写入；README 也记载同账号多标签页会互相覆盖。766:F3 进一步复现：标签 A 切到中文后，标签 B 的接口返回也变中文而界面仍为英文，期望与修复方向一致（按标签页/请求隔离语言，或在 README/Skill 中显著说明该边界）。701:F4 仍单列：它聚焦 app-client 固定单键 localStorage 被同一浏览器 profile 的不同账号共享，是客户端持久化键缺少用户维度的问题，与本组服务端 session 单例的根因和修复面不同。",
       "members": [
-        "725:38481207536:1:F7"
+        "725:38481207536:1:F7",
+        "766:39165532645:1:F3"
       ]
     },
     {
@@ -2199,15 +2215,29 @@
       "members": [
         "758:39068146241:1:F7"
       ]
+    },
+    {
+      "title": "前端示例链接的层级被误读，但链接本身有效，不构成文档路径缺口",
+      "reason": "单条保留。766:F4 与既有“Skill 内部 references 路径/目录说明不明”组症状相似，但证据显示 api.md 的 example/list-page.md 相对链接可解析到真实存在的 references/frontend/references/example/list-page.md；实际失败命令漏掉了链接中明确写出的 example/ 段，属于执行时路径拼接失误，而非文档未给出真实引用路径或目录结构。根因不同，故不并入该组，也不与其他发现合并。",
+      "members": [
+        "766:39165532645:1:F4"
+      ]
+    },
+    {
+      "title": "单次 dist 路径猜测不足以证明公开入口或产物布局指引缺失",
+      "reason": "单条保留。766:F5 与既有“公开入口与已发布 dist 布局未文档化”组症状相似，但证据只记录了一次 dist/server/index.d.ts 猜测失败；包 README 的入口表和 testing.md 已给出 @nocobase/app-testing/server 说明符，exports 也正确映射到 dist/src。现有证据不足以支持“指引缺失或无效”的同一根因，故不并入该组。",
+      "members": [
+        "766:39165532645:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39077650033",
+    "runId": "39169245583",
     "attempt": 1,
-    "controlSha": "2c89ed9810a3468fa3efa87459c26f04da5b639f",
-    "completedAt": "2026-10-17T23:08:53.358Z"
+    "controlSha": "159671742ca501d20347a005bebd1abac7629e28",
+    "completedAt": "2026-10-18T21:49:18.008Z"
   }
 }
