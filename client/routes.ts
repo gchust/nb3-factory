@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,46 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Any signed-in user may manage todos, and the API below enforces the session. The create and edit dialogs live on
+    // child routes so they are URL-addressable and closing one returns to the list it opened over.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+    children: [
+      {
+        authz: 'skip',
+        auth: 'required',
+        componentLoader: () => import('./pages/todos/new.js'),
+        name: 'todo-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        auth: 'required',
+        componentLoader: () => import('./pages/todos/edit.js'),
+        name: 'todo-edit',
+        path: 'edit/:todoId',
+      },
+    ],
+  },
+  {
+    // The Scheduler plugin stores this page's grant under this resource id. The
+    // page is an ordinary application route; root sees it, and an administrator
+    // can grant it to another role through the existing permission pages.
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    auth: 'required',
+    componentLoader: () => import('./pages/scheduler/index.js'),
+    name: 'scheduler',
+    navigation: { title: 'navigation.scheduler', icon: CalendarClock },
+    path: '/scheduler',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
