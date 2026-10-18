@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -52,6 +52,33 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The devices page and its dialogs are open to every signed-in user: the ledger belongs to the office, and any
+    // member of it may add a device or correct one. Page authorization is therefore opted out of, like the landing
+    // page, and the API's own routes require a session rather than a permission. The two dialogs inherit this value.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: HardDrive, order: 10 },
+    path: '/devices',
+    children: [
+      {
+        // The create dialog, opened over the list at /devices/new.
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/new.js'),
+        name: 'device-new',
+        path: 'new',
+      },
+      {
+        // A record's edit dialog, opened over the list at /devices/edit/:deviceId.
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/edit.js'),
+        name: 'device-edit',
+        path: 'edit/:deviceId',
+      },
+    ],
   },
   {
     // Where a command line's sign-in sends the person to approve it (`pages/auth/device.tsx`). Optional rather than
