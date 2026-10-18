@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home, ShieldCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,34 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The library's list page. Every signed-in user reaches it; the server decides what each of them may see, so the
+    // page itself only needs a session. The visibility rules live in server/AGENTS.md.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: BookOpen },
+    path: '/materials',
+  },
+  {
+    // A material's own page, so a published or shared material can be opened from a URL and survives a refresh.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/library/detail.js'),
+    name: 'materialDetail',
+    path: '/materials/:materialId',
+  },
+  {
+    // Administering the library: who may keep materials and whose account is disabled. Root alone passes an
+    // `unrestricted` page guard, which is exactly the administrator this page is for.
+    authz: 'unrestricted',
+    auth: 'required',
+    componentLoader: () => import('./pages/library/admin.js'),
+    name: 'libraryAdmin',
+    navigation: { title: 'navigation.libraryAdmin', icon: ShieldCheck },
+    path: '/library-admin',
   },
   {
     auth: 'guest',

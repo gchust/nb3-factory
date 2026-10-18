@@ -50,10 +50,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the inbox and the library pages opted out of page authorization, so they are reachable by
+    // every signed-in user; the library's server endpoints decide what each of them may actually read or change.
+    // Administering the library is `unrestricted`, so only root passes its page guard.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'materials', authorizedAs: null },
+      { name: 'materialDetail', authorizedAs: null },
+      { name: 'libraryAdmin', authorizedAs: 'unrestricted' },
     ]);
   });
 
