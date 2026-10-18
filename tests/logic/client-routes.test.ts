@@ -51,9 +51,18 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The document library and its overlays are signed-in pages, so they are pinned too: the library itself is
+    // reached through the `documents` page grant, its child overlays inherit nothing of their own, and the settings
+    // page is reached through the `documents.admin` settings item.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'documents' },
+      { name: 'documents-new', authorizedAs: null },
+      { name: 'documents-edit', authorizedAs: null },
+      { name: 'documents-detail', authorizedAs: null },
+      { name: 'documents-detail-edit', authorizedAs: null },
+      { name: 'settings', authorizedAs: 'settings:documents.admin' },
     ]);
   });
 

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home, Settings } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -61,6 +61,60 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/device.js'),
     name: 'device',
     path: '/device',
+  },
+  {
+    // The document library. Who may open it and which records it shows are decided by the `documents` page grant and
+    // the `documents.readable` record access, both enforced by the server; the page only renders what it receives.
+    name: 'documents',
+    path: '/documents',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'documents' }, action: 'access' },
+    navigation: { title: 'navigation.documents', icon: FileText },
+    componentLoader: () => import('./pages/documents/index.js'),
+    children: [
+      {
+        // /documents/new: the create dialog, over the list.
+        name: 'documents-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/new.js'),
+      },
+      {
+        // /documents/edit/:documentId: the edit dialog a row's menu opens, alone over the list.
+        name: 'documents-edit',
+        path: 'edit/:documentId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/edit.js'),
+      },
+      {
+        // /documents/:documentId: the detail drawer, plus /documents/:documentId/edit stacked on it.
+        name: 'documents-detail',
+        path: ':documentId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/detail/index.js'),
+        children: [
+          {
+            name: 'documents-detail-edit',
+            path: 'edit',
+            authz: 'skip',
+            componentLoader: () => import('./pages/documents/detail/edit.js'),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    // An ordinary route placed in the sidebar, not a separate settings surface. Its page authorization is the
+    // `documents.admin` settings item the server registers, so only a person holding that item reaches it.
+    name: 'settings',
+    path: '/settings',
+    auth: 'required',
+    authz: {
+      resource: { type: 'settings', id: 'documents.admin' },
+      action: 'read',
+    },
+    navigation: { title: 'navigation.settings', icon: Settings },
+    componentLoader: () => import('./pages/settings/index.js'),
   },
 ]);
 
