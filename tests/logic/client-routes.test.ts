@@ -51,9 +51,15 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // A child route inherits its parent's `auth` and shows up here with `null`: its own access is the parent page's
+    // grant, which the parent entry below already states.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: 'todos' },
+      { name: 'todo-new', authorizedAs: null },
+      { name: 'schedules', authorizedAs: 'scheduler.schedules' },
+      { name: 'schedule-occurrences', authorizedAs: null },
     ]);
   });
 

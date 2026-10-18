@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -24,6 +24,47 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The todo list, and the page where the schedule's effect is visible: a row the sweep has reached shows
+    // 已过期. `expired` is server-owned, so this page reads it and never writes it.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    path: '/todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    children: [
+      {
+        // The create form, a dialog opened by URL. It inherits the list page's `auth`; its access is the list's.
+        authz: 'skip',
+        componentLoader: () => import('./pages/todos/new.js'),
+        name: 'todo-new',
+        path: 'new',
+      },
+    ],
+  },
+  {
+    // The Scheduler's management page. The plugin registers the Schedules and owns their records, but ships no page;
+    // the page id is the plugin's own grant, `page:scheduler.schedules/access`, which its API also enforces.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/schedules/index.js'),
+    name: 'schedules',
+    path: '/schedules',
+    navigation: { title: 'navigation.schedules', icon: CalendarClock },
+    children: [
+      {
+        // One Schedule's execution records, a drawer over the list. It reads the same grant through the plugin's API.
+        authz: 'skip',
+        componentLoader: () => import('./pages/schedules/occurrences.js'),
+        name: 'schedule-occurrences',
+        path: ':scheduleId/occurrences',
+      },
+    ],
   },
   {
     auth: 'guest',
