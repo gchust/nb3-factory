@@ -53,6 +53,15 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      // The list page and its two overlays share one page grant, so a role
+      // granted the list also reaches the create form and a ticket's details.
+      { name: 'it-tickets', authorizedAs: 'it.tickets' },
+      { name: 'it-ticket-new', authorizedAs: 'it.tickets' },
+      { name: 'it-ticket-detail', authorizedAs: 'it.tickets' },
+      // Team management is a separate grant: an engineer reaches the queue but
+      // not the account and demo-data administration.
+      { name: 'it-team', authorizedAs: 'it.team' },
+      { name: 'it-team-member-new', authorizedAs: 'it.team' },
       { name: 'inbox', authorizedAs: null },
     ]);
   });

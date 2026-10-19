@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HeadsetIcon, Home, UsersRoundIcon } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,47 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // IT service desk. The list page owns the dashboard and the ticket table;
+    // both the create form and a ticket's details are child overlays, so the
+    // list stays mounted behind them.
+    name: 'it-tickets',
+    path: '/it-tickets',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'it.tickets' }, action: 'access' },
+    navigation: { title: 'navigation.itTickets', icon: HeadsetIcon },
+    componentLoader: () => import('./pages/it-tickets/index.js'),
+    children: [
+      {
+        name: 'it-ticket-new',
+        path: 'new',
+        componentLoader: () => import('./pages/it-tickets/new.js'),
+      },
+      {
+        name: 'it-ticket-detail',
+        path: ':ticketId',
+        componentLoader: () => import('./pages/it-tickets/detail.js'),
+      },
+    ],
+  },
+  {
+    // Service desk administration: the team roster, permission-set assignment
+    // and the demonstration data. The page grant is held by the service desk
+    // set; root administrators reach it without an assignment.
+    name: 'it-team',
+    path: '/it-team',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'it.team' }, action: 'access' },
+    navigation: { title: 'navigation.itTeam', icon: UsersRoundIcon },
+    componentLoader: () => import('./pages/it-team/index.js'),
+    children: [
+      {
+        name: 'it-team-member-new',
+        path: 'new',
+        componentLoader: () => import('./pages/it-team/new.js'),
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an

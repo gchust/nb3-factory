@@ -3,6 +3,7 @@ import {
   ClientApplicationContext,
   type ClientApplication,
   createAppClientConfig,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import {
@@ -13,6 +14,7 @@ import {
   AuthorizationClient,
   authorizationClientToken,
 } from '@nocobase/app-plugin-authorization/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   act,
   fireEvent,
@@ -102,15 +104,16 @@ describe('application shell', () => {
     ).toBeVisible();
   });
 
-  it('renders no Settings or Inbox entry in the header', async () => {
+  it('renders the inbox entry but no Settings entry in the header', async () => {
     renderApplication('/', true);
     await screen.findByRole('heading', { name: 'App client is ready' });
     expect(
       screen.queryByRole('link', { name: 'Settings' }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: /inbox/i }),
-    ).not.toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /inbox/i })).toHaveAttribute(
+      'href',
+      '/inbox',
+    );
   });
 
   it('renders nested pages through manual outlets and selects the nearest menu ancestor', async () => {
@@ -281,14 +284,29 @@ function renderApplication(
     (request) => options.authorization?.can(request) ?? Promise.resolve(true),
   );
   const apiClient = {
-    request: vi.fn().mockResolvedValue({
-      data: { fallback: false, locale: 'en-US', requestedLocale: 'en-US' },
-    }),
+    request: vi
+      .fn()
+      .mockImplementation(({ path }: { readonly path: string }) =>
+        path.endsWith('/unreadCount')
+          ? Promise.resolve({ data: { count: 0 } })
+          : Promise.resolve({
+              data: {
+                fallback: false,
+                locale: 'en-US',
+                requestedLocale: 'en-US',
+              },
+            }),
+      ),
+  };
+  const realtimeClient = {
+    onOpen: vi.fn().mockReturnValue(vi.fn()),
+    subscribe: vi.fn().mockReturnValue(vi.fn()),
   };
   const registered = new Map<unknown, unknown>([
     [apiClientToken, apiClient],
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    [realtimeClientToken, realtimeClient],
   ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
@@ -300,15 +318,20 @@ function renderApplication(
       },
     },
   } as unknown as ClientApplication;
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   render(
     <ClientApplicationContext.Provider value={app}>
-      <AuthenticationProvider>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <AppThemeProvider>
-            <AppRouter clientRoutes={clientRoutes} />
-          </AppThemeProvider>
-        </MemoryRouter>
-      </AuthenticationProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthenticationProvider>
+          <MemoryRouter initialEntries={[initialEntry]}>
+            <AppThemeProvider>
+              <AppRouter clientRoutes={clientRoutes} />
+            </AppThemeProvider>
+          </MemoryRouter>
+        </AuthenticationProvider>
+      </QueryClientProvider>
     </ClientApplicationContext.Provider>,
   );
 }

@@ -2,26 +2,25 @@ import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { TicketDashboard } from '../../client/pages/it-tickets/types.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
+const { api } = vi.hoisted(() => ({
+  api: { request: vi.fn() },
 }));
 
 vi.mock('@nocobase/app-client', async (original) => ({
   ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+  useApiClient: () => api,
 }));
 
-// Strict: a key the locale lacks fails the test instead of rendering as text.
 const runtime = await createTestI18nRuntime({
   application: {
     namespace: '@nocobase/app-template-default',
@@ -29,146 +28,85 @@ const runtime = await createTestI18nRuntime({
   },
 });
 
-function I18n({ children }: { readonly children: ReactNode }): ReactElement {
-  return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
-}
+const dashboard: TicketDashboard = {
+  pendingAssignment: 4,
+  inProgress: 3,
+  resolvedAwaiting: 2,
+  overdue: 1,
+  myOpen: 1,
+  canAssign: true,
+  overdueAfterHours: 24,
+  workload: [
+    {
+      id: 'engineer-1',
+      name: 'Erin Engineer',
+      email: 'erin@example.com',
+      open: 3,
+      overdue: 1,
+    },
+  ],
+  recent: [],
+  generatedAt: '2026-10-07T00:00:00.000Z',
+};
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
-
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
+function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
   });
-  return user;
+  return (
+    <TestI18nProvider runtime={runtime}>
+      <QueryClientProvider client={client}>
+        <MemoryRouter>{children}</MemoryRouter>
+      </QueryClientProvider>
+    </TestI18nProvider>
+  );
 }
 
 describe('home page', () => {
   beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
+    api.request.mockReset();
+    api.request.mockResolvedValue({ data: dashboard });
   });
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows the service desk overview instead of the template introduction', async () => {
+    render(<HomePage />, { wrapper: Wrapper });
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
+      screen.getByRole('heading', { level: 1, name: enUS.itTickets.title }),
+    ).toBeVisible();
+    expect(
+      await screen.findByText(enUS.itTickets.dashboard.title),
+    ).toBeVisible();
+    expect(
+      screen.getByText(enUS.itTickets.dashboard.pendingAssignment),
+    ).toBeVisible();
+    expect(screen.getByText('4')).toBeVisible();
+    expect(screen.getByText('3')).toBeVisible();
+    expect(screen.getByText('2')).toBeVisible();
+    expect(screen.getByText('1')).toBeVisible();
+    expect(screen.getByText('Erin Engineer')).toBeVisible();
+    expect(
+      screen.getByText(
+        enUS.itTickets.dashboard.engineerLoad
+          .replace('{{open}}', '3')
+          .replace('{{overdue}}', '1'),
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(enUS.home.capabilitiesTitle),
+    ).not.toBeInTheDocument();
   });
 
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('links from the overview to the full ticket queue', async () => {
+    render(<HomePage />, { wrapper: Wrapper });
 
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
-    });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
-
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
+    expect(
+      await screen.findByRole('link', {
+        name: enUS.itTickets.actions.viewTickets,
       }),
+    ).toHaveAttribute('href', '/it-tickets');
+    expect(api.request).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/tickets/dashboard' }),
     );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
-    expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
-  });
-
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
-    );
-
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
-  });
-});
-
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
   });
 });

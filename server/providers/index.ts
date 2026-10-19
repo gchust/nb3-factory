@@ -1,5 +1,9 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import ItTicketServiceProvider from './it-ticket-service-provider.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  ItTicketServiceProvider,
+];
 
 export default serviceProviders;
