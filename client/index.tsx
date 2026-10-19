@@ -8,6 +8,7 @@ import { resolveAppRuntime } from '@nocobase/app-client/runtime';
 import { createRoot } from 'react-dom/client';
 
 import { revealScrollbarsWhileScrolling } from './lib/scrollbar';
+import { restoreWebSocketConstants } from './lib/websocket';
 import appRuntime from './runtime';
 import { AppStartupError } from './startup';
 import './styles.css';
@@ -15,6 +16,10 @@ import { initializeTheme } from './theme/theme-preferences';
 import { themePresets } from './theme/theme-presets';
 
 const container = document.getElementById('root');
+
+// The realtime client is created during app.start(); restore the constants the browser's WebSocket wrapper omitted
+// before that happens, or authentication waits forever for a connection the client cannot recognize as open.
+restoreWebSocketConstants();
 
 if (!container) {
   throw new Error('Missing application root element.');
