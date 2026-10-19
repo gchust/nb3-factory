@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +16,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    name: 'todos',
+    path: '/todos',
+    auth: 'required',
+    // One page grant covers the page and the `/api/todos` endpoints it calls; see `server/routes/todos.ts`.
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    navigation: { title: 'todos.title', icon: ListTodo, order: 10 },
+    breadcrumb: { title: 'todos.title' },
+    componentLoader: () => import('./pages/todos/index.js'),
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +76,10 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  // Users, roles and schedules become part of the application now that it has business pages.
+  systemSettingsRoutes,
+];
 
 export default routes;
