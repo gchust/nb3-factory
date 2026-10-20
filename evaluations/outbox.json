@@ -8750,33 +8750,9 @@
       "key": "gchust/nb3-factory/issues/776/initial",
       "revision": 1,
       "bundleSha256": "69a1781b84cfe2e3f878e8869e356c111b5f8c144876077fc45cff35fb201719",
-      "state": "pending",
-      "attempts": 21,
+      "state": "rejected",
+      "attempts": 24,
       "history": [
-        {
-          "at": "2026-10-20T17:32:31.138Z",
-          "httpStatus": 502,
-          "outcome": "retryable",
-          "error": "http-502",
-          "detail": null,
-          "durationMs": 1057
-        },
-        {
-          "at": "2026-10-20T21:53:00.884Z",
-          "httpStatus": 502,
-          "outcome": "retryable",
-          "error": "http-502",
-          "detail": null,
-          "durationMs": 994
-        },
-        {
-          "at": "2026-10-20T21:53:03.879Z",
-          "httpStatus": 502,
-          "outcome": "retryable",
-          "error": "http-502",
-          "detail": null,
-          "durationMs": 988
-        },
         {
           "at": "2026-10-20T21:53:12.869Z",
           "httpStatus": 502,
@@ -8832,12 +8808,36 @@
           "error": "http-502",
           "detail": null,
           "durationMs": 984
+        },
+        {
+          "at": "2026-10-20T23:26:01.201Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 840
+        },
+        {
+          "at": "2026-10-20T23:26:04.043Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 592
+        },
+        {
+          "at": "2026-10-20T23:26:12.639Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 701
         }
       ],
       "receipt": null,
-      "reason": "http-502",
+      "reason": "retry-limit",
       "createdAt": "2026-10-20T01:58:24.327Z",
-      "updatedAt": "2026-10-20T23:17:18.760Z",
+      "updatedAt": "2026-10-20T23:27:01.175Z",
       "detail": null,
       "appliedResults": [
         "9c21cb799e82939af5c2ce95c127d4d50cab023dc11d947ca8f6eaa92f881395",
@@ -8846,7 +8846,8 @@
         "1367dcf554bc097700e3d0d8e2664dc49e156fa2e042ace05af110b1b09bf440",
         "1de53fd0aa74c75b31242d6d1abe9402143f2a9e8bc1d7cc68db6b41b7b67f34",
         "0b66e4eab88c1cc94b3b679c3a138f1aeb3b2b311150dff8b94cd8bcab214b15",
-        "e6e20869edfad97f1bc24a436d775d80b4f9d966618e6d2dec2ade3dfd01ddcd"
+        "e6e20869edfad97f1bc24a436d775d80b4f9d966618e6d2dec2ade3dfd01ddcd",
+        "a64722bebb7e0daf9241eeb75ab460b2cea8c24ddce0e5bbfd3848cf406ff1fd"
       ]
     },
     {
@@ -8857,7 +8858,7 @@
       "revision": 1,
       "bundleSha256": "35caa59067325770d7789fe10b88424dec2525b903f0df831f771a662083bdae",
       "state": "pending",
-      "attempts": 6,
+      "attempts": 9,
       "history": [
         {
           "at": "2026-10-20T22:47:36.465Z",
@@ -8906,16 +8907,41 @@
           "error": "http-502",
           "detail": null,
           "durationMs": 957
+        },
+        {
+          "at": "2026-10-20T23:26:13.353Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 659
+        },
+        {
+          "at": "2026-10-20T23:26:16.014Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 614
+        },
+        {
+          "at": "2026-10-20T23:26:24.635Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 633
         }
       ],
       "receipt": null,
       "reason": "http-502",
       "createdAt": "2026-10-20T22:45:55.964Z",
-      "updatedAt": "2026-10-20T23:17:18.760Z",
+      "updatedAt": "2026-10-20T23:27:01.175Z",
       "detail": null,
       "appliedResults": [
         "50bf424956cb790a95e7ba0f95beb3e24ad886edaedcac25313b7aa0bc91d143",
-        "9784c4f6501f0f08ee4a1553165827759f9df64b07c6bb5e73b55f3c073679dd"
+        "9784c4f6501f0f08ee4a1553165827759f9df64b07c6bb5e73b55f3c073679dd",
+        "2b86e02b22834b4d02e0b51383d2afcff7458278dd4686216993ff635be4435b"
       ]
     },
     {
@@ -8926,7 +8952,7 @@
       "revision": 1,
       "bundleSha256": "c3e6c89d1d16e3cbf4633559909d422f44b8eca7e4f7c0c578c62b7278cc9711",
       "state": "pending",
-      "attempts": 3,
+      "attempts": 6,
       "history": [
         {
           "at": "2026-10-20T23:16:56.052Z",
@@ -8951,15 +8977,40 @@
           "error": "http-502",
           "detail": null,
           "durationMs": 953
+        },
+        {
+          "at": "2026-10-20T23:26:25.279Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 656
+        },
+        {
+          "at": "2026-10-20T23:26:27.937Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 811
+        },
+        {
+          "at": "2026-10-20T23:26:36.751Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 781
         }
       ],
       "receipt": null,
       "reason": "http-502",
       "createdAt": "2026-10-20T23:15:20.824Z",
-      "updatedAt": "2026-10-20T23:17:18.760Z",
+      "updatedAt": "2026-10-20T23:27:01.175Z",
       "detail": null,
       "appliedResults": [
-        "24e5dbb64b0433835a14c7bb83e69e0e6a2f9dea29b1b6d9acdbc6df7b345090"
+        "24e5dbb64b0433835a14c7bb83e69e0e6a2f9dea29b1b6d9acdbc6df7b345090",
+        "5e3a7ea91d35ddfd581b336cb29b01be6ae55b2529b831b9d5ba92bf217b4f0f"
       ]
     },
     {
@@ -8970,12 +9021,41 @@
       "revision": 1,
       "bundleSha256": "2b661cfed4718780d66f7dc8070ecaba1d5412b0e21ba47d515aff1029dd77e0",
       "state": "pending",
-      "attempts": 0,
-      "history": [],
+      "attempts": 3,
+      "history": [
+        {
+          "at": "2026-10-20T23:26:37.543Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 638
+        },
+        {
+          "at": "2026-10-20T23:26:40.183Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 653
+        },
+        {
+          "at": "2026-10-20T23:26:48.843Z",
+          "httpStatus": 502,
+          "outcome": "retryable",
+          "error": "http-502",
+          "detail": null,
+          "durationMs": 593
+        }
+      ],
       "receipt": null,
-      "reason": null,
+      "reason": "http-502",
       "createdAt": "2026-10-20T23:25:09.611Z",
-      "updatedAt": "2026-10-20T23:25:09.611Z"
+      "updatedAt": "2026-10-20T23:27:01.175Z",
+      "detail": null,
+      "appliedResults": [
+        "4950faa865356f94c85e4d8781ca21ac6a0b16038fac5359edabf2e06d667757"
+      ]
     }
   ]
 }
