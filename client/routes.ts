@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +16,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The todo list the scheduled expiry check operates on. Page access is separate from the Collection's record
+    // policy, so a person without a `todos` data grant reaches the page but the API returns no rows.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'todos.title', icon: ListTodo, order: 10 },
+    path: '/todos',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +76,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
