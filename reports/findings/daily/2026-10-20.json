@@ -1,0 +1,399 @@
+{
+  "version": 1,
+  "date": "2026-10-20",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "a1a5df2ee7426e6a048657ff",
+      "id": "773:39335481569:1:F1",
+      "issue": 773,
+      "runId": 39335481569,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "实时准备超时会把整个应用锁在入口错误页",
+      "summary": "认证 Provider 在 realtime.active 时最多等待 10 秒 onOpen；模板的 SessionPreparation 只有 preparation===\"ready\" 才渲染业务页面，failed 时仅提供 Retry/退出。第一轮 QA 的登录与 get-session 均返回 200，但入口仍显示 The realtime connection could not be prepared，B01-B05 全部不可达。第二轮通过给验收浏览器修补 WebSocket.CONNECTING/OPEN 常量后通过，说明触发条件至少包含浏览器/仪器化环境差异；但框架侧把实时准备失败等价为全应用不可进入，放大了任何实时连接异常。",
+      "severity": "major",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "源码与测试证实：只要 realtime.active，认证 Provider 就进入 preparing 并最多等 10 秒 onOpen，超时发布 failed；模板 SessionPreparation 仅在 ready 时渲染受保护区域，failed 只剩错误页/Retry/退出，因此单次实时准备失败确实阻断登录后的全部业务页。插件 README 又把该整区门禁写成模板的有意契约，并给出无订阅即 ready、自定义应用可不消费 preparation 的出口，所以候选将其定位为可用性改进（区分失败原因、提供受限进入或更可诊断恢复）而非契约违约是成立的。第一轮的触发源确由验收浏览器解释（WebSocket 静态常量缺失），但这恰恰演示了放大效应，未推翻结论。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "插件 README 明确记载 preparation 三态、retryPreparation、10 秒超时，并说明 Default/Examples 模板把 SessionPreparation 放在 RequiredAuthentication 内、整个已登录区域自动等待，同时说明仅用 RequiredAuthentication 的自定义应用需自行消费；故整区门禁是文档化的有意行为，候选正确地按可用性改进而非违约提出。",
+            "evidence": [
+              "E88",
+              "E29",
+              "E30"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "auth-provider 在 realtime.active 时发布 preparing，等 onOpen 或 10 秒超时发布 failed；session-preparation 只在 ready 渲染 children，preparing 仅 Loading，failed 仅连接错误、Retry 与退出；单测断言 10 秒后显示 Unable to connect、Retry 会重连、需后续 open 才挂载受保护页面。",
+            "evidence": [
+              "E29",
+              "E30",
+              "E31"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "AppRouter 按 README 所述模板把 SessionPreparation 包在 RequiredAuthentication 内、位于应用布局之外，覆盖全部 required 路由；这是文档化装配而非误用 API 或遗漏业务逻辑。",
+            "evidence": [
+              "E90",
+              "E88"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "第一轮症状的触发条件由验收浏览器解释：第二轮在同一 agent-browser 中读到 WebSocket.CONNECTING/OPEN 为 undefined 且页面停在 Preparing your session…，之后经 CDP 注入常量并在真实浏览器完成 B01-B05。环境解释了触发源，但不否定「一次实时准备失败即整区不可进入」的放大结论。",
+            "evidence": [
+              "E87",
+              "E37"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "未发现工厂提示、注入配置或构建脚本改写该门禁；app 侧 session-preparation/app-router 与插件 README 描述的模板一致，故无工厂归因证据；是否存在工厂模板覆盖规则仍属未知。",
+            "evidence": [
+              "E88",
+              "E90"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "框架确有文档化出口（无 realtime 客户端或无订阅即 ready；自定义应用可不用 SessionPreparation），但授权插件 boot 时就 subscribe 两个 realtime topic，常规组合下 realtime.active 为真，门禁实际难以绕过；且没有对失败原因分类或受限进入的内建路径，改进空间真实存在。",
+            "evidence": [
+              "E89",
+              "E88"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "实时准备失败会把登录后的整个应用锁在入口错误页，缺少失败分类与降级进入路径",
+        "issues": 1,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/773/runs/39335481569/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "88362e992f3a4366ac94e80b",
+      "id": "773:39335481569:1:F4",
+      "issue": 773,
+      "runId": 39335481569,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "认证 Skill 未记录 preparation/retryPreparation 与 10 秒失败门禁",
+      "summary": "认证 Skill 的公共接口只写 useAuthentication() 返回 { client, session, isPending, refresh }，但实现还返回 preparation 和 retryPreparation，并在 realtime.active 时执行 10 秒准备超时。模板正是依赖 preparation 决定是否渲染应用，因此只看 Skill 会漏掉入口门禁与重试语义。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "认证 Skill 的 Client 公共面只写 useAuthentication() 返回 {client, session, isPending, refresh}，整个 Skill 目录未出现 preparation/retryPreparation；而实现与 d.ts 额外公开 preparation 三态和 retryPreparation，并在 realtime.active 下执行 10 秒准备超时，模板正以 preparation 作为入口硬门禁。仅按 Skill 设计入口会漏掉 Preparing/Unable to connect 状态与重试语义，属真实 guidance-gap；README 有完整说明只说明信息可得，不消除 Skill 缺口。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "SKILL.md 的 Client 公共面断言 useAuthentication() 返回 {client, session, isPending, refresh}，并称 useAuthenticationClient() 只返回 client；Skill 目录内 preparation/retryPreparation 检索为 0 次，未记录 10 秒门禁。",
+            "evidence": [
+              "E36"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现返回 preparation 与 retryPreparation，并在会话存在且 realtime.active 时以 10 秒超时发布 failed；auth-provider.d.ts 也把两个字段列为 AuthenticationContextValue 成员，说明 Skill 的返回值清单与实现不一致。",
+            "evidence": [
+              "E29"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "模板 SessionPreparation 直接消费 preparation，preparing 显示 Preparing your session、failed 显示 Unable to connect 并提供 Retry/退出；只按 Skill 的四个返回值设计的入口无法解释或处理这些状态。",
+            "evidence": [
+              "E30",
+              "E90"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "缺口不是运行环境问题：插件 README 已完整记录 preparation/retryPreparation、超时与模板依赖，信息缺失发生在 Skill 文本而非环境或运行时。",
+            "evidence": [
+              "E88",
+              "E29"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "app/.agents 下的 Skill 内容与包内 skills 副本同名，未见工厂提示或同步配置改写其 Client 公共面的证据；若工厂存在 Skill 同步/覆盖规则，是否应补齐属未知，保留。",
+            "evidence": [
+              "E36"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "README 与 dist 类型已提供 preparation 契约，开发者可通过它们发现该能力，但这恰说明 Skill 作为入口文档落后于现有公开能力；Skill 的 client-session 参考也仅用 session/isPending，未补足该语义。",
+            "evidence": [
+              "E88",
+              "E36"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与实时准备失败门禁",
+        "issues": 2,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/773/runs/39335481569/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "9b672bf6212a83d6d3b81fa0",
+      "id": "775:39335495461:1:F4",
+      "issue": 775,
+      "runId": 39335495461,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "裸 HTTP 409 的默认 ApiError 语义偏向 ABORTED",
+      "summary": "apiErrorStatusFromHttp(409) 固定返回 ABORTED；应用以 status: 409 构造重复设备编号错误时，HTTP 状态和 reason 正确，但 AIP-193 的 status 被表达为并发冲突而非 ALREADY_EXISTS。文档要求重复创建使用 ALREADY_EXISTS，调用方必须显式选择。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "核对结果支持该候选：E17 将裸 409 固定映射为 ABORTED；E19 的设备路由在重复编号场景以数字 409 调用该辅助函数，E16 将该 status 原样写入标准 payload，故 API 响应语义为 ABORTED 而非 ALREADY_EXISTS；E18 明确重复创建应为 ALREADY_EXISTS、并发冲突才为 ABORTED。E53 表明调用方可直接选择 ALREADY_EXISTS，E54 显示设备页按 reason 显示本地化错误，E55 的路由测试只断言 409/reason，未覆盖 status。这是框架辅助函数指引/构造器的可发现性改进，不宣称用户可见故障或框架违约。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E18 公开 HTTP API 指引承诺：status 是固定 AIP-193 集合并决定 HTTP 状态，ALREADY_EXISTS 用于重复创建、ABORTED 用于并发冲突。E17 的辅助函数只承诺“把裸 HTTP 状态映射为 canonical status”，其输入只有数字 code，409 因此只能取 ABORTED；E53 说明 ApiError 本身要求调用方给出 status，httpStatus 仅用于 413/415 等协议状态。前提是调用方拥有重复创建语义时应显式选择 ALREADY_EXISTS；现有能力允许这样做，候选只是要求文档/构造器更容易发现该歧义，并非把愿望写成违约。",
+            "evidence": [
+              "E18",
+              "E17",
+              "E53"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E17 源码中 statusByHttpCode[409] 为 ABORTED，apiErrorStatusFromHttp(code) 只返回该表值；E19 的 deviceApiError 以数字 409 调用它；E16 构造器把 options.status 原样存为 this.status，toPayload 再原样输出，故重复 code 的响应 HTTP code 仍为 409（E15），但 AIP status 为 ABORTED，reason 仍为 DEVICE_CODE_TAKEN。E55 的现有路由测试只断言 HTTP 409 与 reason/localizedMessage，未断言 status，不能反证该映射。",
+            "evidence": [
+              "E17",
+              "E19",
+              "E16",
+              "E15",
+              "E55"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "E11 显示应用在 createOne 异常后按 code 回查并抛 DuplicateDeviceCodeError；E19 的 translateDomainError 将其送入 codeTaken，而 deviceApiError 用 apiErrorStatusFromHttp(options.status) 统一转换，没有使用 E18 推荐的 ALREADY_EXISTS。E53 表明应用可直接传 status:'ALREADY_EXISTS'，所以直接触发是应用自己的数值包装选择；这支持候选的触发条件，也说明候选建议的是减少此类误用的框架可发现性改进，而非框架已违反硬契约。",
+            "evidence": [
+              "E11",
+              "E19",
+              "E18",
+              "E53"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "E17 的 409→ABORTED 是常量分支，E19 的调用也在冻结源码中，结论不依赖数据库驱动、外部服务、凭据、依赖安装或运行环境；E18 的语义要求同样没有环境前提。未运行应用并不妨碍该静态结论，且没有环境材料能更好地解释这条具体映射。",
+            "evidence": [
+              "E17",
+              "E19",
+              "E18"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "E56 的工厂实现提示只给出业务需求、阅读 Skill、Migration/Seed 和测试约束，没有要求使用裸 409 或 apiErrorStatusFromHttp；E18 的公开指引反而区分 ALREADY_EXISTS 与 ABORTED。故不是工厂提示、注入配置、QA/构建脚本或模板覆盖造成；映射来自框架源码默认值（E17）和应用自己的数值状态包装（E19）。",
+            "evidence": [
+              "E56",
+              "E18",
+              "E17",
+              "E19"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "E53 的 ApiErrorOptions.status 必填为 ApiErrorStatus，调用方可直接传 'ALREADY_EXISTS'；E18 已把该值列为重复创建的推荐语义。故公开入口和文档已能表达正确语义，候选不是 capability-gap，而是辅助函数文档/语义化构造器的 usability 改进；E17 的 helper 只有 HTTP code 参数，无法自行区分重复创建与并发冲突。",
+            "evidence": [
+              "E53",
+              "E18",
+              "E17"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development/references/http-api.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "裸 HTTP 409 的默认 ApiError 状态映射固定为 ABORTED，重复创建无法自动表达 ALREADY_EXISTS",
+        "issues": 1,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/775/runs/39335495461/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "107459d7c999bc5f38430dad",
+      "id": "776:39335502311:1:F3",
+      "issue": 776,
+      "runId": 39335502311,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "API 指引劝阻 TanStack Query，却没有给出跨页面缓存失效方案",
+      "summary": "api.md 第 235 行说没有共享数据加载 hook，并让读者不要使用 Refine 数据 hooks 或 TanStack Query；但框架自己的站内通知 hook 就使用 QueryClient，并在 mutation 后 invalidateQueries。应用因此手写 useTicketsApi，只维护组件内 revision，verify-6 中创建/分派后列表保持旧数据。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md",
+        "@nocobase/app-plugin-notification-in-app"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-notification-in-app",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/通知",
+      "candidates": [
+        "应用搭建/通知"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "API 指引劝阻 TanStack Query，却未给出跨页面缓存失效方案",
+        "issues": 1,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/776/runs/39335502311/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "00924e9c729d0486a58c77e9",
+      "id": "776:39335502311:1:F5",
+      "issue": 776,
+      "runId": 39335502311,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "迁移 Skill 未提醒嵌入式测试可能不安装插件 Collection",
+      "summary": "nocobase-db Skill 已提醒 repository 是在押注迁移自身未声明的 Collection 形状，但没有说明嵌入式测试 app 往往只注册最小插件集。verify-5 中迁移访问 authorizationPermissionSets，测试 app 未安装授权插件而 COLLECTION_NOT_FOUND；最终应用加 hasCollection 守卫。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "迁移 Skill 未提醒嵌入式测试的插件集可能缺少迁移所访问的插件 Collection",
+        "issues": 1,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/776/runs/39335502311/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "88c5d0b7466310ebe5afc92f",
+      "id": "776:39335502311:1:F8",
+      "issue": 776,
+      "runId": 39335502311,
+      "attempt": 1,
+      "findingId": "F8",
+      "runDay": "2026-10-20",
+      "archivedAt": "2026-10-20T23:10:06.840Z",
+      "title": "认证 Skill 未记录 preparation/retryPreparation，Agent 无法发现实时失败后的官方回退",
+      "summary": "认证实现暴露 preparing/ready/failed、retryPreparation 与 refresh，但 SKILL.md 第 48 行把 useAuthentication() 只列为 { client, session, isPending, refresh }。Agent 读到的是“会话已就绪与否”，没有契约说明实时准备失败后仍应继续 HTTP 会话，最终写出阻塞式页面。",
+      "severity": "major",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "停止诊断只允许单次只读调用；保留待定向复核的候选。",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与实时准备失败门禁",
+        "issues": 2,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/776/runs/39335502311/attempt-1/index.html#review-finding-F8"
+    }
+  ]
+}
