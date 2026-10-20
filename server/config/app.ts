@@ -33,6 +33,9 @@ const app: AppConfigFactory<AppIdentityConfig> = defineAppConfig({
       publicBasePath,
       internalBasePath: routing.internalBasePath,
       publicApiUrl: joinBasePath(publicBasePath, '/api'),
+      // The requested starting state includes three fictional documents and two test accounts. They are sample
+      // data, so `APP_SAMPLE_DATA=false` keeps them out of a deployment that does not want them.
+      sampleData: true,
     };
   },
 });

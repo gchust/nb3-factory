@@ -1378,6 +1378,9 @@ async function createIsolatedStandaloneServer(
     env: {
       DB_MIGRATIONS_AUTO_RUN: 'true',
       ...options.env,
+      // Application tests exercise an administrator-only installation; the delivered sample records would otherwise
+      // appear in every assertion that lists users or documents.
+      APP_SAMPLE_DATA: options.env?.APP_SAMPLE_DATA ?? 'false',
       APP_CONFIG_FILE: await writeRuntimeTestConfig(databaseDir, options.env),
     },
     paths: {

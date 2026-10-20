@@ -1,10 +1,33 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
 
+import systemSettingsRoutes from './pages/settings/routes.js';
+
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
+  {
+    // The library's own page permission. The detail page below inherits this check rather than bypassing it.
+    name: 'library',
+    path: '/library',
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    navigation: { title: 'library.navigation', icon: BookOpen, order: 20 },
+    breadcrumb: { title: 'library.navigation' },
+    componentLoader: () => import('./pages/library/index.js'),
+    children: [
+      {
+        name: 'libraryDocument',
+        path: ':documentId',
+        breadcrumb: { title: 'library.documentBreadcrumb' },
+        componentLoader: () => import('./pages/library/detail.js'),
+      },
+    ],
+  },
   {
     // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so
     // no permission change can leave a user signed in with nowhere to land.
@@ -64,6 +87,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
