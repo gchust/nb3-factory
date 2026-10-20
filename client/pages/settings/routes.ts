@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { Clock3, Settings, Users, ShieldCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -39,6 +39,32 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             ],
           },
         ],
+      },
+      {
+        name: 'settingsSchedules',
+        path: '/scheduled-tasks',
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'scheduler.schedules' },
+          action: 'access',
+        },
+        navigation: { title: 'todos.schedules.title', icon: Clock3 },
+        breadcrumb: { title: 'todos.schedules.title' },
+        componentLoader: () => import('./schedules.js'),
+      },
+      {
+        // A sibling of the list, not a child: the list page renders its cards
+        // above an outlet, so nesting would repeat the schedule overview on
+        // the execution-history page.
+        name: 'settingsSchedule',
+        path: '/scheduled-tasks/detail/:scheduleId',
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'scheduler.schedules' },
+          action: 'access',
+        },
+        breadcrumb: { title: 'todos.schedules.detailTitle' },
+        componentLoader: () => import('./schedule-detail.js'),
       },
       {
         name: 'settingsRoles',
