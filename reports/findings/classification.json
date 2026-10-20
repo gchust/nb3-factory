@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "758b62621260cc2fba283556afe4f618a84a925c50dc5c8c7087706bd2c847dd",
+  "inputHash": "73b2072f5141b7da357045081f435db4310c40d2ec001aef2c32a3d0100925f0",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1243,6 +1243,16 @@
       "fingerprint": "ec6c3d98741acd1cda78dd0677a291194dc9ab32b21bb7f72eb402d1f666779d"
     },
     {
+      "id": "773:39335481569:1:F1",
+      "report": "773:39335481569:1",
+      "fingerprint": "cc4c83a2adcede3d44abbd0cc99a9f649242e9b294e0a9b2d21d8b360a1ae11a"
+    },
+    {
+      "id": "773:39335481569:1:F4",
+      "report": "773:39335481569:1",
+      "fingerprint": "200a3be5bb780a7b7d4e4867647c4b5d79f249596567bf046dc245b52e780446"
+    },
+    {
       "id": "775:39335495461:1:F4",
       "report": "775:39335495461:1",
       "fingerprint": "b16ebc8312bd99910d9f32f0bf054abbb1ab9b8f03d513a8e38afbe92d7c26f1"
@@ -2289,15 +2299,29 @@
       "members": [
         "775:39335495461:1:F4"
       ]
+    },
+    {
+      "title": "实时准备失败会把登录后的整个应用锁在入口错误页，缺少失败分类与降级进入路径",
+      "reason": "独立保留：仅 773:39335481569:1:F1 提出该框架可用性问题。认证 Provider 在 realtime.active 时最多等待 10 秒 onOpen，超时即发布 preparation=failed；模板 SessionPreparation 只在 ready 时渲染业务区域，failed 时仅剩连接错误、Retry 与退出，导致会话和 HTTP API 正常也无法进入任何业务页。第二轮通过修补验收浏览器缺失的 WebSocket.CONNECTING/OPEN 常量才恢复，说明环境差异会放大门禁，但没有推翻“一次实时准备失败即整区不可进入”的结论。该根因是实时准备门禁缺少失败分类/降级路径，与同报告 F4 的 Skill 文档缺口不同，也不同于 OOXML/预览超时组与 CSRF/Origin 组，故单例保留。",
+      "members": [
+        "773:39335481569:1:F1"
+      ]
+    },
+    {
+      "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与 10 秒实时准备失败门禁",
+      "reason": "独立保留：773:39335481569:1:F4 是文档缺口。认证 Skill 的公共接口只列 client、session、isPending、refresh，遗漏实现和类型中已公开的 preparation 三态、retryPreparation，以及 realtime.active 时最多等待 10 秒 onOpen 的失败门禁；模板正依赖 preparation 决定是否渲染应用，仅按 Skill 设计入口无法解释 Preparing your session/Unable to connect 与重试语义。插件 README 与 dist 类型虽有完整契约，但不能消除 Skill 入口缺口。它与同报告 F1 的框架可用性根因不同（同一报告也不得合并），也不属于 CSRF/Origin 测试指引组或 secrets 前置组，故单例保留。",
+      "members": [
+        "773:39335481569:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39347014569",
+    "runId": "39348786975",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-20T00:26:18.795Z"
+    "completedAt": "2026-10-20T00:40:35.370Z"
   }
 }
