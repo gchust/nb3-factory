@@ -1,65 +1,48 @@
 import { useAuthentication } from '@nocobase/app-plugin-authentication/client';
+import { useToaster } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
-import { useState, type PropsWithChildren, type ReactElement } from 'react';
+import { useEffect, type PropsWithChildren, type ReactElement } from 'react';
 
 import { Loading } from '#components/loading';
-import { Button } from '#components/ui/button';
 
-/** The first identity handshake must invalidate permissions before pages mount. */
+/**
+ * Waits for the first identity handshake, so pages mount with a permission snapshot for the signed-in session.
+ *
+ * A realtime connection can be unavailable while the HTTP API and the session are healthy: a proxy may block the
+ * WebSocket, or the server may be briefly unable to resolve the session when the socket opens. The authorization
+ * revision still guards every route and invalidates permissions on later notifications, so an unavailable socket must
+ * not lock the user out of an otherwise working application. The handshake therefore falls back to the mounted
+ * application with a warning, instead of a fatal screen that only offers retry or sign-out.
+ */
 export function SessionPreparation({
   children,
 }: PropsWithChildren): ReactElement {
-  const { preparation, retryPreparation, client, refresh } =
-    useAuthentication();
+  const { preparation, retryPreparation } = useAuthentication();
+  const toaster = useToaster();
   const { t } = useTranslation();
-  const [signingOut, setSigningOut] = useState(false);
-  const [signOutFailed, setSignOutFailed] = useState(false);
 
-  if (preparation === 'ready') return <>{children}</>;
+  useEffect(() => {
+    if (preparation !== 'failed') return;
+    const id = 'session-preparation-realtime-unavailable';
+    toaster.show({
+      id,
+      type: 'warning',
+      title: t('auth.realtimeUnavailable'),
+      description: t('auth.realtimeUnavailableDescription'),
+      duration: 0,
+      action: {
+        label: t('auth.retry'),
+        onClick: () => {
+          toaster.close(id);
+          retryPreparation();
+        },
+      },
+    });
+  }, [preparation, retryPreparation, t, toaster]);
+
   if (preparation === 'preparing') {
     return <Loading className='min-h-svh' label={t('auth.preparingSession')} />;
   }
 
-  return (
-    <section className='grid min-h-svh place-items-center px-6'>
-      <div className='w-full max-w-lg space-y-4 text-center'>
-        <h1 className='text-xl font-semibold'>{t('auth.connectionFailed')}</h1>
-        <p className='text-sm text-muted-foreground'>
-          {t('auth.connectionFailedDescription')}
-        </p>
-        {signOutFailed ? (
-          <p role='alert'>{t('account.signOutFailed')}</p>
-        ) : null}
-        <div className='flex justify-center gap-3'>
-          <Button disabled={signingOut} onClick={retryPreparation}>
-            {t('auth.retry')}
-          </Button>
-          <Button
-            variant='outline'
-            disabled={signingOut}
-            onClick={() => {
-              void (async () => {
-                setSigningOut(true);
-                setSignOutFailed(false);
-                try {
-                  const result = await client.signOut();
-                  if (result.error) {
-                    setSignOutFailed(true);
-                    return;
-                  }
-                  await refresh();
-                } catch {
-                  setSignOutFailed(true);
-                } finally {
-                  setSigningOut(false);
-                }
-              })();
-            }}
-          >
-            {t(signingOut ? 'account.signingOut' : 'account.signOut')}
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
+  return <>{children}</>;
 }

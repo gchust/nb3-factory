@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { Settings, Users, ShieldCheck, BookMarked } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -39,6 +39,20 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             ],
           },
         ],
+      },
+      {
+        // Temporary document shares. The page checks the settings item its provider registers; assigning it to a role
+        // is what grants an administrator this surface.
+        name: 'settingsLibrary',
+        path: '/library',
+        auth: 'required',
+        authz: {
+          resource: { type: 'settings', id: 'library.shares' },
+          action: 'read',
+        },
+        navigation: { title: 'library.admin.navigation', icon: BookMarked },
+        breadcrumb: { title: 'library.admin.title' },
+        componentLoader: () => import('./library-shares.js'),
       },
       {
         name: 'settingsRoles',

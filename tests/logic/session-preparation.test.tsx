@@ -1,6 +1,7 @@
 import {
   ClientApplicationContext,
   realtimeClientToken,
+  toasterToken,
   type ClientApplication,
 } from '@nocobase/app-client';
 import {
@@ -18,7 +19,7 @@ import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { MemoryRouter, Outlet } from 'react-router';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -66,15 +67,16 @@ async function setup() {
       };
     },
   };
-  const signOut = vi.fn().mockResolvedValue({ error: { message: 'Offline' } });
   let session: unknown = { user: { id: 'user' }, session: { id: 'session' } };
   const getSession = vi.fn(async () => ({ data: session }));
+  const toaster = { show: vi.fn(), close: vi.fn() };
   services.instance(authenticationClientToken, {
     getSession,
-    signOut,
+    signOut: vi.fn(),
   } as never);
   services.instance(realtimeClientToken, realtime as never);
   services.instance(authorizationClientToken, authz);
+  services.instance(toasterToken, toaster);
   const mounted = vi.fn();
   const cleaned = vi.fn();
   const accepted = vi.fn();
@@ -155,7 +157,7 @@ async function setup() {
     request,
     authz,
     realtime,
-    signOut,
+    toaster,
     getSession,
     mounted,
     cleaned,
@@ -195,29 +197,27 @@ it('mounts only after the initial handshake and preserves runtime fail-closed po
   expect(await screen.findByText('Access denied')).toBeVisible();
 });
 
-it('keeps a timed-out session closed, supports retry, and reports sign-out failure', async () => {
+it('mounts with a warning when realtime cannot open, and retries from the warning', async () => {
   vi.useFakeTimers();
   const probe = await setup();
   await act(async () => vi.advanceTimersByTime(10_000));
-  expect(screen.getByText('Unable to connect')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   await act(async () => {});
-  expect(screen.getByRole('alert')).toHaveTextContent('Unable to sign out');
-  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
-  expect(screen.queryByText('Unable to connect')).toBeNull();
-  await probe.open();
+  expect(screen.getByText('Protected dialog')).toBeVisible();
   expect(probe.mounted).toHaveBeenCalledOnce();
-});
-
-it('can sign out of a failed initialization without a working realtime connection', async () => {
-  vi.useFakeTimers();
-  const probe = await setup();
-  await act(async () => vi.advanceTimersByTime(10_000));
-  probe.signOut.mockResolvedValueOnce({});
-  probe.getSession.mockResolvedValueOnce({ data: null });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-  await act(async () => {});
-  expect(screen.getByText('Login route')).toBeVisible();
-  expect(probe.mounted).not.toHaveBeenCalled();
+  expect(probe.toaster.show).toHaveBeenCalledOnce();
+  const warning = probe.toaster.show.mock.calls[0][0] as {
+    id: string;
+    type: string;
+    title: string;
+    duration: number;
+    action: { onClick: () => void };
+  };
+  expect(warning).toMatchObject({
+    type: 'warning',
+    title: 'Realtime updates are unavailable',
+    duration: 0,
+  });
+  await act(async () => warning.action.onClick());
+  expect(probe.toaster.close).toHaveBeenCalledWith(warning.id);
+  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
 });
