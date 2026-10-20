@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Boxes, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,30 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The ledger is for every signed-in person, so it opts out of page authorization like the landing page. Its
+    // dialogs are child routes of this page, keeping the list visible behind them and the filter in the URL.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: Boxes, order: 20 },
+    path: '/devices',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/new.js'),
+        name: 'deviceCreate',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/devices/edit.js'),
+        name: 'deviceEdit',
+        path: 'edit/:deviceId',
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
