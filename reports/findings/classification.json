@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "73b2072f5141b7da357045081f435db4310c40d2ec001aef2c32a3d0100925f0",
+  "inputHash": "174b9ed3b2878f3b45ba51d11b4700498c17813aaf639065dc89c34ef8c60d87",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1256,6 +1256,21 @@
       "id": "775:39335495461:1:F4",
       "report": "775:39335495461:1",
       "fingerprint": "b16ebc8312bd99910d9f32f0bf054abbb1ab9b8f03d513a8e38afbe92d7c26f1"
+    },
+    {
+      "id": "776:39335502311:1:F3",
+      "report": "776:39335502311:1",
+      "fingerprint": "78af06c91dbbe2c79db8ab78fb3b424a04bfdf83b9d4c9e34c13b2934498819e"
+    },
+    {
+      "id": "776:39335502311:1:F5",
+      "report": "776:39335502311:1",
+      "fingerprint": "8e4efc0c6b1fec5861717fd55b069519b34a2eae4c375654c3a20b4f1991fb2d"
+    },
+    {
+      "id": "776:39335502311:1:F8",
+      "report": "776:39335502311:1",
+      "fingerprint": "2bd5a887910d446fce8ac1e3e11c882bdaa3ccd0cdb2ba67e249cafa0be8df2d"
     }
   ],
   "groups": [
@@ -2308,10 +2323,25 @@
       ]
     },
     {
-      "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与 10 秒实时准备失败门禁",
-      "reason": "独立保留：773:39335481569:1:F4 是文档缺口。认证 Skill 的公共接口只列 client、session、isPending、refresh，遗漏实现和类型中已公开的 preparation 三态、retryPreparation，以及 realtime.active 时最多等待 10 秒 onOpen 的失败门禁；模板正依赖 preparation 决定是否渲染应用，仅按 Skill 设计入口无法解释 Preparing your session/Unable to connect 与重试语义。插件 README 与 dist 类型虽有完整契约，但不能消除 Skill 入口缺口。它与同报告 F1 的框架可用性根因不同（同一报告也不得合并），也不属于 CSRF/Origin 测试指引组或 secrets 前置组，故单例保留。",
+      "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与实时准备失败门禁",
+      "reason": "跨报告合并：773:F4（E36/E29）与 776:F8（E81/E80/E71/E72/E95）均指向同一处认证 Skill 公共契约缺口：SKILL.md 的 Client 公共面只写 useAuthentication() 返回 { client, session, isPending, refresh }，未列出实现与 d.ts 已公开的 preparation（ready/preparing/failed）、retryPreparation，也未说明 realtime.active 下最多等待 10 秒 onOpen 的准备门禁。773:F4 的证据显示模板 SessionPreparation 依赖 preparation 硬门禁；776:F8 进一步记录实时准备失败时登录后整页被 “Unable to connect” 阻塞，应用只能从 dist 反推契约，最终自行加 3 秒 grace/watchdog 才能继续 HTTP 会话。共同修复方向是把 preparation/retryPreparation、超时条件和失败后的推荐回退补进认证 Skill。",
       "members": [
-        "773:39335481569:1:F4"
+        "773:39335481569:1:F4",
+        "776:39335502311:1:F8"
+      ]
+    },
+    {
+      "title": "API 指引劝阻 TanStack Query，却未给出跨页面缓存失效方案",
+      "reason": "单独保留：776:F3 的 E85 显示 api.md 第 235 行在“没有共享数据加载 hook”的说明中明确劝阻 Refine 数据 hooks 与 TanStack Query；但 E86 显示框架自带的站内通知 useInboxActions 正使用 useQueryClient 并在 mutation 后 invalidateQueries，E98 显示应用按指引手写的 useTicketsApi 只维护组件内 revision，E78 的 verify-6 因此记录创建/分派后列表必须整页刷新。该缺口是跨页面缓存失效指引与框架自身实践相矛盾，修复落点是修正“一刀切禁用”的表述并给出 invalidation 示例或统一失效入口；它不同于 473:F6 仅要求补一个处理 loading/error/取消的请求状态 hook，故单列。",
+      "members": [
+        "776:39335502311:1:F3"
+      ]
+    },
+    {
+      "title": "迁移 Skill 未提醒嵌入式测试的插件集可能缺少迁移所访问的插件 Collection",
+      "reason": "单独保留：776:F5 的 E92 显示 nocobase-db Skill 只提醒 migration 使用 repository 是在押注迁移自身未声明的 Collection 形状，未说明嵌入式测试 app 往往只注册最小插件集；E91 显示独立数据库任务容器为空，E99 显示 verify-5 中迁移访问 authorizationPermissionSets 时测试 app 未安装授权插件而抛 COLLECTION_NOT_FOUND，E97 显示最终应用以 builder.hasCollection 守卫绕行。缺口是迁移对可选插件 Collection 与测试插件集的说明/守卫示例缺失；它与 475:F4/532:F3/570:F2/764:F3 讨论的应用 provider 运行时 container.has 可选 token 守卫属于不同装配阶段与 API，故单列。",
+      "members": [
+        "776:39335502311:1:F5"
       ]
     }
   ],
@@ -2319,9 +2349,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39348786975",
+    "runId": "39356477599",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-20T00:40:35.370Z"
+    "completedAt": "2026-10-20T02:01:46.752Z"
   }
 }
