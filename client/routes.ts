@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, Laptop } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +16,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The shared ledger is available to every signed-in teammate, so it opts out of page authorization just like the
+    // landing page. Authentication is still required to open it and to call its API.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: Laptop, order: 10 },
+    path: '/devices',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +76,11 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  // The prepared Users and Roles administration becomes part of the application now that it has business data and
+  // personal settings to preserve. Each page still enforces its own authorization.
+  systemSettingsRoutes,
+];
 
 export default routes;
