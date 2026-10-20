@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "174b9ed3b2878f3b45ba51d11b4700498c17813aaf639065dc89c34ef8c60d87",
+  "inputHash": "00cae87d173e834f6a1d565b947aaea9de4a078e05cf442cf0f7dd426cc3fcdf",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1271,6 +1271,11 @@
       "id": "776:39335502311:1:F8",
       "report": "776:39335502311:1",
       "fingerprint": "2bd5a887910d446fce8ac1e3e11c882bdaa3ccd0cdb2ba67e249cafa0be8df2d"
+    },
+    {
+      "id": "782:39502971651:1:F2",
+      "report": "782:39502971651:1",
+      "fingerprint": "53821525ba9a7b523dda42928cf096f31b81e53616afbac4afaaa607bf48fe41"
     }
   ],
   "groups": [
@@ -2343,15 +2348,22 @@
       "members": [
         "776:39335502311:1:F5"
       ]
+    },
+    {
+      "title": "Scheduler 计划 title/description 仅字符串契约，缺少本地化/展示文本约定",
+      "reason": "单条保留：782:F2（E1/E40/E43/E41/E42/E20/E21）显示 ScheduleDefinition 的 title 为必填 string、description 为可选 string，defineSchedule 只校验 title 非空；字段文档与 REST/OpenAPI 投影都原样透传字符串，没有本地化文本对象或“API 返回原文/展示 key”的约定；应用把 i18n key 写入 title/description 并只在自身页面调用 t()，因此页面可读而 API、Swagger 或外部管理端会看到裸 key。该缺口只涉及 Scheduler 计划定义的契约与文档，与既有 i18n 错误本地化、语言偏好存储以及 Scheduler 立即执行/管理页等组的根因和修复方向不同，故单独保留。",
+      "members": [
+        "782:39502971651:1:F2"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39356477599",
+    "runId": "39510592167",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-20T02:01:46.752Z"
+    "completedAt": "2026-10-20T22:50:42.453Z"
   }
 }
