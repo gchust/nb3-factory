@@ -1,6 +1,14 @@
-import type { Application } from '@nocobase/app-server/application';
 import type { AppRouteContribution } from '@nocobase/app-server/router';
+import type { Application } from '@nocobase/app-server/application';
 
-const routes: readonly AppRouteContribution<Application>[] = [];
+import { fileRoutes } from './files.js';
+import { ticketRoutes } from './tickets.js';
+import { workflowRoutes } from './workflows.js';
+
+const routes: readonly AppRouteContribution<Application>[] = [
+  ...fileRoutes,
+  ticketRoutes,
+  workflowRoutes,
+];
 
 export default routes;

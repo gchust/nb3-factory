@@ -29,6 +29,7 @@ import type { ComponentType, ReactElement } from 'react';
 import { Outlet, MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AppQueryProvider } from '../../client/lib/query-provider.tsx';
 import { AppRouter } from '../../client/routing/app-router.tsx';
 import { AppThemeProvider } from '../../client/theme/index.ts';
 
@@ -106,15 +107,13 @@ describe('application shell', () => {
     ).toBeVisible();
   });
 
-  it('renders no Settings or Inbox entry in the header', async () => {
+  it('keeps Settings out of the header and links to the inbox', async () => {
     renderApplication('/', true);
     await screen.findByRole('heading', { name: 'App client is ready' });
     expect(
       screen.queryByRole('link', { name: 'Settings' }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: /inbox/i }),
-    ).not.toBeInTheDocument();
+    expect(document.querySelector('header a[href="/inbox"]')).not.toBeNull();
   });
 
   it('renders nested pages through manual outlets and selects the nearest menu ancestor', async () => {
@@ -309,11 +308,13 @@ function renderApplication(
       <AuthenticationProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
           <AppThemeProvider>
-            <SidebarPreferenceProvider
-              value={createAppSidebarPreferenceStore('/main')}
-            >
-              <AppRouter clientRoutes={clientRoutes} />
-            </SidebarPreferenceProvider>
+            <AppQueryProvider>
+              <SidebarPreferenceProvider
+                value={createAppSidebarPreferenceStore('/main')}
+              >
+                <AppRouter clientRoutes={clientRoutes} />
+              </SidebarPreferenceProvider>
+            </AppQueryProvider>
           </AppThemeProvider>
         </MemoryRouter>
       </AuthenticationProvider>

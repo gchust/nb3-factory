@@ -2,26 +2,35 @@ import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from '../../client/locales/en-US.js';
-import zhCN from '../../client/locales/zh-CN.js';
 import HomePage from '../../client/pages/home/index.js';
-import { CAPABILITIES } from '../../client/pages/home/capabilities.js';
+import type { TicketDashboard } from '../../client/pages/tickets/shared.js';
 
-const { toaster } = vi.hoisted(() => ({
-  toaster: { show: vi.fn(), close: vi.fn() },
+const state = vi.hoisted(() => ({
+  canAssign: true,
+  canCreate: true,
+  request: {
+    data: undefined as { data: TicketDashboard } | undefined,
+    error: undefined as unknown,
+    loading: false,
+    reload: vi.fn(),
+  },
 }));
 
-vi.mock('@nocobase/app-client', async (original) => ({
-  ...(await original<typeof import('@nocobase/app-client')>()),
-  useToaster: () => toaster,
+vi.mock('../../client/pages/tickets/shared.js', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../../client/pages/tickets/shared.js')
+  >()),
+  useTicketsApi: () => state.request,
+  useTicketPermission: (action: string) =>
+    action === 'assign' ? state.canAssign : state.canCreate,
 }));
 
-// Strict: a key the locale lacks fails the test instead of rendering as text.
 const runtime = await createTestI18nRuntime({
   application: {
     namespace: '@nocobase/app-template-default',
@@ -29,146 +38,153 @@ const runtime = await createTestI18nRuntime({
   },
 });
 
-function I18n({ children }: { readonly children: ReactNode }): ReactElement {
-  return <TestI18nProvider runtime={runtime}>{children}</TestI18nProvider>;
+function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
+  return (
+    <TestI18nProvider runtime={runtime}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </TestI18nProvider>
+  );
 }
 
-const writeText = vi.fn<(text: string) => Promise<void>>();
-const clipboard = { fail: false };
+const dashboard: TicketDashboard = {
+  summary: {
+    total: 8,
+    active: 4,
+    pending: 2,
+    processing: 1,
+    escalated: 1,
+    resolved: 1,
+    closed: 1,
+    cancelled: 2,
+    unassigned: 1,
+    overdue: 1,
+  },
+  unassigned: [
+    {
+      id: 'ticket-vpn',
+      ticketNo: 'TK-20261007-ABC123',
+      title: 'VPN disconnects every few minutes',
+      description: 'The VPN drops.',
+      category: 'network',
+      priority: 'high',
+      status: 'pending',
+      requesterId: 'alice',
+      assigneeId: null,
+      resolution: null,
+      closeNote: null,
+      cancelReason: null,
+      statusChangedAt: '2026-10-06T08:00:00.000Z',
+      lifecycleVersion: 0,
+      resolvedAt: null,
+      closedAt: null,
+      createdAt: '2026-10-06T08:00:00.000Z',
+      updatedAt: '2026-10-06T08:00:00.000Z',
+    },
+  ],
+  overdue: [
+    {
+      id: 'ticket-drive',
+      ticketNo: 'TK-20261007-DEF456',
+      title: 'Shared drive access lost after password reset',
+      description: 'Access denied.',
+      category: 'account',
+      priority: 'urgent',
+      status: 'escalated',
+      requesterId: 'evan',
+      assigneeId: 'bob',
+      resolution: null,
+      closeNote: null,
+      cancelReason: null,
+      statusChangedAt: '2026-10-06T09:00:00.000Z',
+      lifecycleVersion: 2,
+      resolvedAt: null,
+      closedAt: null,
+      createdAt: '2026-10-06T09:00:00.000Z',
+      updatedAt: '2026-10-06T09:00:00.000Z',
+    },
+  ],
+  workload: [
+    { id: 'bob', name: 'Bob Liu', active: 2, escalated: 1 },
+    { id: 'carol', name: 'Carol Wang', active: 1, escalated: 0 },
+  ],
+};
 
-/** `userEvent.setup()` installs a clipboard stub of its own, so the mock goes in after it. */
-function setup(): ReturnType<typeof userEvent.setup> {
-  const user = userEvent.setup();
-  writeText
-    .mockReset()
-    .mockImplementation(() =>
-      clipboard.fail ? Promise.reject(new Error('denied')) : Promise.resolve(),
-    );
-  Object.defineProperty(navigator, 'clipboard', {
-    configurable: true,
-    value: { writeText },
-  });
-  return user;
-}
-
-describe('home page', () => {
+describe('service desk home page', () => {
   beforeEach(() => {
-    toaster.show.mockReset();
-    clipboard.fail = false;
+    state.canAssign = true;
+    state.canCreate = true;
+    state.request = {
+      data: { data: dashboard },
+      error: undefined,
+      loading: false,
+      reload: vi.fn(),
+    };
   });
 
-  it('tells people to build by asking their coding agent', () => {
-    render(<HomePage />, { wrapper: I18n });
+  it('shows the desk summary, queues and engineer workload', () => {
+    render(<HomePage />, { wrapper: Wrapper });
 
     expect(
-      screen.getByRole('heading', { level: 1, name: enUS.home.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(enUS.home.steps.describe.title)).toBeVisible();
-  });
-
-  it('shows one card per built-in capability', () => {
-    render(<HomePage />, { wrapper: I18n });
-
-    for (const { id } of CAPABILITIES) {
-      const title =
-        enUS.home.capabilities[id as keyof typeof enUS.home.capabilities].title;
-      expect(
-        screen.getByRole('button', { name: new RegExp(title) }),
-      ).toBeInTheDocument();
-    }
-  });
-
-  it('opens a capability, switches prompts, and copies the edited text', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const scheduler = enUS.home.capabilities.scheduler;
-
-    await user.click(
-      screen.getByRole('button', { name: new RegExp(scheduler.title) }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    const prompt = within(dialog).getByRole('textbox', {
-      name: enUS.home.prompt.label,
-    });
-    expect(prompt).toHaveValue(scheduler.prompts.reminder.text);
-
-    await user.click(
-      within(dialog).getByRole('tab', {
-        name: scheduler.prompts.weeklyReport.label,
+      screen.getByRole('heading', {
+        level: 1,
+        name: enUS.helpdesk.dashboard.title,
       }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-
-    await user.clear(prompt);
-    await user.type(prompt, 'Every Friday');
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.copy }),
-    );
-
-    expect(writeText).toHaveBeenCalledWith('Every Friday');
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'success',
-      title: enUS.home.prompt.copied,
-    });
-
-    await user.click(
-      within(dialog).getByRole('button', { name: enUS.home.prompt.reset }),
-    );
-    expect(prompt).toHaveValue(scheduler.prompts.weeklyReport.text);
-  });
-
-  it('starts from the default prompt each time the dialog opens', async () => {
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
-    const theme = enUS.home.capabilities.theme;
-    const card = screen.getByRole('button', { name: new RegExp(theme.title) });
-
-    await user.click(card);
-    const prompt = within(await screen.findByRole('dialog')).getByRole(
-      'textbox',
-    );
-    await user.type(prompt, ' Edited.');
-    await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-
-    await user.click(card);
+    ).toBeVisible();
     expect(
-      within(await screen.findByRole('dialog')).getByRole('textbox'),
-    ).toHaveValue(theme.prompts.changeTheme.text);
+      screen.getByRole('heading', {
+        name: enUS.helpdesk.dashboard.unassignedTitle,
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('heading', {
+        name: enUS.helpdesk.dashboard.overdueTitle,
+      }),
+    ).toBeVisible();
+    expect(screen.getByText('Bob Liu')).toBeVisible();
+    expect(screen.getByText('Carol Wang')).toBeVisible();
+    expect(
+      screen.getByRole('link', {
+        name: /VPN disconnects every few minutes/,
+      }),
+    ).toHaveAttribute('href', '/tickets/ticket-vpn');
+    expect(
+      screen.getByRole('link', {
+        name: /Shared drive access lost after password reset/,
+      }),
+    ).toHaveAttribute('href', '/tickets/ticket-drive');
+    expect(
+      screen.getByRole('button', { name: enUS.helpdesk.newTicket }),
+    ).toHaveAttribute('href', '/tickets/new');
   });
 
-  it('reports a copy the browser refuses', async () => {
-    clipboard.fail = true;
-    const user = setup();
-    render(<HomePage />, { wrapper: I18n });
+  it('hides the engineering workload from people who cannot assign', () => {
+    state.canAssign = false;
+    render(<HomePage />, { wrapper: Wrapper });
 
-    await user.click(
-      screen.getAllByRole('button', { name: enUS.home.prompt.copy })[0],
-    );
-
-    expect(toaster.show).toHaveBeenCalledWith({
-      type: 'error',
-      title: enUS.home.prompt.copyFailed,
-    });
+    expect(
+      screen.queryByRole('heading', {
+        name: enUS.helpdesk.dashboard.workloadTitle,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: enUS.helpdesk.dashboard.unassignedTitle,
+      }),
+    ).toBeVisible();
   });
-});
 
-describe('home page copy', () => {
-  it('translates every capability prompt into Chinese', () => {
-    for (const { id, prompts } of CAPABILITIES) {
-      const key = id as keyof typeof zhCN.home.capabilities;
-      for (const prompt of prompts) {
-        const zh = (
-          zhCN.home.capabilities[key].prompts as Record<
-            string,
-            { label: string; text: string }
-          >
-        )[prompt];
-        expect(zh?.text, `${id}.${prompt}`).toBeTruthy();
-        expect(zh?.label, `${id}.${prompt}`).toBeTruthy();
-      }
-    }
+  it('reports a dashboard the server could not load', () => {
+    state.request = {
+      data: undefined,
+      error: new Error('offline'),
+      loading: false,
+      reload: vi.fn(),
+    };
+    render(<HomePage />, { wrapper: Wrapper });
+
+    expect(screen.getByText(enUS.helpdesk.dashboard.loadFailed)).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: enUS.helpdesk.retry }),
+    ).toBeVisible();
   });
 });
