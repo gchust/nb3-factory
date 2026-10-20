@@ -26,3 +26,9 @@ database/*/seeds/
 .agents/*
 !.agents/rules/
 .claude/skills/
+
+# `pnpm nocobase config init` writes config.yml together with a generated secrets key, and deployment writes its own.
+# It is local configuration, not application source: its formatting belongs to the generator, and the factory owns the
+# file, so `format:check` must not rewrite it. `.gitignore` un-ignores it to keep a baseline's configuration, so it
+# would otherwise be checked here.
+config.yml

@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, Ticket } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -24,6 +26,42 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    name: 'tickets',
+    path: '/tickets',
+    auth: 'required',
+    authz: {
+      resource: { type: 'composite', id: 'helpdesk.tickets' },
+      action: 'view',
+    },
+    navigation: { title: 'navigation.tickets', icon: Ticket, order: 10 },
+    breadcrumb: { title: 'navigation.tickets' },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    children: [
+      {
+        name: 'ticketCreate',
+        path: 'new',
+        auth: 'required',
+        authz: {
+          resource: { type: 'composite', id: 'helpdesk.tickets' },
+          action: 'create',
+        },
+        breadcrumb: { title: 'helpdesk.newTicket' },
+        componentLoader: () => import('./pages/tickets/create.js'),
+      },
+      {
+        name: 'ticketDetail',
+        path: ':ticketId',
+        auth: 'required',
+        authz: {
+          resource: { type: 'composite', id: 'helpdesk.tickets' },
+          action: 'view',
+        },
+        breadcrumb: { title: 'helpdesk.ticket' },
+        componentLoader: () => import('./pages/tickets/detail.js'),
+      },
+    ],
   },
   {
     auth: 'guest',
@@ -64,6 +102,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
