@@ -5,6 +5,7 @@ import { Badge } from '#components/ui/badge';
 const tones = {
   neutral: 'border-border bg-muted text-muted-foreground',
   info: 'border-primary/15 bg-primary/8 text-primary',
+  danger: 'border-destructive/20 bg-destructive/10 text-destructive',
   warning:
     'border-(--status-warning)/20 bg-(--status-warning-background) text-(--status-warning)',
   success:

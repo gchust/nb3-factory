@@ -741,6 +741,282 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('serves leave requests to their owner and decisions to an approver', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const year = new Date().getUTCFullYear();
+    const jsonHeaders = (cookie: string) => ({
+      cookie,
+      'content-type': 'application/json',
+      origin: new URL(baseUrl).origin,
+    });
+    const signIn = async (username: string, password: string) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+    const createUser = async (input: { name: string; email: string }) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-up/email`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...input,
+            password: 'LeaveTestPass123!',
+          }),
+        },
+      );
+      expect([200, 201]).toContain(response.status);
+      return (await response.json()) as { user: { id: string } };
+    };
+    const signInWithEmail = async (email: string) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/email`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password: 'LeaveTestPass123!',
+          }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+    const createRequest = async (
+      cookie: string,
+      startDate: string,
+      endDate: string,
+    ) => {
+      const response = await requestApp(app, `${baseUrl}/api/leaveRequests`, {
+        method: 'POST',
+        headers: jsonHeaders(cookie),
+        body: JSON.stringify({
+          type: 'annual',
+          startDate,
+          endDate,
+          reason: 'Annual family trip',
+        }),
+      });
+      expect(response.status).toBe(201);
+      return (await response.json()) as {
+        data: { id: string; userId: string; status: string };
+      };
+    };
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/leaveRequests`);
+    expect(anonymous.status).toBe(401);
+
+    const adminCookie = await signIn('nocobase', 'admin123');
+    const employee = await createUser({
+      name: 'Leave Employee',
+      email: 'leave-employee@example.com',
+    });
+    const approver = await createUser({
+      name: 'Leave Approver',
+      email: 'leave-approver@example.com',
+    });
+    const employeeCookie = await signInWithEmail('leave-employee@example.com');
+    const approverCookie = await signInWithEmail('leave-approver@example.com');
+
+    const employeeRequest = await createRequest(
+      employeeCookie,
+      `${year}-06-01`,
+      `${year}-06-05`,
+    );
+    const adminRequest = await createRequest(
+      adminCookie,
+      `${year}-07-01`,
+      `${year}-07-05`,
+    );
+
+    const pendingStats = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/stats`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(pendingStats.status).toBe(200);
+    await expect(pendingStats.json()).resolves.toMatchObject({
+      data: { pending: 1, approved: 0, yearTotal: 1, teamPending: null },
+    });
+
+    const invisible = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${adminRequest.data.id}`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(invisible.status).toBe(404);
+    await expect(invisible.json()).resolves.toMatchObject({
+      error: { reason: 'LEAVE_REQUEST_NOT_FOUND' },
+    });
+
+    const employeeTeam = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests?scope=team`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(employeeTeam.status).toBe(403);
+    const employeeDecision = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}/status`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders(employeeCookie),
+        body: JSON.stringify({ status: 'approved' }),
+      },
+    );
+    expect(employeeDecision.status).toBe(403);
+
+    // The seeded `leave-approver` Permission Set is what grants the decision, so an
+    // unassigned account is refused even when its input is valid.
+    const undecided = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}/status`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders(approverCookie),
+        body: JSON.stringify({ status: 'approved' }),
+      },
+    );
+    expect(undecided.status).toBe(403);
+
+    const database = app.application.container.resolve(databaseManagerToken);
+    const now = new Date();
+    await database
+      .connection('main')
+      .query.insertInto('authorizationPermissionSetAssignments')
+      .values({
+        id: `user:${approver.user.id}:leave-approver`,
+        subjectType: 'user',
+        subjectId: approver.user.id,
+        permissionSetKey: 'leave-approver',
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+
+    const team = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests?scope=team`,
+      { headers: { cookie: approverCookie } },
+    );
+    expect(team.status).toBe(200);
+    const teamBody = (await team.json()) as {
+      data: { id: string }[];
+      meta: { total: number };
+    };
+    expect(teamBody.meta.total).toBe(2);
+    expect(teamBody.data.map(({ id }) => id)).toEqual(
+      expect.arrayContaining([employeeRequest.data.id, adminRequest.data.id]),
+    );
+
+    const approverDetail = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}`,
+      { headers: { cookie: approverCookie } },
+    );
+    expect(approverDetail.status).toBe(200);
+
+    const decision = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}/status`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders(approverCookie),
+        body: JSON.stringify({
+          status: 'approved',
+          comment: 'Approved by the team lead.',
+        }),
+      },
+    );
+    expect(decision.status).toBe(200);
+    await expect(decision.json()).resolves.toMatchObject({
+      data: {
+        id: employeeRequest.data.id,
+        status: 'approved',
+        reviewerId: approver.user.id,
+        reviewComment: 'Approved by the team lead.',
+      },
+    });
+
+    // The state predicate is part of the update, so a second decision cannot overwrite the first.
+    const repeated = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}/status`,
+      {
+        method: 'PATCH',
+        headers: jsonHeaders(approverCookie),
+        body: JSON.stringify({ status: 'rejected' }),
+      },
+    );
+    expect(repeated.status).toBe(400);
+    await expect(repeated.json()).resolves.toMatchObject({
+      error: { reason: 'LEAVE_REQUEST_NOT_PENDING' },
+    });
+
+    const ownDetail = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/${employeeRequest.data.id}`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(ownDetail.status).toBe(200);
+    await expect(ownDetail.json()).resolves.toMatchObject({
+      data: { id: employeeRequest.data.id, status: 'approved' },
+    });
+
+    const approvedStats = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/stats`,
+      { headers: { cookie: employeeCookie } },
+    );
+    await expect(approvedStats.json()).resolves.toMatchObject({
+      data: { pending: 0, approved: 1, yearTotal: 1, teamPending: null },
+    });
+
+    const calendar = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/calendar?month=${year}-06`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(calendar.status).toBe(200);
+    await expect(calendar.json()).resolves.toMatchObject({
+      data: [{ id: employeeRequest.data.id, status: 'approved' }],
+      meta: { month: `${year}-06`, total: 1 },
+    });
+
+    const approverStats = await requestApp(
+      app,
+      `${baseUrl}/api/leaveRequests/stats`,
+      { headers: { cookie: approverCookie } },
+    );
+    await expect(approverStats.json()).resolves.toMatchObject({
+      data: { pending: 0, approved: 0, yearTotal: 0, teamPending: 1 },
+    });
+
+    // The employee account is not the approver, and remains unable to lead a team view.
+    expect(employee.user.id).not.toBe(approver.user.id);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),
