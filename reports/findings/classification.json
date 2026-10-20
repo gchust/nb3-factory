@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "e9af8909f7a32d2515f04e90d02a028d24ccb4ba29b23d27ab69b39fb35532b1",
+  "inputHash": "8caf751a790bd488981a5a93c47de878af13ec5d7d15d2c49b5da0fb01a99c8b",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1273,6 +1273,16 @@
       "fingerprint": "2bd5a887910d446fce8ac1e3e11c882bdaa3ccd0cdb2ba67e249cafa0be8df2d"
     },
     {
+      "id": "781:39502963850:1:F1",
+      "report": "781:39502963850:1",
+      "fingerprint": "302f27d22e24788a75fa3eb4e27b26b95ffb6d6b4f2a9da1b2c7004532500af1"
+    },
+    {
+      "id": "781:39502963850:1:F5",
+      "report": "781:39502963850:1",
+      "fingerprint": "d3fedc8c09d39e5b2a59ade40c1bd0385752f442bea2d47c853432574fef258e"
+    },
+    {
       "id": "782:39502971651:1:F2",
       "report": "782:39502971651:1",
       "fingerprint": "53821525ba9a7b523dda42928cf096f31b81e53616afbac4afaaa607bf48fe41"
@@ -2332,18 +2342,20 @@
       ]
     },
     {
-      "title": "实时准备失败会把登录后的整个应用锁在入口错误页，缺少失败分类与降级进入路径",
-      "reason": "独立保留：仅 773:39335481569:1:F1 提出该框架可用性问题。认证 Provider 在 realtime.active 时最多等待 10 秒 onOpen，超时即发布 preparation=failed；模板 SessionPreparation 只在 ready 时渲染业务区域，failed 时仅剩连接错误、Retry 与退出，导致会话和 HTTP API 正常也无法进入任何业务页。第二轮通过修补验收浏览器缺失的 WebSocket.CONNECTING/OPEN 常量才恢复，说明环境差异会放大门禁，但没有推翻“一次实时准备失败即整区不可进入”的结论。该根因是实时准备门禁缺少失败分类/降级路径，与同报告 F4 的 Skill 文档缺口不同，也不同于 OOXML/预览超时组与 CSRF/Origin 组，故单例保留。",
+      "title": "实时准备失败缺少降级分类，failed 被等同于不可进入，登录后的整个应用锁在入口错误页",
+      "reason": "跨报告合并：773:F1（E29/E30/E31/E37）与 781:F5（E12/E13/E27/E14/E17）均指向认证 Provider 的 preparation 只有 preparing/ready/failed 三态，十秒实时握手超时后直接发布 failed；模板 SessionPreparation 只在 ready 时渲染业务页，failed 只给 Retry/退出，781 的应用也只能自行把 failed 当 warning 才能继续挂载。两者共同缺口是未区分“认证失败/未就绪”与“HTTP 会话已认证但实时传输降级”，修复方向一致：增加 authenticated-degraded 状态或等价的能力标志，并让模板/示例在实时不可用时继续挂载业务界面。",
       "members": [
-        "773:39335481569:1:F1"
+        "773:39335481569:1:F1",
+        "781:39502963850:1:F5"
       ]
     },
     {
-      "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation 与实时准备失败门禁",
-      "reason": "跨报告合并：773:F4（E36/E29）与 776:F8（E81/E80/E71/E72/E95）均指向同一处认证 Skill 公共契约缺口：SKILL.md 的 Client 公共面只写 useAuthentication() 返回 { client, session, isPending, refresh }，未列出实现与 d.ts 已公开的 preparation（ready/preparing/failed）、retryPreparation，也未说明 realtime.active 下最多等待 10 秒 onOpen 的准备门禁。773:F4 的证据显示模板 SessionPreparation 依赖 preparation 硬门禁；776:F8 进一步记录实时准备失败时登录后整页被 “Unable to connect” 阻塞，应用只能从 dist 反推契约，最终自行加 3 秒 grace/watchdog 才能继续 HTTP 会话。共同修复方向是把 preparation/retryPreparation、超时条件和失败后的推荐回退补进认证 Skill。",
+      "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation、十秒准备门禁与失败降级语义",
+      "reason": "跨报告合并：773:F4（E36/E29）、776:F8（E81/E80/E71/E72/E95）、781:F1（E27/E28/E12/E13/E14/E15/E17）均指向同一处认证 Skill 公共契约缺口：SKILL.md 的 Public surfaces 只写 useAuthentication() 返回 { client, session, isPending, refresh }，client-session 参考也只解释这些字段，未列出实现与 d.ts 已公开的 preparation（preparing/ready/failed）和 retryPreparation，也未说明 realtime.active 下最多等待十秒 onOpen 的门禁及失败后应继续 HTTP 会话。三个应用只能从 README/dist 反推契约，781 更把 failed 写成致命门禁直至补丁改为 warning。共同修复方向是把 preparation/retryPreparation、超时条件和降级回退补进认证 Skill 与参考。",
       "members": [
         "773:39335481569:1:F4",
-        "776:39335502311:1:F8"
+        "776:39335502311:1:F8",
+        "781:39502963850:1:F1"
       ]
     },
     {
@@ -2379,9 +2391,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39513903599",
+    "runId": "39515027146",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-20T23:19:27.251Z"
+    "completedAt": "2026-10-20T23:28:30.278Z"
   }
 }
