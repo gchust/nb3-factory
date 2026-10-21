@@ -1,8 +1,26 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
+
+const documentSharingSettings = defineAppRoutes([
+  {
+    parent: 'settings',
+    name: 'settingsDocumentsSharing',
+    path: '/documents-sharing',
+    auth: 'required',
+    authz: {
+      resource: { type: 'settings', id: 'documents.sharing' },
+      action: 'read',
+    },
+    navigation: { title: 'settings.documentsSharing', icon: BookOpen },
+    breadcrumb: { title: 'settings.documentsSharing' },
+    componentLoader: () => import('./pages/settings/documents-sharing.js'),
+  },
+]);
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +32,39 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The library is the business entry point. Its page grant is separate from the document data grant: a reader
+    // may open the library without being able to edit any document.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'documents' }, action: 'access' },
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: BookOpen, order: 20 },
+    breadcrumb: { title: 'navigation.documents' },
+    path: '/documents',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/new.js'),
+        name: 'documentsNew',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/documents/detail.js'),
+        name: 'documentsDetail',
+        path: ':documentId',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/documents/edit.js'),
+            name: 'documentsEdit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +115,10 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+  documentSharingSettings,
+];
 
 export default routes;

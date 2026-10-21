@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -24,6 +23,7 @@ describe('app client routes', () => {
         '/reset-password',
         // The page `deviceAuthorization()`'s verificationUri names, where a CLI's sign-in is approved.
         '/device',
+        '/documents',
       ]),
     );
   });
@@ -55,25 +55,10 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
-    ]);
-  });
-
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'documents' },
+      { name: 'documentsNew', authorizedAs: null },
+      { name: 'documentsDetail', authorizedAs: null },
+      { name: 'documentsEdit', authorizedAs: null },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
       { name: 'settingsUser', authorizedAs: 'user:*' },
@@ -90,7 +75,32 @@ describe('app client routes', () => {
         name: 'settingsRoleEdit',
         authorizedAs: 'settings:authorization.permission-sets',
       },
+      {
+        name: 'settingsDocumentsSharing',
+        authorizedAs: 'settings:documents.sharing',
+      },
     ]);
+  });
+
+  it('registers the business pages and management surfaces as business capabilities', async () => {
+    const built = resolveAppClientContributions([
+      {
+        packageName: '@nocobase/app-template-default',
+        routes: applicationRoutes,
+        source: 'application',
+      },
+    ]);
+    expect(pagePaths(built.routes)).toEqual(
+      expect.arrayContaining([
+        '/documents',
+        '/documents/new',
+        '/documents/:documentId',
+        '/documents/:documentId/edit',
+        '/settings/users',
+        '/settings/roles',
+        '/settings/documents-sharing',
+      ]),
+    );
     for (const loader of componentLoadersIn(built.routes))
       await expect(loader()).resolves.toMatchObject({
         default: expect.any(Function),
