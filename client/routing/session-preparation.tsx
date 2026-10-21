@@ -1,65 +1,43 @@
 import { useAuthentication } from '@nocobase/app-plugin-authentication/client';
 import { useTranslation } from '@nocobase/i18n/client';
-import { useState, type PropsWithChildren, type ReactElement } from 'react';
+import {
+  useEffect,
+  useState,
+  type PropsWithChildren,
+  type ReactElement,
+} from 'react';
 
 import { Loading } from '#components/loading';
-import { Button } from '#components/ui/button';
 
-/** The first identity handshake must invalidate permissions before pages mount. */
+/**
+ * How long the authenticated shell waits for the realtime channel before it
+ * falls back to the HTTP session.
+ *
+ * The realtime channel only carries live invalidation; this application's
+ * pages read and write through the HTTP API, and `AuthorizationProvider`
+ * clears the permission snapshot whenever the session changes. A network that
+ * does not carry WebSocket upgrades (a preview proxy, an extension, a strict
+ * firewall) must therefore not lock the whole application behind the
+ * authentication plugin's ten-second failure screen.
+ */
+const REALTIME_GRACE_MS = 1_500;
+
 export function SessionPreparation({
   children,
 }: PropsWithChildren): ReactElement {
-  const { preparation, retryPreparation, client, refresh } =
-    useAuthentication();
+  const { preparation } = useAuthentication();
   const { t } = useTranslation();
-  const [signingOut, setSigningOut] = useState(false);
-  const [signOutFailed, setSignOutFailed] = useState(false);
+  const [graceElapsed, setGraceElapsed] = useState(false);
 
-  if (preparation === 'ready') return <>{children}</>;
-  if (preparation === 'preparing') {
-    return <Loading className='min-h-svh' label={t('auth.preparingSession')} />;
+  useEffect(() => {
+    if (preparation !== 'preparing') return;
+    const timer = setTimeout(() => setGraceElapsed(true), REALTIME_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [preparation]);
+
+  if (preparation === 'ready' || preparation === 'failed' || graceElapsed) {
+    return <>{children}</>;
   }
 
-  return (
-    <section className='grid min-h-svh place-items-center px-6'>
-      <div className='w-full max-w-lg space-y-4 text-center'>
-        <h1 className='text-xl font-semibold'>{t('auth.connectionFailed')}</h1>
-        <p className='text-sm text-muted-foreground'>
-          {t('auth.connectionFailedDescription')}
-        </p>
-        {signOutFailed ? (
-          <p role='alert'>{t('account.signOutFailed')}</p>
-        ) : null}
-        <div className='flex justify-center gap-3'>
-          <Button disabled={signingOut} onClick={retryPreparation}>
-            {t('auth.retry')}
-          </Button>
-          <Button
-            variant='outline'
-            disabled={signingOut}
-            onClick={() => {
-              void (async () => {
-                setSigningOut(true);
-                setSignOutFailed(false);
-                try {
-                  const result = await client.signOut();
-                  if (result.error) {
-                    setSignOutFailed(true);
-                    return;
-                  }
-                  await refresh();
-                } catch {
-                  setSignOutFailed(true);
-                } finally {
-                  setSigningOut(false);
-                }
-              })();
-            }}
-          >
-            {t(signingOut ? 'account.signingOut' : 'account.signOut')}
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
+  return <Loading className='min-h-svh' label={t('auth.preparingSession')} />;
 }

@@ -18,7 +18,7 @@ import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { MemoryRouter, Outlet } from 'react-router';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -195,29 +195,32 @@ it('mounts only after the initial handshake and preserves runtime fail-closed po
   expect(await screen.findByText('Access denied')).toBeVisible();
 });
 
-it('keeps a timed-out session closed, supports retry, and reports sign-out failure', async () => {
+it('enters the application when the realtime channel does not open within the grace period', async () => {
   vi.useFakeTimers();
   const probe = await setup();
-  await act(async () => vi.advanceTimersByTime(10_000));
-  expect(screen.getByText('Unable to connect')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-  await act(async () => {});
-  expect(screen.getByRole('alert')).toHaveTextContent('Unable to sign out');
-  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
-  expect(screen.queryByText('Unable to connect')).toBeNull();
-  await probe.open();
+  expect(screen.getByText('Preparing your session…')).toBeVisible();
+  expect(probe.mounted).not.toHaveBeenCalled();
+
+  await act(async () => vi.advanceTimersByTime(1_500));
+  expect(screen.getByText('Protected dialog')).toBeVisible();
   expect(probe.mounted).toHaveBeenCalledOnce();
+  expect(probe.realtime.reconnect).toHaveBeenCalledOnce();
+
+  // A channel that opens late re-checks permissions through the normal
+  // fail-closed guard without locking the application again.
+  await probe.open();
+  expect(screen.getByText('Protected dialog')).toBeVisible();
+  expect(screen.queryByText('Preparing your session…')).toBeNull();
+  expect(probe.request).toHaveBeenCalledTimes(2);
 });
 
-it('can sign out of a failed initialization without a working realtime connection', async () => {
+it('keeps authentication guards active after the realtime fallback', async () => {
   vi.useFakeTimers();
   const probe = await setup();
-  await act(async () => vi.advanceTimersByTime(10_000));
-  probe.signOut.mockResolvedValueOnce({});
-  probe.getSession.mockResolvedValueOnce({ data: null });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-  await act(async () => {});
+  await act(async () => vi.advanceTimersByTime(1_500));
+  expect(screen.getByText('Protected dialog')).toBeVisible();
+
+  await probe.logout();
   expect(screen.getByText('Login route')).toBeVisible();
-  expect(probe.mounted).not.toHaveBeenCalled();
+  expect(screen.queryByText('Protected dialog')).toBeNull();
 });

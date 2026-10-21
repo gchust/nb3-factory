@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, Laptop } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +16,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The device ledger is an operational page every signed-in person uses, so it is not page-authorized. The API
+    // still requires a session for every read and write.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: Laptop, order: 10 },
+    breadcrumb: { title: 'navigation.devices' },
+    path: '/devices',
+    children: [
+      {
+        name: 'deviceCreate',
+        path: 'create',
+        breadcrumb: { title: 'devices.create.title' },
+        componentLoader: () => import('./pages/devices/new.js'),
+      },
+      {
+        name: 'deviceEdit',
+        path: ':deviceId/edit',
+        breadcrumb: { title: 'devices.edit.title' },
+        componentLoader: () => import('./pages/devices/edit.js'),
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +91,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
