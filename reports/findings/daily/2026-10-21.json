@@ -1,0 +1,407 @@
+{
+  "version": 1,
+  "date": "2026-10-21",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "eda2772b3f8a800eb64bbdef",
+      "id": "781:39502963850:1:F1",
+      "issue": 781,
+      "runId": 39502963850,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "认证 Skill 漏掉 preparation，应用只能照不完整的客户端契约处理实时失败",
+      "summary": "认证 Skill 的 Public surfaces 明确写 useAuthentication() 返回 client、session、isPending、refresh，client-session 参考也只描述这些字段；但实现实际还返回 preparation 和 retryPreparation，README 另有一段十秒准备超时与 retry/sign-out。Agent 使用了 preparation 并把 failed 实现成致命门禁，Skill 和参考都没有说明实时传输降级时是否应阻断 HTTP 会话。verify-2 因此登录成功后始终停在 Unable to connect，B01-B05 全部未执行。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "Skill 第 48 行把 useAuthentication() 返回写成 {client,session,isPending,refresh}，client-session 参考 17-30 行也只讲 session/isPending/refresh；实际类型和实现还公开 preparation/retryPreparation，README 36-40 行记录十秒超时及 failed 后 retry/sign-out。应用在 verify-2 确实把 failed 当致命门禁（登录 200、authenticated=true 却停在 Unable to connect），补丁后才改为 warning 并继续挂载。因此“Skill/参考漏掉 preparation 与实时降级语义”有源码和原始事件支持。需限定：socket 失败本身还涉及应用把 realtimeURL 从 api.baseURL 派生，不能全部归因于文档；README 已文档化 preparation，缺口在 Skill/参考的入门指引。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "认证 Skill 的 Public surfaces 明确把 useAuthentication() 写成只返回 client/session/isPending/refresh；client-session 参考同样只解释这些字段，未提 preparation/retryPreparation，而 README 另有十秒准备超时和 failed 状态，冻结指引内部不一致。",
+            "evidence": [
+              "E27",
+              "E28",
+              "E12",
+              "E66"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "auth-provider 实际用十秒计时器把未完成的实时准备 publish 为 failed，并把 preparation/retryPreparation 放进 context；这是公开运行行为，不是仅文档声明。",
+            "evidence": [
+              "E13",
+              "E66"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "verify-2 报告显示管理员登录成功且 authenticated=true，但进入业务界面即停在 Unable to connect，B01-B05 未执行；补丁显示应用原先把非 ready 渲染成 retry/sign-out 致命屏，后改为 failed 显示 warning 并继续挂载。",
+            "evidence": [
+              "E15",
+              "E17",
+              "E14"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "retro 记录原故障还包含 realtimeURL 从 api.baseURL 派生导致 Origin 不匹配 403，以及代理阻断 WebSocket；这解释了触发条件，但不能解释 Skill/参考为何漏列 preparation，因此环境因素不推翻文档缺口。",
+            "evidence": [
+              "E67",
+              "E13"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "补丁修改的是应用自有 .agents/rules/shell.md 和 session-preparation.tsx，致命门禁来自应用规则与实现；现有材料未发现工厂提示或注入配置直接要求该门禁，工厂因素保留未知，但不需要它来解释 Skill 缺项。",
+            "evidence": [
+              "E17",
+              "E14"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "插件已公开 preparation/retryPreparation，README 也文档化其超时与 failed；当前应用已能用 failed+warning 降级。能力存在，缺的是 Skill/参考的入门说明，故落在 guidance-gap 而非 capability-gap。",
+            "evidence": [
+              "E12",
+              "E14",
+              "E66"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/SKILL.md",
+        "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/client-session-and-pages.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication",
+        "guide:@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/client-session-and-pages.md",
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation、十秒准备门禁与失败降级语义",
+        "issues": 3,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/781/runs/39502963850/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "b0a001a7dfd68219157cee21",
+      "id": "781:39502963850:1:F5",
+      "issue": 781,
+      "runId": 39502963850,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "preparation 可增加“实时降级但认证可用”的状态，避免应用把 failed 等同于不可进入",
+      "summary": "当前 useAuthentication 只暴露 preparing/ready/failed，认证插件内部同时掌握会话是否已认证和实时握手是否失败；应用只能自行判断 failed 是否致命。若公开状态能区分 authenticated-degraded，模板可直接采用非阻塞策略。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "类型确认 preparation 只有 preparing/ready/failed，且同一 context 还公开 session/isPending/refresh；auth-provider 在十秒后发布 failed，README 也只说 failed 提供 retry/sign-out。应用当前只能自行把 failed 解释为 warning（session-preparation.tsx），因此增加 authenticated-degraded 状态或能力标志是有源码依据的可用性改进：保持三态兼容，减少每个应用重复推断。现有 session+preparation 组合已能区分“未认证/认证中/已认证但实时 failed”，所以这不是缺失能力，而是便利性/模板层面的改进。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "AuthenticationContextValue 把 preparation 精确限定为 'preparing'|'ready'|'failed'，没有 degraded/authenticated 标志；同一 context 同时公开 session/isPending/refresh，调用方可以组合判断。",
+            "evidence": [
+              "E66"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "provider 的十秒计时器到期 publish('failed')，failed 后没有额外状态；重试依靠 retryPreparation 新建握手，而不是切换到降级状态。",
+            "evidence": [
+              "E13",
+              "E12"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用在 failed 时显示持久 warning 并继续挂载业务界面，说明非阻塞降级可做，但这段判断由应用重复实现；补丁只是把致命屏改成本地 warning+retry。",
+            "evidence": [
+              "E14",
+              "E17"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "触发条件是 WebSocket 准备超时（代理阻断或 Origin 403），环境决定何时触发，不改变 hook 的状态集合；该改进基于类型/文档即可判断，不依赖运行时复现。",
+            "evidence": [
+              "E13",
+              "E67"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "插件 README 仍描述默认模板在 failed 时提供 retry/sign-out；应用侧规则和组件决定实际降级行为。现有材料未发现工厂提示要求新增状态，工厂是否应推动模板改动保留未知。",
+            "evidence": [
+              "E12",
+              "E17"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "session 与 preparation 的正常组合已经能区分未认证/认证中/已认证但实时 failed；当前应用示例证明组合可用。命名 degraded 状态的价值是减少重复推断，属于改进空间而非缺失能力。",
+            "evidence": [
+              "E66",
+              "E14"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication",
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "实时准备失败缺少降级分类，failed 被等同于不可进入，登录后的整个应用锁在入口错误页",
+        "issues": 2,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/781/runs/39502963850/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "15788f1ad596b2f0dd0324a1",
+      "id": "782:39502971651:1:F2",
+      "issue": 782,
+      "runId": 39502971651,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "计划 title/description 只有字符串契约，缺少本地化展示约定",
+      "summary": "ScheduleDefinition 的 title/description 是 string；应用把 i18n key 存入 title，自己的页面再翻译，但 REST/OpenAPI 消费者看到的是 key。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "证据链完整支撑“仅字符串契约、缺少本地化/展示约定”这一改进点：公开类型 title: string、description?: string（E40），defineSchedule 只要求 title 非空（E1），字段表仅写“Required title / optional description”（E43），schema 只有 z.string()（E41），没有任何本地化文本对象或“API 返回原文”的说明。应用把 i18n key 写入 title/description（E20），存储与 REST 投影原样返回（E42、E41），设置页再 t() 翻译（E21），因此页面可读而 API/Swagger/外部管理端会看到裸 key，与候选描述一致。合理替代解释（纯应用误用、环境问题）不足以推翻：应用遵守的是同一工厂同步的应用 i18n 规则“所有用户可见文本走翻译 key”（E17），而 Scheduler 契约与文档既未说明 title 是纯展示文本、也未说明 REST 返回原文，改进空间存在于框架契约/文档一侧；浏览器验收通过（E39）只证明 UI 路径，不覆盖 API 消费者，故不能说明该改进点不存在。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "公开契约是纯字符串：ScheduleDefinition.title: string、description?: string（E40）；defineSchedule 只校验 title 存在、不处理本地化（E1）；definitions.md 字段表仅“Required title / optional description”，示例用字面量 'Daily maintenance'，未定义本地化对象或展示 key 约定（E43）。",
+            "evidence": [
+              "E40",
+              "E1",
+              "E43"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "已实现的投影原样透传：store.list() 把 definition.title 直接放进返回项（E42），OpenAPI 响应用例 title: z.string() 且无说明（E41），所以 REST/OpenAPI 消费者拿到的是定义里的字符串本身，此处即 key。",
+            "evidence": [
+              "E42",
+              "E41"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用写入值确为 key：defineSchedule({title:'todos.schedules.definition.title', description:'...description'})（E20），设置页对 schedule.title/description 调 t() 才显示可读文本（E21）。这是应用按 E17“所有用户可见文本走翻译 key”的规则做的选择，不是装配错误；暴露 key 的缺口落在契约/文档未定义 API 投影语义。",
+            "evidence": [
+              "E20",
+              "E21",
+              "E17"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该现象由契约与投影的静态行为决定，不依赖外部服务、凭据或运行环境；验收报告在真实浏览器环境中通过且页面显示正常（E39），恰好说明环境无法解释 API 中仍是 key，且该报告只覆盖 UI 路径，未核对 API 响应。",
+            "evidence": [
+              "E39",
+              "E41"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "相关指引来自工厂同步的 Scheduler 包 Skill：它强调“meaningful task names”、以管理员 UI 可观测为目标（E5），字段文档仍只写 title/description 字符串（E43）；应用侧 i18n 规则要求 key（E17）。两者之间没有本地化/展示文本约定，属于包文档与契约的指引缺口，未发现工厂提示注入或模板覆盖等其他成因材料。",
+            "evidence": [
+              "E5",
+              "E43",
+              "E17"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已检索 Scheduler 公开入口：ScheduleDefinition 无本地化 title 类型或 titleKey（E40），REST schema 也只有 z.string()（E41），存储层无翻译处理（E42）；应用自身只能在其页面翻译（E21）。相邻的集合目录已使用 {key, ns} 形式标题（E20 中 authorization.collections.add 的 title），说明此类本地化约定在框架内存在先例但 Scheduler 计划定义未提供，改进点并非已由现有能力满足。",
+            "evidence": [
+              "E40",
+              "E41",
+              "E42",
+              "E21",
+              "E20"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "Scheduler 计划 title/description 仅字符串契约，缺少本地化/展示文本约定",
+        "issues": 1,
+        "first": "2026-10-21"
+      },
+      "report": "reports/issues/782/runs/39502971651/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "a83c9ad0d6ab9a5c2f358147",
+      "id": "783:39502979147:1:F1",
+      "issue": 783,
+      "runId": 39502979147,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "@nocobase/db 未公开唯一约束冲突识别，Repository 普通写入泄漏驱动错误",
+      "summary": "db 包内部已有健壮的 isUniqueConstraintViolation，覆盖 Oracle -6602、PostgreSQL 23505、MySQL ER_DUP_ENTRY 和 SQLite 错误码，并沿 cause/originalError 链查找；但 db/dist/src/index.d.ts 与 index.js 没有导出该函数。Repository 的 createOne/update 路径不把唯一冲突归一化为 RepositoryError；repository-input 的错误目录只有 FIELD_NOT_FOUND、RECORD_NOT_FOUND、SCOPE_VIOLATION 等，没有 UNIQUE_CONFLICT/DUPLICATE。设备应用只能复制驱动码判断，并在 service 中先查后写。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 7,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/783/runs/39502979147/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "fdb1f3df395bf1e514a94826",
+      "id": "783:39502979147:1:F2",
+      "issue": 783,
+      "runId": 39502979147,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "AppI18nError 进入统一 API 错误体需要每个路由自写适配器",
+      "summary": "AppI18nError 暴露 code、ns、key、params、status，但没有 ApiError 的 reason。app-server 的 recognizeApiError 不识别该类型，通用 apiErrorHandler 最终走 readStatusError，只保留 HTTP 状态并把消息呈现为 CODE: ns:key；localizedMessage 不会自动进入响应。i18n Skill 因而要求在路由 onError 中调用 toXApiError 和 serializeI18nError。设备应用为避开这层适配，改成自定义 DeviceCodeTakenError 并在路由映射 reason。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+        "@nocobase/app-server",
+        "@nocobase/i18n"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "pkg:@nocobase/i18n",
+        "skill:nocobase-app-plugin-i18n"
+      ],
+      "featurePoint": "应用搭建/多语言",
+      "candidates": [
+        "应用搭建/多语言"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "通用 API 错误处理器不识别 AppI18nError，路由需逐条自写本地化适配",
+        "issues": 1,
+        "first": "2026-10-21"
+      },
+      "report": "reports/issues/783/runs/39502979147/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "c79c6deb3958b1cbaf58920f",
+      "id": "783:39502979147:1:F3",
+      "issue": 783,
+      "runId": 39502979147,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-21",
+      "archivedAt": "2026-10-21T23:16:56.273Z",
+      "title": "数据库 README 把已存在的 Repository 写成未来提案",
+      "summary": "packages/@nocobase/db/README.zh-CN.md 的 API 边界段仍把 Repository、Select、Filter 描述为后续提案，暗示当前包只提供连接和迁移；实际 index 已导出 RepositoryError、repositoryErrorStatuses 等 Repository 相关 API，db Skill 也把 Repository 作为首选查询入口，设备应用已经使用 Repository。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "db 包 README 宣称 Repository/Select AST 等“当前不可调用”，与已发布导出和 Skill 用法矛盾",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/783/runs/39502979147/attempt-1/index.html#review-finding-F3"
+    }
+  ]
+}
