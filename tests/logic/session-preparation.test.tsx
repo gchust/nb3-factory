@@ -221,3 +221,15 @@ it('can sign out of a failed initialization without a working realtime connectio
   expect(screen.getByText('Login route')).toBeVisible();
   expect(probe.mounted).not.toHaveBeenCalled();
 });
+
+it('enters the application when the transport opens after the preparation timeout', async () => {
+  vi.useFakeTimers();
+  const probe = await setup();
+  await act(async () => vi.advanceTimersByTime(10_000));
+  expect(screen.getByText('Unable to connect')).toBeVisible();
+  // The provider stopped listening at the timeout; the socket still opened, so
+  // the transport is prepared even though its notification was missed.
+  await probe.open();
+  expect(probe.mounted).toHaveBeenCalledOnce();
+  expect(screen.queryByText('Unable to connect')).toBeNull();
+});

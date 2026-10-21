@@ -8,6 +8,7 @@ import { resolveAppRuntime } from '@nocobase/app-client/runtime';
 import { createRoot } from 'react-dom/client';
 
 import { revealScrollbarsWhileScrolling } from './lib/scrollbar';
+import { restoreWebSocketReadyStateConstants } from './lib/web-socket';
 import appRuntime from './runtime';
 import { AppStartupError } from './startup';
 import './styles.css';
@@ -22,6 +23,8 @@ if (!container) {
 
 // Scrollbars show only while their element scrolls (client/styles.css).
 revealScrollbarsWhileScrolling();
+// A wrapped WebSocket without its readyState constants makes the realtime client unable to connect (lib/web-socket.ts).
+restoreWebSocketReadyStateConstants();
 
 const root = createRoot(container);
 let app: ClientApplication | undefined;

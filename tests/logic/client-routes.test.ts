@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -54,25 +53,47 @@ describe('app client routes', () => {
     // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'tickets' },
+      { name: 'ticketNew', authorizedAs: 'tickets' },
+      { name: 'ticketDetail', authorizedAs: 'tickets' },
       { name: 'inbox', authorizedAs: null },
+      { name: 'settingsUsers', authorizedAs: 'user:*' },
+      { name: 'settingsUserCreate', authorizedAs: 'user:*' },
+      { name: 'settingsUser', authorizedAs: 'user:*' },
+      { name: 'settingsUserEdit', authorizedAs: 'user:*' },
+      {
+        name: 'settingsRoles',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
+      {
+        name: 'settingsRoleCreate',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
+      {
+        name: 'settingsRoleEdit',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
     ]);
   });
 
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
+  it('registers business pages alongside the settings administration they need', async () => {
     expect(
       pagePaths(resolveRoutes().routes).some((path) =>
         path.startsWith('/settings'),
       ),
-    ).toBe(false);
+    ).toBe(true);
     const built = resolveAppClientContributions([
       {
         packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
+        routes: applicationRoutes,
         source: 'application',
       },
     ]);
     expect(pageAuthorizations(built.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'tickets' },
+      { name: 'ticketNew', authorizedAs: 'tickets' },
+      { name: 'ticketDetail', authorizedAs: 'tickets' },
       { name: 'inbox', authorizedAs: null },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
@@ -97,11 +118,16 @@ describe('app client routes', () => {
       });
   });
 
-  it('keeps the inbox out of the application navigation', () => {
-    // The inbox is reached from the header's inbox button, so it deliberately declares no menu entry.
-    expect(
-      applicationRoutes[0].routes.find((route) => route.name === 'inbox'),
-    ).not.toHaveProperty('navigation');
+  it('gives the inbox a sidebar entry instead of a header button', () => {
+    // The template leaves the inbox out of the navigation and keeps the header free of an Inbox entry. This
+    // application surfaces the notices in the sidebar, where they sit beside the ticket queue they point into.
+    const inbox = applicationRoutes[0].routes.find(
+      (route) => route.name === 'inbox',
+    );
+    expect(inbox).toMatchObject({
+      path: '/inbox',
+      navigation: { title: 'navigation.inbox' },
+    });
   });
 });
 
