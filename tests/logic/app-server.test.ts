@@ -715,7 +715,11 @@ describe('app server', () => {
       `${baseUrl}/api/auth/api-key/create`,
       {
         method: 'POST',
-        headers: { cookie, 'content-type': 'application/json' },
+        headers: {
+          cookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({ name: 'template-integration' }),
       },
     );
@@ -730,7 +734,11 @@ describe('app server', () => {
       `${baseUrl}/api/auth/api-key/delete`,
       {
         method: 'POST',
-        headers: { cookie, 'content-type': 'application/json' },
+        headers: {
+          cookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({ keyId: key.id }),
       },
     );
@@ -739,6 +747,818 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('builds sample service-desk data when APP_SAMPLE_DATA is enabled', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_SAMPLE_DATA: 'true' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'demo.desk',
+          password: 'Demo123!',
+        }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const serviceDeskCookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const tickets = await requestApp(
+      app,
+      `${baseUrl}/api/tickets?q=DEMO&pageSize=50`,
+      { headers: { cookie: serviceDeskCookie } },
+    );
+    expect(tickets.status).toBe(200);
+    const ticketData = (await tickets.json()) as {
+      data: { ticketNo: string; title: string; assignee?: { name: string } }[];
+    };
+    expect(ticketData.data.map((ticket) => ticket.ticketNo)).toEqual(
+      expect.arrayContaining([
+        'DEMO-1001',
+        'DEMO-1002',
+        'DEMO-1003',
+        'DEMO-1004',
+        'DEMO-1005',
+        'DEMO-1006',
+      ]),
+    );
+    expect(ticketData.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ticketNo: 'DEMO-1002',
+          assignee: expect.objectContaining({ name: 'Grace Engineer' }),
+        }),
+      ]),
+    );
+
+    const dashboard = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/dashboard`,
+      { headers: { cookie: serviceDeskCookie } },
+    );
+    expect(dashboard.status).toBe(200);
+    const dashboardData = (await dashboard.json()) as {
+      data: {
+        viewer: { serviceDesk: boolean };
+        counts: { unassigned: number; overdue: number };
+        workload: {
+          user: { name: string };
+          active: number;
+        }[];
+      };
+    };
+    expect(dashboardData.data.viewer.serviceDesk).toBe(true);
+    expect(dashboardData.data.counts.unassigned).toBeGreaterThanOrEqual(2);
+    expect(dashboardData.data.counts.overdue).toBeGreaterThanOrEqual(2);
+    expect(dashboardData.data.workload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          user: expect.objectContaining({ name: 'Grace Engineer' }),
+          active: 1,
+        }),
+        expect.objectContaining({
+          user: expect.objectContaining({ name: 'Henry Engineer' }),
+          active: 1,
+        }),
+      ]),
+    );
+  });
+
+  it('serves the application service-ticket workflow with authorized attachments', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const anonymous = await requestApp(app, `${baseUrl}/api/tickets`);
+    expect(anonymous.status).toBe(401);
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const signUp = await requestApp(app, `${baseUrl}/api/auth/sign-up/email`, {
+      method: 'POST',
+      headers: {
+        origin: new URL(baseUrl).origin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'requester@example.com',
+        password: 'Requester123!',
+        name: 'Requester',
+        username: 'requester',
+      }),
+    });
+    expect(signUp.status).toBe(200);
+    const requesterId = ((await signUp.json()) as { user: { id: string } }).user
+      .id;
+    const database = app.application.container.resolve(databaseManagerToken);
+    const assignmentTime = new Date();
+    await database
+      .connection('main')
+      .query.insertInto('authorizationPermissionSetAssignments')
+      .values({
+        id: `user:${requesterId}:tickets-requester`,
+        subjectType: 'user',
+        subjectId: requesterId,
+        permissionSetKey: 'tickets-requester',
+        createdAt: assignmentTime,
+        updatedAt: assignmentTime,
+      })
+      .execute();
+    const agentSignUp = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-up/email`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'agent@example.com',
+          password: 'Agent123!',
+          name: 'Service Desk Agent',
+          username: 'agent',
+        }),
+      },
+    );
+    expect(agentSignUp.status).toBe(200);
+    const agentId = ((await agentSignUp.json()) as { user: { id: string } })
+      .user.id;
+    await database
+      .connection('main')
+      .query.insertInto('authorizationPermissionSetAssignments')
+      .values({
+        id: `user:${agentId}:tickets-admin`,
+        subjectType: 'user',
+        subjectId: agentId,
+        permissionSetKey: 'tickets-admin',
+        createdAt: assignmentTime,
+        updatedAt: assignmentTime,
+      })
+      .execute();
+    const agentSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ username: 'agent', password: 'Agent123!' }),
+      },
+    );
+    expect(agentSignIn.status).toBe(200);
+    const serviceDeskCookie = agentSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const engineerSignUp = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-up/email`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'engineer@example.com',
+          password: 'Engineer123!',
+          name: 'Ticket Engineer',
+          username: 'engineer',
+        }),
+      },
+    );
+    expect(engineerSignUp.status).toBe(200);
+    const engineerId = (
+      (await engineerSignUp.json()) as { user: { id: string } }
+    ).user.id;
+    await database
+      .connection('main')
+      .query.insertInto('authorizationPermissionSetAssignments')
+      .values({
+        id: `user:${engineerId}:tickets-maintainer`,
+        subjectType: 'user',
+        subjectId: engineerId,
+        permissionSetKey: 'tickets-maintainer',
+        createdAt: assignmentTime,
+        updatedAt: assignmentTime,
+      })
+      .execute();
+    const engineerSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'engineer',
+          password: 'Engineer123!',
+        }),
+      },
+    );
+    expect(engineerSignIn.status).toBe(200);
+    const engineerCookie = engineerSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const created = await requestApp(app, `${baseUrl}/api/tickets`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        origin: new URL(baseUrl).origin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Laptop will not start',
+        description: 'The power light blinks and the screen stays black.',
+        priority: 'high',
+        category: 'hardware',
+      }),
+    });
+    expect(created.status).toBe(200);
+    const ticket = (await created.json()) as {
+      data: {
+        id: string;
+        ticketNo: string;
+        status: string;
+        comments: unknown[];
+      };
+    };
+    expect(ticket.data).toMatchObject({
+      status: 'open',
+      comments: [],
+      category: 'hardware',
+    });
+    expect(ticket.data.ticketNo).toMatch(/^TKT-/u);
+
+    const ticketUrl = `${baseUrl}/api/tickets/${ticket.data.id}`;
+    const listed = await requestApp(
+      app,
+      `${ticketUrl.replace(/\/[^/]+$/u, '')}?q=Laptop`,
+      {
+        headers: { cookie },
+      },
+    );
+    expect(listed.status).toBe(200);
+    await expect(listed.json()).resolves.toMatchObject({
+      data: [{ id: ticket.data.id }],
+      meta: { total: 1 },
+    });
+
+    const commented = await requestApp(app, `${ticketUrl}/comments`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        origin: new URL(baseUrl).origin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        body: 'I tried another charger.',
+        internal: false,
+      }),
+    });
+    expect(commented.status).toBe(200);
+    const comment = (await commented.json()) as {
+      data: { id: string; body: string; attachments: unknown[] };
+    };
+
+    const form = new FormData();
+    form.append(
+      'file',
+      new File(['diagnostic text'], 'diagnostic.txt', { type: 'text/plain' }),
+    );
+    form.append('commentId', comment.data.id);
+    const uploaded = await requestApp(app, `${ticketUrl}/attachments`, {
+      method: 'POST',
+      headers: { cookie, origin: new URL(baseUrl).origin },
+      body: form,
+    });
+    expect(uploaded.status).toBe(200);
+    const attachment = (await uploaded.json()) as {
+      data: { id: string; filename: string; contentUrl: string };
+    };
+    expect(attachment.data).toMatchObject({ filename: 'diagnostic.txt' });
+
+    const downloaded = await requestApp(
+      app,
+      `${baseUrl}/api/${attachment.data.contentUrl}`,
+      { headers: { cookie } },
+    );
+    expect(downloaded.status).toBe(200);
+    expect(downloaded.headers.get('content-type')).toContain('text/plain');
+    expect(downloaded.headers.get('x-content-type-options')).toBe('nosniff');
+    await expect(downloaded.text()).resolves.toBe('diagnostic text');
+
+    for (const [action, status, body] of [
+      ['assign', 'in_progress', { assigneeId: agentId }],
+      ['resolve', 'resolved', {}],
+    ] as const) {
+      const transitioned = await requestApp(app, `${ticketUrl}/${action}`, {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      expect(transitioned.status).toBe(200);
+      await expect(transitioned.json()).resolves.toMatchObject({
+        data: { id: ticket.data.id, status },
+      });
+    }
+
+    const prematureClose = await requestApp(app, `${ticketUrl}/close`, {
+      method: 'POST',
+      headers: {
+        cookie: serviceDeskCookie,
+        origin: new URL(baseUrl).origin,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    });
+    expect(prematureClose.status).toBe(403);
+
+    const detail = await requestApp(app, ticketUrl, {
+      headers: { cookie: serviceDeskCookie },
+    });
+    expect(detail.status).toBe(200);
+    await expect(detail.json()).resolves.toMatchObject({
+      data: {
+        status: 'resolved',
+        viewer: {
+          canAssign: true,
+          canResolve: true,
+          canClose: false,
+          canReopen: false,
+        },
+        comments: [
+          {
+            body: 'I tried another charger.',
+            attachments: [{ filename: 'diagnostic.txt' }],
+          },
+        ],
+        attachments: [],
+      },
+    });
+
+    const agentInbox = await requestApp(
+      app,
+      `${baseUrl}/api/notificationInApp/messages`,
+      { headers: { cookie: serviceDeskCookie } },
+    );
+    expect(agentInbox.status).toBe(200);
+    const agentMessages = (await agentInbox.json()) as {
+      data: {
+        title?: string;
+        target?: { type: string; path?: string };
+      }[];
+    };
+    expect(agentMessages.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: expect.stringContaining('New service ticket'),
+          target: { type: 'route', path: `/tickets/${ticket.data.id}` },
+        }),
+      ]),
+    );
+
+    const agentDashboard = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/dashboard`,
+      { headers: { cookie: serviceDeskCookie } },
+    );
+    expect(agentDashboard.status).toBe(200);
+    const agentDashboardData = (await agentDashboard.json()) as {
+      data: {
+        viewer: { serviceDesk: boolean };
+        counts: { active: number; resolved: number };
+        workload: {
+          user: { id: string };
+          active: number;
+          overdue: number;
+        }[];
+      };
+    };
+    expect(agentDashboardData.data.viewer.serviceDesk).toBe(true);
+    expect(agentDashboardData.data.counts).toMatchObject({
+      active: 0,
+      resolved: 1,
+    });
+    expect(agentDashboardData.data.workload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          user: expect.objectContaining({ id: agentId }),
+          active: 0,
+          overdue: 0,
+        }),
+      ]),
+    );
+
+    const engineerList = await requestApp(
+      app,
+      `${baseUrl}/api/tickets?q=Laptop`,
+      { headers: { cookie: engineerCookie } },
+    );
+    expect(engineerList.status).toBe(200);
+    await expect(engineerList.json()).resolves.toMatchObject({
+      data: [],
+      meta: { total: 0 },
+    });
+    const foreignAssignedTicket = await requestApp(app, ticketUrl, {
+      headers: { cookie: engineerCookie },
+    });
+    expect(foreignAssignedTicket.status).toBe(404);
+
+    const requesterSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: {
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: 'requester',
+          password: 'Requester123!',
+        }),
+      },
+    );
+    expect(requesterSignIn.status).toBe(200);
+    const requesterCookie = requesterSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const requesterTicketResponse = await requestApp(
+      app,
+      `${baseUrl}/api/tickets`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: requesterCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'Cannot reach the printer',
+          description: 'The office printer is missing from my laptop.',
+          priority: 'medium',
+          category: 'software',
+        }),
+      },
+    );
+    expect(requesterTicketResponse.status).toBe(200);
+    const requesterTicket = (await requesterTicketResponse.json()) as {
+      data: { id: string };
+    };
+    const requesterTicketUrl = `${baseUrl}/api/tickets/${requesterTicket.data.id}`;
+
+    const internalNote = await requestApp(
+      app,
+      `${requesterTicketUrl}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          body: 'Checked the print server.',
+          internal: true,
+        }),
+      },
+    );
+    expect(internalNote.status).toBe(200);
+
+    const requesterDetail = await requestApp(app, requesterTicketUrl, {
+      headers: { cookie: requesterCookie },
+    });
+    expect(requesterDetail.status).toBe(200);
+    await expect(requesterDetail.json()).resolves.toMatchObject({
+      data: { id: requesterTicket.data.id, comments: [] },
+    });
+
+    const internalDenied = await requestApp(
+      app,
+      `${requesterTicketUrl}/comments`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: requesterCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ body: 'Hidden note', internal: true }),
+      },
+    );
+    expect(internalDenied.status).toBe(403);
+
+    const foreignTicket = await requestApp(app, ticketUrl, {
+      headers: { cookie: requesterCookie },
+    });
+    expect(foreignTicket.status).toBe(404);
+
+    const acceptDenied = await requestApp(app, `${requesterTicketUrl}/accept`, {
+      method: 'POST',
+      headers: {
+        cookie: requesterCookie,
+        origin: new URL(baseUrl).origin,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    });
+    expect(acceptDenied.status).toBe(403);
+
+    const assignedToEngineer = await requestApp(
+      app,
+      `${requesterTicketUrl}/assign`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: serviceDeskCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ assigneeId: engineerId }),
+      },
+    );
+    expect(assignedToEngineer.status).toBe(200);
+    await expect(assignedToEngineer.json()).resolves.toMatchObject({
+      data: { assignee: { id: engineerId }, status: 'in_progress' },
+    });
+
+    const engineerOwnList = await requestApp(app, `${baseUrl}/api/tickets`, {
+      headers: { cookie: engineerCookie },
+    });
+    expect(engineerOwnList.status).toBe(200);
+    await expect(engineerOwnList.json()).resolves.toMatchObject({
+      data: [{ id: requesterTicket.data.id }],
+      meta: { total: 1 },
+    });
+
+    const engineerCannotAssign = await requestApp(
+      app,
+      `${requesterTicketUrl}/assign`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: engineerCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ assigneeId: engineerId }),
+      },
+    );
+    expect(engineerCannotAssign.status).toBe(403);
+
+    const engineerInbox = await requestApp(
+      app,
+      `${baseUrl}/api/notificationInApp/messages`,
+      { headers: { cookie: engineerCookie } },
+    );
+    expect(engineerInbox.status).toBe(200);
+    const engineerMessages = (await engineerInbox.json()) as {
+      data: { title?: string; target?: { path?: string } }[];
+    };
+    expect(engineerMessages.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: expect.stringContaining('assigned to Ticket Engineer'),
+          target: {
+            type: 'route',
+            path: `/tickets/${requesterTicket.data.id}`,
+          },
+        }),
+      ]),
+    );
+
+    const engineerResolved = await requestApp(
+      app,
+      `${requesterTicketUrl}/resolve`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: serviceDeskCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: '{}',
+      },
+    );
+    expect(engineerResolved.status).toBe(200);
+
+    const engineerCannotClose = await requestApp(
+      app,
+      `${requesterTicketUrl}/close`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: engineerCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: '{}',
+      },
+    );
+    expect(engineerCannotClose.status).toBe(403);
+
+    const engineerDetail = await requestApp(app, requesterTicketUrl, {
+      headers: { cookie: engineerCookie },
+    });
+    expect(engineerDetail.status).toBe(200);
+    await expect(engineerDetail.json()).resolves.toMatchObject({
+      data: {
+        status: 'resolved',
+        viewer: {
+          canAssign: false,
+          canResolve: true,
+          canClose: false,
+          canReopen: false,
+        },
+      },
+    });
+
+    const requesterClosed = await requestApp(
+      app,
+      `${requesterTicketUrl}/close`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: requesterCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: '{}',
+      },
+    );
+    expect(requesterClosed.status).toBe(200);
+    await expect(requesterClosed.json()).resolves.toMatchObject({
+      data: { id: requesterTicket.data.id, status: 'closed' },
+    });
+
+    const requesterReopened = await requestApp(
+      app,
+      `${requesterTicketUrl}/reopen`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: requesterCookie,
+          origin: new URL(baseUrl).origin,
+          'content-type': 'application/json',
+        },
+        body: '{}',
+      },
+    );
+    expect(requesterReopened.status).toBe(200);
+    await expect(requesterReopened.json()).resolves.toMatchObject({
+      data: { id: requesterTicket.data.id, status: 'in_progress' },
+    });
+
+    const requesterList = await requestApp(
+      app,
+      `${baseUrl}/api/tickets?q=start`,
+      { headers: { cookie: requesterCookie } },
+    );
+    expect(requesterList.status).toBe(200);
+    await expect(requesterList.json()).resolves.toMatchObject({
+      data: [],
+      meta: { total: 0 },
+    });
+
+    const staleTime = new Date(
+      Date.now() - 25 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const now = new Date().toISOString();
+    await database
+      .connection('main')
+      .query.insertInto('tickets')
+      .values({
+        id: '00000000-0000-4000-8000-000000000001',
+        ticketNo: 'TKT-OVERDUE-24H',
+        title: 'Old unassigned ticket',
+        description: 'This has waited for more than a day.',
+        status: 'open',
+        priority: 'high',
+        category: 'incident',
+        requesterId: requesterId,
+        assigneeId: null,
+        resolvedAt: null,
+        closedAt: null,
+        createdAt: staleTime,
+        updatedAt: now,
+      })
+      .execute();
+
+    const overdueDashboard = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/dashboard`,
+      { headers: { cookie: serviceDeskCookie } },
+    );
+    expect(overdueDashboard.status).toBe(200);
+    const overdueData = (await overdueDashboard.json()) as {
+      data: {
+        counts: {
+          unassigned: number;
+          overdue: number;
+        };
+        unassigned: { id: string; overdue: boolean }[];
+        overdue: { id: string }[];
+        workload: {
+          user: { id: string };
+          active: number;
+          overdue: number;
+        }[];
+      };
+    };
+    expect(overdueData.data.counts).toMatchObject({
+      unassigned: 1,
+      overdue: 1,
+    });
+    expect(overdueData.data.unassigned[0]).toMatchObject({
+      id: '00000000-0000-4000-8000-000000000001',
+      overdue: true,
+    });
+    expect(overdueData.data.overdue[0]).toMatchObject({
+      id: '00000000-0000-4000-8000-000000000001',
+    });
+    expect(
+      overdueData.data.workload.find((entry) => entry.user.id === engineerId),
+    ).toMatchObject({ active: 1, overdue: 0 });
+    expect(
+      overdueData.data.workload.find((entry) => entry.user.id === agentId),
+    ).toMatchObject({ active: 0, overdue: 0 });
+
+    let reminderMessages: {
+      data: { title?: string; target?: { path?: string } }[];
+    } = { data: [] };
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const reminderInbox = await requestApp(
+        app,
+        `${baseUrl}/api/notificationInApp/messages`,
+        { headers: { cookie: serviceDeskCookie } },
+      );
+      expect(reminderInbox.status).toBe(200);
+      reminderMessages =
+        (await reminderInbox.json()) as typeof reminderMessages;
+      if (
+        reminderMessages.data.some((message) =>
+          message.title?.startsWith('Overdue ticket'),
+        )
+      ) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    expect(reminderMessages.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: expect.stringContaining('Overdue ticket'),
+          target: {
+            type: 'route',
+            path: '/tickets/00000000-0000-4000-8000-000000000001',
+          },
+        }),
+      ]),
+    );
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {

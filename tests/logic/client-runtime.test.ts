@@ -15,6 +15,7 @@ import {
 } from '@nocobase/app-client/runtime';
 import type { ClientApplication as ClientApplicationType } from '@nocobase/app-client';
 
+import appConfigs from '../../client/config/index.ts';
 import appRuntime from '../../client/runtime.ts';
 
 describe('app client runtime', () => {
@@ -101,6 +102,15 @@ describe('app client runtime', () => {
     );
     expect(app.refineConfig.resources ?? []).toEqual([]);
     await app.shutdown();
+  });
+
+  it('states the realtime endpoint instead of deriving it from the API URL', () => {
+    const config = appConfigs({} as never);
+
+    expect(config.api).toMatchObject({
+      baseURL: '/main/api',
+      realtimeURL: '/main/ws',
+    });
   });
 
   it('requires a Client config factory in the breaking static Runtime protocol', async () => {
