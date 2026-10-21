@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "8caf751a790bd488981a5a93c47de878af13ec5d7d15d2c49b5da0fb01a99c8b",
+  "inputHash": "28dac33e99d4f9bfc242c9f1b51831053f34adf189e14e44857b0251a3e15d26",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1301,6 +1301,26 @@
       "id": "783:39502979147:1:F3",
       "report": "783:39502979147:1",
       "fingerprint": "dfa3894e36621a84b9008a42d1aef4ccd3aafd716c99ebfa58c4109aaf9444c5"
+    },
+    {
+      "id": "789:39682163349:1:F1",
+      "report": "789:39682163349:1",
+      "fingerprint": "77836dc40511d6238459c5c6e29658ae2e5f3101d487a8e92fb18f76efa41b27"
+    },
+    {
+      "id": "789:39682163349:1:F2",
+      "report": "789:39682163349:1",
+      "fingerprint": "1e8e7f3037198445253191ab7608354f758c9295d80602359e1409378327a625"
+    },
+    {
+      "id": "789:39682163349:1:F3",
+      "report": "789:39682163349:1",
+      "fingerprint": "1aad3deb2aaf0208511cd6d51fa52f772fae4e8a1a621567e6f485479bf6d3c1"
+    },
+    {
+      "id": "789:39682163349:1:F4",
+      "report": "789:39682163349:1",
+      "fingerprint": "daa7f402dd225e23b632ecf6c2b5e7757daadcbf7eadfb83d8276c9246e28ff6"
     }
   ],
   "groups": [
@@ -1335,7 +1355,7 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
-      "reason": "跨报告合并：474:F1（E20/E21）、475:F2（E6/E13）、496:F1（E11/E15）、544:F1（E18/E19）、649:F1（E43/E44）、646:F1（E29/E30）、688:F1（E29/E30/E31）、699:F1（E18/E19/E36）均引用授权/迁移指引用 import ... from './x.js' 指向磁盘上的 .ts 源；而 @nocobase/db 的 importTaskDefinition 只用原生动态 import() 并仅改写任务文件自身的扩展名，seed 内部相对导入按字面解析，源码/进程内测试路径因此报 ERR_MODULE_NOT_FOUND。共同修复方向是把示例改为 .ts 说明符或要求种子自包含。",
+      "reason": "跨报告合并：474:F1（E20/E21）、475:F2（E6/E13）、496:F1（E11/E15）、544:F1（E18/E19）、649:F1（E43/E44）、646:F1（E29/E30）、688:F1（E29/E30/E31）、699:F1（E18/E19/E36）、789:F1（E14/E22/E24/E28）均引用授权/迁移指引中的 import ... from './x.js' 指向磁盘上的 .ts 源；@nocobase/db 的 importTaskDefinition 只用原生动态 import() 并仅改写任务入口文件的扩展名，seed 内部相对导入按字面解析，源码/进程内测试路径因此报 ERR_MODULE_NOT_FOUND。789:F1 同样记录 code-and-seeds.md 的 .js 示例、loader 只重写入口 URL，以及首次装载 documents.js 失败后改用 .ts 的日志；共同修复方向是把示例改为 .ts 说明符或要求种子自包含。",
       "members": [
         "474:36498921009:1:F1",
         "475:36498925234:1:F2",
@@ -1344,7 +1364,8 @@
         "649:37621548882:1:F1",
         "646:37621545718:1:F1",
         "688:38089375339:1:F1",
-        "699:38106772246:1:F1"
+        "699:38106772246:1:F1",
+        "789:39682163349:1:F1"
       ]
     },
     {
@@ -1642,9 +1663,10 @@
     },
     {
       "title": "授权 Skill 示例使用顶层 router.use('*') 与泄漏警告冲突并污染其他 API 路由",
-      "reason": "单独保留：496:F2 的 E10/E22/E54/E12 显示通配中间件作用于整个 /api 前缀，属独立错误指引。",
+      "reason": "跨报告合并：496:F2（E10/E22/E54/E12）与 789:F2（E16/E26/E29）均显示授权 Skill 的 repository-routes 示例在 API 贡献内使用顶层 router.use('*', 认证/限额/授权)，而 app-server 把所有 api 贡献挂到同一个 /api 根，该通配中间件因此先于其它贡献和 404 兜底匹配全部 /api 请求；496:F2 还指出它与 server-routes.md 的泄漏警告冲突，789:F2 的 retro 记录未注册端点返回 401 而非 404、最终需收窄到功能前缀。共同修复方向是把示例限定到功能前缀，或在贡献装配期对通配中间件给出警告。",
       "members": [
-        "496:36641602107:1:F2"
+        "496:36641602107:1:F2",
+        "789:39682163349:1:F2"
       ]
     },
     {
@@ -2385,15 +2407,29 @@
       "members": [
         "783:39502979147:1:F2"
       ]
+    },
+    {
+      "title": "create 授权静默跳过 recordAccess 与数据范围，归属字段须由业务写入且无提示",
+      "reason": "单独保留：789:F3 的 E5/E6/E9 显示 @nocobase/app-plugin-authorization 的 authorizer 对 action===\"create\" 直接取 constraints=[]、effective={scope:true,configured:true}，完全不编译 recordsIOwn/customFilter 等记录范围；E6 证明 recordsIOwn 仍把 ownerId 声明为 requiredFields，E9 显示应用只能在创建路由手写 ownerId 补归属。这是 create 动作的授权语义与文档/类型提示缺口，与既有“delete builder 无法附加 Record Access”（707:F2）及“create 回读需 read 权限”等组的根因不同，故单独保留。",
+      "members": [
+        "789:39682163349:1:F3"
+      ]
+    },
+    {
+      "title": "各 @nocobase 包的 dist 布局不统一，Skill 未给出模块入口路径",
+      "reason": "单独保留：789:F4 的 E21/E27/E10 分别指向 db 的 dist/src、app-client 的扁平 dist 与 authorization 的 dist/plugins，确实呈现发布包目录布局不一致；但原 finding 的定向复核为 insufficient，证据中没有记录所称“至少 5 次猜路径失败”的探测日志，也没有捕获到未给出入口说明的 Skill/README 契约，无法与 G9 中由真实失败探测支撑的“公开入口与 dist 布局指引缺失”认定为同一证据链。按“证据不足或只能推测相关时单独保留”的规则，不并入 G9，也不猜测其与具体包入口缺口的关系。",
+      "members": [
+        "789:39682163349:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39515027146",
+    "runId": "39694173765",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-20T23:28:30.278Z"
+    "completedAt": "2026-10-21T23:35:39.238Z"
   }
 }
