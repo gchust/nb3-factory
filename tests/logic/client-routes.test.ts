@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -51,29 +50,12 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the inbox and the device ledger opted out of page authorization, so they are reachable by
+    // every signed-in user; the administration pages name the resource and action a page grant records.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
-    ]);
-  });
-
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
+      { name: 'devices', authorizedAs: null },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
       { name: 'settingsUser', authorizedAs: 'user:*' },
@@ -91,7 +73,22 @@ describe('app client routes', () => {
         authorizedAs: 'settings:authorization.permission-sets',
       },
     ]);
-    for (const loader of componentLoadersIn(built.routes))
+  });
+
+  it('registers the devices page and the prepared system settings as business capabilities exist', async () => {
+    // The bare template is Home-only, but AGENTS.md requires the prepared Users/Roles administration surfaces to be
+    // registered once the application has a business capability — an administrator has to be able to create the
+    // ordinary users who use the ledger. So the registered tree now carries both /devices and /settings.
+    const resolved = resolveRoutes();
+    expect(pagePaths(resolved.routes)).toEqual(
+      expect.arrayContaining([
+        '/devices',
+        '/settings/users',
+        '/settings/roles',
+      ]),
+    );
+    // Every page component still loads, including the ones the settings contribution adds.
+    for (const loader of componentLoadersIn(resolved.routes))
       await expect(loader()).resolves.toMatchObject({
         default: expect.any(Function),
       });
