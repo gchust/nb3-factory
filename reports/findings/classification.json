@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "28dac33e99d4f9bfc242c9f1b51831053f34adf189e14e44857b0251a3e15d26",
+  "inputHash": "190a54e26527ab6d5477f473e951256a1cf26bb99f1cf131854ee03e69f99470",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1321,6 +1321,26 @@
       "id": "789:39682163349:1:F4",
       "report": "789:39682163349:1",
       "fingerprint": "daa7f402dd225e23b632ecf6c2b5e7757daadcbf7eadfb83d8276c9246e28ff6"
+    },
+    {
+      "id": "790:39682172014:1:F1",
+      "report": "790:39682172014:1",
+      "fingerprint": "4f0e308f562ae161f6b9cea92e7e7c39caf70c8269c6a68d3b0ed5390400375d"
+    },
+    {
+      "id": "790:39682172014:1:F2",
+      "report": "790:39682172014:1",
+      "fingerprint": "55b182283fd9f495ce480a9895301ed57b3c2e8ffca601128ea202677ff598f1"
+    },
+    {
+      "id": "791:39682181087:1:F1",
+      "report": "791:39682181087:1",
+      "fingerprint": "a49a45972e76f458b2b8fee273d426dc25a7cec196757575ba9f6e011fcba609"
+    },
+    {
+      "id": "791:39682181087:1:F2",
+      "report": "791:39682181087:1",
+      "fingerprint": "c672b433f62130e0abaec0e16e371a24fcacd270c07986a6793e45395eeae16c"
     }
   ],
   "groups": [
@@ -2364,20 +2384,24 @@
       ]
     },
     {
-      "title": "实时准备失败缺少降级分类，failed 被等同于不可进入，登录后的整个应用锁在入口错误页",
-      "reason": "跨报告合并：773:F1（E29/E30/E31/E37）与 781:F5（E12/E13/E27/E14/E17）均指向认证 Provider 的 preparation 只有 preparing/ready/failed 三态，十秒实时握手超时后直接发布 failed；模板 SessionPreparation 只在 ready 时渲染业务页，failed 只给 Retry/退出，781 的应用也只能自行把 failed 当 warning 才能继续挂载。两者共同缺口是未区分“认证失败/未就绪”与“HTTP 会话已认证但实时传输降级”，修复方向一致：增加 authenticated-degraded 状态或等价的能力标志，并让模板/示例在实时不可用时继续挂载业务界面。",
+      "title": "实时准备超时后 failed 为终局：缺少降级状态与迟到连接恢复，应用被锁在入口错误页",
+      "reason": "跨报告合并：773:F1（E29/E30/E31/E37）、781:F5（E12/E13/E27/E14/E17）、790:F1（E12/E13/E40/E41）、791:F1（E1/E2/E3/E6/E29）均指向认证 Provider 的 preparation 在 realtime.active 时只等待最多 10 秒 onOpen，超时即 publish(failed) 并 unsubscribe；失败后不区分“HTTP 会话已认证、实时传输降级”与不可进入，也不因迟到的 onOpen 自动恢复。773/781 的模板只在 ready 时挂载业务页，790 应用另监听 realtimeClientToken 自动重试一次，791 应用只能自设 1.5 秒宽限后把 failed 当作可继续。共同根因是实时准备超时成为终局状态且没有受支持的降级/恢复出口，修复方向一致：提供可配置宽限或 authenticated-degraded 状态，保留迟到 open 的恢复，并让模板/示例在实时不可用时继续挂载业务界面。",
       "members": [
         "773:39335481569:1:F1",
-        "781:39502963850:1:F5"
+        "781:39502963850:1:F5",
+        "790:39682172014:1:F1",
+        "791:39682181087:1:F1"
       ]
     },
     {
       "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation、十秒准备门禁与失败降级语义",
-      "reason": "跨报告合并：773:F4（E36/E29）、776:F8（E81/E80/E71/E72/E95）、781:F1（E27/E28/E12/E13/E14/E15/E17）均指向同一处认证 Skill 公共契约缺口：SKILL.md 的 Public surfaces 只写 useAuthentication() 返回 { client, session, isPending, refresh }，client-session 参考也只解释这些字段，未列出实现与 d.ts 已公开的 preparation（preparing/ready/failed）和 retryPreparation，也未说明 realtime.active 下最多等待十秒 onOpen 的门禁及失败后应继续 HTTP 会话。三个应用只能从 README/dist 反推契约，781 更把 failed 写成致命门禁直至补丁改为 warning。共同修复方向是把 preparation/retryPreparation、超时条件和降级回退补进认证 Skill 与参考。",
+      "reason": "跨报告合并：773:F4（E36/E29）、776:F8（E81/E80/E71/E72/E95）、781:F1（E27/E28/E12/E13/E14/E15/E17）、790:F2（E13/E14）、791:F2（E2/E3/E4/E29）均指向同一处认证 Skill 公共契约缺口：SKILL.md 的 Public surfaces 与 client-session-and-pages.md 只列 useAuthentication() 返回 { client, session, isPending, refresh }，而公开 d.ts 还提供 preparation（preparing/ready/failed）和 retryPreparation；文档也未说明 realtime.active 下最多等待十秒 onOpen 的门禁、失败语义及继续 HTTP 会话的降级方式。各应用只能从 dist/类型声明或源码反推契约，790/791 也记录了准备失败阻断后才自行补监听/重试。共同修复方向是把 preparation/retryPreparation、超时条件和失败回退补进认证 Skill 与参考。",
       "members": [
         "773:39335481569:1:F4",
         "776:39335502311:1:F8",
-        "781:39502963850:1:F1"
+        "781:39502963850:1:F1",
+        "790:39682172014:1:F2",
+        "791:39682181087:1:F2"
       ]
     },
     {
@@ -2427,9 +2451,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39694173765",
+    "runId": "39696562085",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-21T23:35:39.238Z"
+    "completedAt": "2026-10-22T00:00:04.678Z"
   }
 }
