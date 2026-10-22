@@ -1,8 +1,9 @@
-import { Home } from 'lucide-react';
+import { Home, LayoutDashboard, Ticket } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -24,6 +25,44 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    name: 'helpdeskDashboard',
+    path: '/helpdesk',
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'helpdesk.dashboard' },
+      action: 'access',
+    },
+    navigation: { title: 'helpdesk.nav.dashboard', icon: LayoutDashboard },
+    breadcrumb: { title: 'helpdesk.nav.dashboard' },
+    componentLoader: () => import('./pages/helpdesk/dashboard.js'),
+  },
+  {
+    name: 'helpdeskTickets',
+    path: '/helpdesk/tickets',
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'helpdesk.tickets' },
+      action: 'access',
+    },
+    navigation: { title: 'helpdesk.nav.tickets', icon: Ticket, order: 1 },
+    breadcrumb: { title: 'helpdesk.nav.tickets' },
+    componentLoader: () => import('./pages/helpdesk/tickets.js'),
+    children: [
+      {
+        name: 'helpdeskTicketCreate',
+        path: 'create',
+        breadcrumb: { title: 'helpdesk.tickets.create' },
+        componentLoader: () => import('./pages/helpdesk/ticket-create.js'),
+      },
+      {
+        name: 'helpdeskTicketDetail',
+        path: ':ticketId',
+        breadcrumb: { title: 'helpdesk.fields.ticket' },
+        componentLoader: () => import('./pages/helpdesk/ticket-detail.js'),
+      },
+    ],
   },
   {
     auth: 'guest',
@@ -64,6 +103,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;

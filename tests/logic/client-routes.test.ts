@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -55,29 +54,106 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'helpdeskDashboard', authorizedAs: 'helpdesk.dashboard' },
+      { name: 'helpdeskTickets', authorizedAs: 'helpdesk.tickets' },
+      { name: 'helpdeskTicketCreate', authorizedAs: 'helpdesk.tickets' },
+      { name: 'helpdeskTicketDetail', authorizedAs: 'helpdesk.tickets' },
+      { name: 'settingsUsers', authorizedAs: 'user:*' },
+      { name: 'settingsUserCreate', authorizedAs: 'user:*' },
+      { name: 'settingsUser', authorizedAs: 'user:*' },
+      { name: 'settingsUserEdit', authorizedAs: 'user:*' },
+      {
+        name: 'settingsHelpdeskWorkflow',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskDefinitions',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskDefinition',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskExecutions',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskExecution',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskReminders',
+        authorizedAs: 'settings:helpdesk.reminders',
+      },
+      {
+        name: 'settingsRoles',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
+      {
+        name: 'settingsRoleCreate',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
+      {
+        name: 'settingsRoleEdit',
+        authorizedAs: 'settings:authorization.permission-sets',
+      },
     ]);
   });
 
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
+  it('registers business pages and administrator surfaces together', async () => {
+    const pages = pagePaths(resolveRoutes().routes);
+    expect(pages).toEqual(
+      expect.arrayContaining([
+        '/helpdesk',
+        '/helpdesk/tickets',
+        '/settings/users',
+        '/settings/helpdesk-workflow',
+        '/settings/helpdesk-reminders',
+      ]),
+    );
     const built = resolveAppClientContributions([
       {
         packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
+        routes: applicationRoutes,
         source: 'application',
       },
     ]);
     expect(pageAuthorizations(built.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'helpdeskDashboard', authorizedAs: 'helpdesk.dashboard' },
+      { name: 'helpdeskTickets', authorizedAs: 'helpdesk.tickets' },
+      { name: 'helpdeskTicketCreate', authorizedAs: 'helpdesk.tickets' },
+      { name: 'helpdeskTicketDetail', authorizedAs: 'helpdesk.tickets' },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
       { name: 'settingsUser', authorizedAs: 'user:*' },
       { name: 'settingsUserEdit', authorizedAs: 'user:*' },
+      {
+        name: 'settingsHelpdeskWorkflow',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskDefinitions',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskDefinition',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskExecutions',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskExecution',
+        authorizedAs: 'settings:helpdesk.workflow',
+      },
+      {
+        name: 'settingsHelpdeskReminders',
+        authorizedAs: 'settings:helpdesk.reminders',
+      },
       {
         name: 'settingsRoles',
         authorizedAs: 'settings:authorization.permission-sets',

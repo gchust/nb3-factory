@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { BellRing, Settings, ShieldCheck, Users, Workflow } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -39,6 +39,61 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             ],
           },
         ],
+      },
+      {
+        name: 'settingsHelpdeskWorkflow',
+        path: '/helpdesk-workflow',
+        auth: 'required',
+        authz: {
+          resource: { type: 'settings', id: 'helpdesk.workflow' },
+          action: 'read',
+        },
+        navigation: { title: 'helpdesk.workflow.title', icon: Workflow },
+        breadcrumb: { title: 'helpdesk.workflow.title' },
+        componentLoader: () => import('./helpdesk/workflow.js'),
+        children: [
+          {
+            name: 'settingsHelpdeskDefinitions',
+            path: 'definitions',
+            breadcrumb: { title: 'helpdesk.workflow.tabs.definitions' },
+            componentLoader: () => import('./helpdesk/definitions.js'),
+            children: [
+              {
+                name: 'settingsHelpdeskDefinition',
+                path: ':definitionName',
+                breadcrumb: { title: 'helpdesk.workflow.ticketProcess' },
+                componentLoader: () =>
+                  import('./helpdesk/definition-detail.js'),
+              },
+            ],
+          },
+          {
+            name: 'settingsHelpdeskExecutions',
+            path: 'executions',
+            breadcrumb: { title: 'helpdesk.workflow.tabs.executions' },
+            componentLoader: () => import('./helpdesk/executions.js'),
+            children: [
+              {
+                name: 'settingsHelpdeskExecution',
+                path: ':transitionId',
+                breadcrumb: { title: 'helpdesk.workflow.executionDetail' },
+                componentLoader: () => import('./helpdesk/execution-detail.js'),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'settingsHelpdeskReminders',
+        path: '/helpdesk-reminders',
+        auth: 'required',
+        authz: {
+          resource: { type: 'settings', id: 'helpdesk.reminders' },
+          action: 'read',
+        },
+        navigation: { title: 'helpdesk.reminders.title', icon: BellRing },
+        breadcrumb: { title: 'helpdesk.reminders.title' },
+        componentLoader: () => import('./helpdesk/reminders.js'),
       },
       {
         name: 'settingsRoles',
