@@ -106,15 +106,16 @@ describe('application shell', () => {
     ).toBeVisible();
   });
 
-  it('renders no Settings or Inbox entry in the header', async () => {
+  it('renders the Inbox entry but no Settings link in the header', async () => {
     renderApplication('/', true);
     await screen.findByRole('heading', { name: 'App client is ready' });
     expect(
       screen.queryByRole('link', { name: 'Settings' }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: /inbox/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /inbox/i })).toHaveAttribute(
+      'href',
+      '/inbox',
+    );
   });
 
   it('renders nested pages through manual outlets and selects the nearest menu ancestor', async () => {
