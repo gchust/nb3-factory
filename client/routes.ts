@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +16,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The device ledger every signed-in user may read and edit, so it needs no page authorization of its own, like
+    // the landing page and the inbox. The API behind it checks the session only.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: HardDrive, order: 10 },
+    path: '/devices',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +76,12 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+// The prepared Users and Roles administration surfaces. AGENTS.md requires them to be registered once the application
+// has a business capability, because an administrator has to be able to create the ordinary users who use it; they are
+// no longer optional the moment the ledger exists. Reconcile this registration on every iteration.
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
