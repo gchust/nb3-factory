@@ -1,0 +1,672 @@
+{
+  "version": 1,
+  "date": "2026-10-22",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "46b6d8420fab402600c7b740",
+      "id": "789:39682163349:1:F1",
+      "issue": 789,
+      "runId": 39682163349,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "Skill 的种子示例在 .ts 文件里 import 兄弟 .js 路径，首次装载必然 ERR_MODULE_NOT_FOUND",
+      "summary": "code-and-seeds.md 让权限集值放在 database/seed-data/permission-sets.ts，示例却写 `import { quotes } from \"../../server/sales-resources.js\"`（第 40 行）和 `import { engineer } from \"../../seed-data/permission-sets.js\"`（第 69 行）。@nocobase/db 的 importTaskDefinition 只把入口路径转成 file:// URL 后交给 __rewriteRelativeImportExtension，而该函数有 /^\\.\\.?\\// 守卫，URL 永不匹配，于是嵌套相对 import 原样交给 Node；在 .ts 种子里写 .js 就找不到文件。构建日志里首次启动即 Database seeds failed ... Cannot find module .../database/seed-data/documents.js（retro 也把这条列为阻塞并注明改用 .ts 解决）。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "Skill 明确要求种子为 database/main/seeds/*.ts 并 import database/seed-data/permission-sets.ts，但示例写成 ../../server/sales-resources.js 与 ../../seed-data/permission-sets.js。冻结的 task-loader 只把 file:// 入口 URL 交给带 /^\\.\\.?\\// 守卫的 __rewriteRelativeImportExtension，URL 不匹配即原样返回，入口内部的相对 import 不会被改写；构建日志中按该结构创建的 202612010001_documents_users.ts 首次装载即报 Cannot find module .../database/seed-data/documents.js，retro 也记录改用 .ts 解决。因此这是可复现的指引缺陷，而非环境偶发。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill 规定种子落在 .ts 文件并 import 兄弟 seed-data .ts 模块，示例却把相对 import 写成 .js；包内同一文档副本内容一致，说明这是公开指引的承诺。",
+            "evidence": [
+              "E14",
+              "E15",
+              "E60"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "重写函数只接受以 ./ 或 ../ 开头的字符串，importTaskDefinition 传入的是 file:// URL，故入口的嵌套 .js 相对 import 原样交给 Node，解析失败。",
+            "evidence": [
+              "E21",
+              "E22"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用按 Skill 结构创建种子后，首次启动/种子装载报 ERR_MODULE_NOT_FOUND，指向 seed-data/documents.js；属应用正确遵循指引却失败。",
+            "evidence": [
+              "E24",
+              "E28"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "失败发生在工作区常规启动路径，工作区依赖版本即 basis 所列 @nocobase/db 1.0.0-beta.21；同一环境把 import 改为 .ts 后即解决，说明不是 Node/依赖安装异常。",
+            "evidence": [
+              "E24",
+              "E28"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "该 Skill 文本随 @nocobase/app-plugin-authorization 包发布，app/.agents/skills 下为同哈希副本；未见工厂提示或注入配置改写此示例，责任不在工厂脚本。",
+            "evidence": [
+              "E60",
+              "E14"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有 loader 已支持 .ts 入口并按 Node 类型剥离加载，但只对裸相对说明符重写；改用与真实文件一致的 .ts 后缀即可装载，文档未利用该能力。",
+            "evidence": [
+              "E21",
+              "E22",
+              "E28"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "授权 Skill 种子示例使用 .js 相对说明符，源码模式加载种子失败",
+        "issues": 9,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/789/runs/39682163349/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "197c85d2207f9cbc52f15273",
+      "id": "789:39682163349:1:F2",
+      "issue": 789,
+      "runId": 39682163349,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "repository-routes 示例的 router.use(\"*\", auth…) 会认证整个 /api，而不只是本贡献的路由",
+      "summary": "repository-routes.md 在 createProjectRoutes 内直接 `router.use(\"*\", required(), bodyLimit(...), authz.database.authorizeRepository(...))`，并把它作为标准写法。app-server 启动时把所有 scope:\"api\" 贡献逐个 `api.route(\"/\", router)` 挂到同一个 /api 实例上，之后才注册 api.all(\"*\", apiNotFoundHandler)，最后 `this.router.route(\"/api\", api)`；因此贡献内部的 use(\"*\") 先于其它贡献和 404 兜底匹配所有 /api 请求。retro 记录了实际症状：未注册的 /api 端点返回 401 而不是 404，最后只能把中间件收窄到功能前缀。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "repository-routes 完整示例在 defineApiRoutes 贡献内用 router.use(\"*\", required(), bodyLimit(), authorizeRepository())，并 return new Hono().route('/', router)。app-server 把所有 scope===\"api\" 贡献逐个 api.route(\"/\", router) 挂到同一 /api 实例，之后才 api.all(\"*\", apiNotFoundHandler)，所以该通配中间件先于其它贡献和 404 兜底匹配全部 /api 请求。retro 记录全新 Default 模板下未注册端点得到 401 而非 404，最终必须收窄前缀，行为与文档写法直接对应。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill 把 createProjectRoutes 中的 router.use('*', 认证/限额/授权) 作为标准守卫写法，贡献经 defineApiRoutes 暴露到 /api；包内副本相同。",
+            "evidence": [
+              "E16",
+              "E61"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "所有 api 贡献共享同一 /api 根并依次挂载，通配 use 会在该根的任意路径执行，包括未注册路径；实际症状是 401 取代 404。",
+            "evidence": [
+              "E26",
+              "E29"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用照示例在 /api 贡献中使用通配守卫，导致无关 /api 路径被认证；retro 记录将其收窄到功能前缀后才恢复 404。",
+            "evidence": [
+              "E29"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "挂载顺序是 app-server 的固定启动逻辑，复现发生在新 Default 模板测试中，并非特定外部服务或凭据；同一代码收窄前缀即修复。",
+            "evidence": [
+              "E26",
+              "E29"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "示例文本随 @nocobase/app-plugin-authorization 包发布，app 下为同哈希副本；未见工厂模板或提示额外引入该通配写法。",
+            "evidence": [
+              "E61",
+              "E16"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "同一篇 Skill 稍后已示范 router.use('/salesProjects/updateOne', ...) 这种前缀限定写法，说明文档自身已有可行模式，只是完整示例未采用。",
+            "evidence": [
+              "E62"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "@nocobase/app-server"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "授权 Skill 示例使用顶层 router.use('*') 与泄漏警告冲突并污染其他 API 路由",
+        "issues": 2,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/789/runs/39682163349/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "fc20b61efb0830fc93f91280",
+      "id": "789:39682163349:1:F3",
+      "issue": 789,
+      "runId": 39682163349,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "create 授权静默忽略 recordAccess 与约束，归属字段必须由业务写入且无文档提示",
+      "summary": "database/authorizer.js 对 action===\"create\" 直接把 constraints 置空并令 effective={scope:true,configured:true}，relation scope 也固定为 true。也就是说给 create 配置 recordsIOwn/customFilter 不会限制插入，也不会校验 ownerId；本应用因此在创建路由里手写 ownerId = currentUser。这个设计本身合理（新行还不存在），但类型注释、Skill 与运行时报错都没有说明，agent 很容易误以为 create 也受数据范围保护。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结的 database/authorizer.js 对 action===\"create\" 明确取 constraints=[]、effective={scope:true,configured:true}，relation branch 也固定 scope:true；recordsIOwn 只在非 create 的 resolve 路径生效。Skill 把 recordsIOwn/recordsICreated 描述为通用数据范围（声明 requiredFields），没有说明 create 不受范围约束；应用因此在创建路由手动写 ownerId。该行为本身合理，但缺少文档/类型提示，属可改进的可用性问题，未发现相反说明。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "recordAccess 声明 recordsIOwn 需要 ownerId 字段，Skill 将其作为可选数据范围推荐；类型与文档均未声明 create 会跳过该范围，构成未说明的语义。",
+            "evidence": [
+              "E6",
+              "E64"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "authorizer 在 create 时直接置空 constraints 并令 scope:true，既不编译记录范围也不校验 ownerId；非 create 才走 resolveEffectiveScope。",
+            "evidence": [
+              "E5"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用在 documents 创建路由调用 create 前强制 ownerId = 当前用户，正是为弥补 create 授权不写归属字段；说明业务侧确实需要额外逻辑。",
+            "evidence": [
+              "E9"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "该分支是冻结框架包内的确定性代码，与应用运行环境、外部服务或凭据无关；不存在环境因素可解释。",
+            "evidence": [
+              "E5"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "行为来自 @nocobase/app-plugin-authorization 包代码，相关 Skill 随包发布；未见工厂提示、模板或构建脚本介入 create 语义。",
+            "evidence": [
+              "E5",
+              "E64"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "现有能力允许业务在服务端写入 ownerId（应用已如此做），recordAccess 也已声明 requiredFields；缺的是把 create 例外写进契约或提供可诊断校验，而非缺少实现入口。",
+            "evidence": [
+              "E9",
+              "E6"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "create 授权静默跳过 recordAccess 与数据范围，归属字段须由业务写入且无提示",
+        "issues": 1,
+        "first": "2026-10-22"
+      },
+      "report": "reports/issues/789/runs/39682163349/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "05c6155fcae9e55a15de6316",
+      "id": "789:39682163349:1:F4",
+      "issue": 789,
+      "runId": 39682163349,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "各 @nocobase 包的 dist 布局不统一，Skill 未给出模块入口路径，导致反复猜路径",
+      "summary": "同一 node_modules 下：@nocobase/db 是 dist/src/…，@nocobase/app-testing 是 dist/src/server/…，@nocobase/app-plugin-authentication 是 dist/server/…，@nocobase/authorization 是 dist/core 与 dist/plugins/…，@nocobase/app-server 只发布 dist/ 而不含 src/。exports 映射本身是正确的，但实现会话里至少 5 次按目录猜路径失败（app-testing/dist/server/app-test.d.ts、authorization/dist/permission-sets、routes/users.js、stores/restriction.js、app-server/src/database/tasks.ts），每次都靠翻 node_modules 才回到 exports。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "本条定向复核未通过校验：Supported feedback needs a captured framework contract or guidance",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/db",
+        "@nocobase/app-client"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-client",
+        "pkg:@nocobase/authorization",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "各 @nocobase 包的 dist 布局不统一，Skill 未给出模块入口路径",
+        "issues": 1,
+        "first": "2026-10-22"
+      },
+      "report": "reports/issues/789/runs/39682163349/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "4af8f74369ac49aa2b24efdf",
+      "id": "790:39682172014:1:F1",
+      "issue": 790,
+      "runId": 39682172014,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "认证 realtime 准备超时后不会因晚到的连接恢复",
+      "summary": "auth-provider.js 在 PREPARATION_TIMEOUT_MS=10_000 后把 preparation 发布为 failed 并 unsubscribe，不再监听迟到的 onOpen；随后整个应用显示 “Unable to connect / The realtime connection could not be prepared”。公开的 retryPreparation() 可恢复，但首轮刷新和 B03 都出现该阻断页，应用还在 session-preparation.tsx 里额外监听 realtimeClientToken 自动重试一次。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "E12 确认 provider 在 10s 超时后取消监听并发布 failed，晚到 onOpen 不会恢复；但候选把用户影响写成“必须手动 Retry”，与冻结应用的现有补偿矛盾：app/client/routing/session-preparation.tsx 在 failed 时订阅 realtime onOpen 并在 1.5s 后自动 retryPreparation，autoRetries=0 时仍显示 Loading（E44）。两轮 QA 的阻断页还可能由 agent-browser 丢失 WebSocket 常量（E35/E37）或工厂录制状态缺失（E34）解释，未证明真的发生过 >10s 的晚到握手。公开 preparation/retryPreparation 已允许页面自动恢复（E13）。因此代码事实成立，但本条的用户影响与归因前提不足，不能据此认定框架必须改动。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E13 只公开 preparation/retryPreparation 与 failed 状态，恢复由调用方触发；没有承诺晚到连接自动恢复。框架职责边界是暴露状态，页面决定重试策略，建议本身不足以构成违约。",
+            "evidence": [
+              "E13"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E12 L74-L97：onOpen 成功后 clearTimeout、unsubscribe 并 publish ready；定时器到点则 cancelled=true、unsubscribe、publish failed。之后 socket 打开时回调已被注销且 cancelled 阻止发布，provider 不会自动回 ready；只有 retryPreparation 递增 retry 才重跑 effect。",
+            "evidence": [
+              "E12"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "E44：应用 SessionPreparation 在 preparation=failed 时订阅 realtimeClientToken 的 onOpen 并自动 retryPreparation，首次失败仍显示 Preparing；晚到连接可由 onOpen 恢复，故“用户会停在全屏错误、必须手动 Retry”在本应用不成立，应用也已正确装配公开 API。",
+            "evidence": [
+              "E44"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "E35/E37 显示 QA 需在页面 eval 中补 WebSocket.CONNECTING/OPEN/CLOSING/CLOSED，录制或刷新后常量丢失；E34 显示 FACTORY_BROWSER_RECORDING_STATE 缺失。E40/E41 的 Unable to connect 可能是包装器/录制环境导致，不能当作 >10s 握手的证据。",
+            "evidence": [
+              "E35",
+              "E37",
+              "E34",
+              "E40",
+              "E41"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "E34 的录制状态缺失与 E35 的 record start 重置页面上下文属于工厂浏览器工具链问题；这些操作会丢失页面注入状态并复现失败页，说明观察到的阻断不能直接归因于插件超时。",
+            "evidence": [
+              "E34",
+              "E35"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "E13 的 retryPreparation 与 E44 的 onOpen+retry 组合已能实现自动恢复；冻结应用就是现成例子，说明公开能力已存在，缺的是由谁承担重试策略，而非无恢复入口。",
+            "evidence": [
+              "E13",
+              "E44"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "实时准备超时后 failed 为终局：缺少降级状态与迟到连接恢复，应用被锁在入口错误页",
+        "issues": 4,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/790/runs/39682172014/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "0b9a1c6325eda629155bff72",
+      "id": "790:39682172014:1:F2",
+      "issue": 790,
+      "runId": 39682172014,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "认证指引未记录公开的 preparation/retryPreparation",
+      "summary": "auth-provider.d.ts 把 preparation: 'preparing' | 'ready' | 'failed' 和 retryPreparation 暴露为 AuthenticationContextValue，但 client-session-and-pages.md 的“Reading the session”只讲 session、isPending、refresh 和 client，没有说明 10 秒失败和恢复入口。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "E13 把 preparation: 'preparing'|'ready'|'failed' 和 retryPreparation 暴露为 AuthenticationContextValue 的公开成员；但 E43 的 SKILL.md 客户端 API 列表仍写 useAuthentication() 返回 { client, session, isPending, refresh }，E14 的 client-session-and-pages.md 会话章节也只讲 session/isPending/refresh/client，均未提 preparation 或 realtime 失败态，认证技能目录全文检索也无相关内容。E44 显示冻结应用必须自行实现 failed 监听与重试，印证仅按现有指引无法得知该公开入口。文档在冻结仓内可直接读取，非环境或工厂覆盖问题；补充指引即可，属 guidance-gap。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "E13：AuthenticationContextValue 明确公开 preparation 的三态与 retryPreparation()，这是页面可依赖的公开契约；指引应覆盖它。",
+            "evidence": [
+              "E13"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "E14 的会话章节（L1-L30）只列 session/isPending/refresh/client；E43 的 SKILL.md L44-L50 也只列四项。两处均无 preparation、retryPreparation 或 10 秒失败说明，文档实际内容与候选描述一致。",
+            "evidence": [
+              "E14",
+              "E43"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "E44：应用 SessionPreparation 直接读取 preparation/retryPreparation 并实现 failed 监听与重试，说明该公开入口是实际集成点；文档缺失迫使应用读实现或自行补 socket 监听。",
+            "evidence": [
+              "E44"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "E14 是仓库内冻结的技能文档，本地可读且不依赖外部服务；未发现环境不可用或外部凭据导致缺页，缺失内容是文档本身。",
+            "evidence": [
+              "E14"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "E43 属于随包发布的 authentication Skill 内容，未见工厂提示、注入配置或模板覆盖修改它；遗漏可直接在 Skill 文档中定位，不是工厂材料缺失。",
+            "evidence": [
+              "E43",
+              "E14"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "检查 authentication Skill 的 SKILL.md 与 references，除 E13 的 d.ts 注释外没有其他 preparation/retryPreparation 使用说明（E14/E43）；现有文档能力不足以替代指引。",
+            "evidence": [
+              "E13",
+              "E14",
+              "E43"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation、十秒准备门禁与失败降级语义",
+        "issues": 5,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/790/runs/39682172014/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "663beaa9202f7f8b996a06a5",
+      "id": "791:39682181087:1:F1",
+      "issue": 791,
+      "runId": 39682181087,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "认证插件的实时准备超时固定 10 秒，失败后没有可用的降级入口",
+      "summary": "auth-provider.js 在实时通道 active 时等待 onOpen，固定 10 秒后 publish(failed)；随后只把 failed 暴露给宿主。当前模板/应用必须自己写 1.5 秒宽限才能继续进入业务页。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "插件实现确认超时固定为 10_000ms：实时通道 active 时发布 preparing，只有 onOpen 发布 ready，定时器到期发布 failed 并退订监听（E1、E2）。公开上下文只有 preparation 三态和 retryPreparation，authentication() 不接受配置（E3、E4），引用文档也未承诺可配置宽限或降级状态（E61）。因此宿主无法配置等待时长，failed 后插件也不再自动恢复（监听已退订、state 不触发重跑），只能 retryPreparation 再等 10 秒。应用侧确实自写 1.5 秒宽限，在 failed 或宽限到期时挂载 children（E6），说明该边界只能由宿主绕行；这是能力缺口而非契约违约，因为 d.ts 只把 preparation 作为状态暴露。原先登录后停在 Unable to connect 由工厂模板把 failed 渲染成终局重试/退出页造成（E62），但该替代解释只解释了谁渲染失败屏，并不推翻“插件固定 10 秒且没有可配置宽限/降级入口”这一具体主张。外部触发是 WebSocket 未 open（E58）；实时服务是可选的，未启用实时插件时 preparation 立即 ready（E5），故只在启用实时通道的默认组合下暴露。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "公开类型只承诺 preparation: 'preparing'|'ready'|'failed' 和 retryPreparation，authentication() 不接受选项；Skill 与引用文档都没有承诺宽限可配置、degraded-ready 或迟到 open 自动恢复。故建议属于能力边界内的改进，不是文档违约。",
+            "evidence": [
+              "E3",
+              "E4",
+              "E61"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "源码硬编码 PREPARATION_TIMEOUT_MS=10_000；realtime.active 时先 publish('preparing')，onOpen 队列微任务中 publish('ready')，定时器到期 cancelled=true、unsubscribe()、publish('failed')。failed 后没有依赖变化，effect 不会重跑，故不会自动重新校验。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E3"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用自设 REALTIME_GRACE_MS=1_500，preparation 为 failed 或宽限到期就挂载业务页，说明降级是宿主自己实现，而不是插件提供的接口；复盘也把它记为应用修复。",
+            "evidence": [
+              "E6",
+              "E29"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "verify-2 的浏览器快照在 /main 显示 Unable to connect/Retry/Sign out，与实时通道未 open 的触发条件一致；实时服务可选，未启用时 preparation 立即 ready，故问题限于启用了实时通道的环境，而非所有部署。",
+            "evidence": [
+              "E58",
+              "E5"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂模板原先把 failed 渲染成终局失败屏并只给 Retry/Sign out，补丁改为宽限后挂载（E62），所以“整页失败”归于模板 UI；但固定 10 秒、无配置项和 failed 后不自动恢复由插件代码决定，模板无法在不自写定时器的情况下缩短等待。",
+            "evidence": [
+              "E62",
+              "E6",
+              "E4"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "已有能力是 retryPreparation、可选实时服务（无实时时立即 ready），以及宿主可把 failed 当作继续信号挂载；但都没有提供可配置宽限，迟到 open 也不会自动恢复，仍不足以消除该边界。",
+            "evidence": [
+              "E3",
+              "E5",
+              "E6",
+              "E2"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "实时准备超时后 failed 为终局：缺少降级状态与迟到连接恢复，应用被锁在入口错误页",
+        "issues": 4,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/791/runs/39682181087/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "e53fcdad0f2e8a6df3f9853f",
+      "id": "791:39682181087:1:F2",
+      "issue": 791,
+      "runId": 39682181087,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-22",
+      "archivedAt": "2026-10-22T23:21:27.461Z",
+      "title": "认证 Skill 的 useAuthentication() 契约遗漏 preparation 和 retryPreparation",
+      "summary": "SKILL.md 第 48 行只列 { client, session, isPending, refresh }；auth-provider.d.ts 实际还提供 preparation 三态和 retryPreparation，实现也以 10 秒超时驱动 failed。",
+      "severity": "major",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "supported",
+        "reason": "冻结的认证 Skill 第 48 行确实写作 `useAuthentication()` returns `{ client, session, isPending, refresh }`，客户端引用文档也只列 session/isPending/refresh/client（E4、E61）；插件权威 Skill 源同一段同样省略（E63，内容与 app 副本相同）。而公开类型 auth-provider.d.ts 明确多出 preparation: 'preparing'|'ready'|'failed' 和 retryPreparation（E3），实现以 10 秒定时器驱动 failed（E1、E2）。因此仅按 Skill 接入的 Agent 无法发现准备状态、失败语义和重试入口，这是可核实的指引缺口，不是运行时缺陷。应用实现者不得不另读 d.ts/实现后才写 SessionPreparation，旧模板还直接依赖 retryPreparation 渲染重试屏（E6、E62），说明发现成本真实存在。替代解释“文档其他位置已说明”已检查：Skill 目录内除 realtime 会话撤销外无 preparation/retryPreparation 说明；副本与源一致，故也不是工厂同步丢失。",
+        "checks": [
+          {
+            "kind": "contract",
+            "reason": "Skill 对 useAuthentication() 返回值的书面契约只有四个字段；引用文档同样只记录这四个字段；权威源同一段也如此。类型声明则公开六项（含 preparation 三态与 retryPreparation），二者不一致，且文档没有给出降级/HTTP 回退示例。",
+            "evidence": [
+              "E4",
+              "E61",
+              "E63",
+              "E3"
+            ]
+          },
+          {
+            "kind": "behavior",
+            "reason": "实现以 PREPARATION_TIMEOUT_MS=10_000 驱动 preparing→ready/failed，并暴露 retryPreparation；这些真实行为与语义均未出现在 Skill 或引用文档中，只有类型与源码可见。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E3"
+            ]
+          },
+          {
+            "kind": "application",
+            "reason": "应用必须自行读取 preparation 并在 failed 或自设 1.5 秒宽限后挂载，旧模板还直接调用 retryPreparation；这证明仅按 Skill 的四字段接入无法写出可用的降级宿主。",
+            "evidence": [
+              "E6",
+              "E62"
+            ]
+          },
+          {
+            "kind": "environment",
+            "reason": "这是冻结文档与类型的静态不一致，不涉及外部服务、凭据或运行环境；同一 basis 版本下 app/.agents 副本与 packages 源内容相同（sha256 相同），不存在版本错配解释。",
+            "evidence": [
+              "E4",
+              "E63"
+            ]
+          },
+          {
+            "kind": "factory",
+            "reason": "工厂只把插件 skills 同步到 .agents/skills；遗漏同时存在于 packages 的权威 Skill 源，且两份内容与哈希相同，故缺口来自插件自身 Skill，而非工厂提示或同步覆盖造成。",
+            "evidence": [
+              "E63",
+              "E4"
+            ]
+          },
+          {
+            "kind": "existing-capability",
+            "reason": "类型声明和源码已提供 preparation/retryPreparation，读 d.ts 或实现即可使用，故不是能力缺失而是文档发现成本；但仅按 Skill 示例无法得知这些入口，改进空间成立。",
+            "evidence": [
+              "E3",
+              "E2",
+              "E61"
+            ]
+          }
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "认证 Skill 未记录 useAuthentication 的 preparation/retryPreparation、十秒准备门禁与失败降级语义",
+        "issues": 5,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/791/runs/39682181087/attempt-1/index.html#review-finding-F2"
+    }
+  ]
+}
