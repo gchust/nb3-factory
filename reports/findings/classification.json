@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "190a54e26527ab6d5477f473e951256a1cf26bb99f1cf131854ee03e69f99470",
+  "inputHash": "a7ebcd84b30b768cb4e87c94d4c43a8bb215a70e5c2a2f4253dd18e30beea1aa",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1341,6 +1341,21 @@
       "id": "791:39682181087:1:F2",
       "report": "791:39682181087:1",
       "fingerprint": "c672b433f62130e0abaec0e16e371a24fcacd270c07986a6793e45395eeae16c"
+    },
+    {
+      "id": "799:39860057502:1:F2",
+      "report": "799:39860057502:1",
+      "fingerprint": "e2a908ecf2c9a8dcefb806ca8e9597e7c9ae0df6e551ab25533bcf7270026c62"
+    },
+    {
+      "id": "799:39860057502:1:F3",
+      "report": "799:39860057502:1",
+      "fingerprint": "cd518f85db3b26e32c6ca28e33c98a116f033a221535856634dc40f7dc81b322"
+    },
+    {
+      "id": "799:39860057502:1:F5",
+      "report": "799:39860057502:1",
+      "fingerprint": "247408086bdac72cb201eea99fa8182aaa34da4f92b04730fa00df72f7febb84"
     }
   ],
   "groups": [
@@ -1455,7 +1470,7 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并：461:F4（E45/E49/E62）、473:F5（E9/E10/E43）、506:F7（E5/E24/E47）、600:F6（E5/E12/E35）、614:F3（E34/E43/E46）、715:F4（E35/E49）、732:F5（E16/E28/E36）均显示 Skill/文档按源码路径或导出子路径描述包内文件，而发布包只有 dist，且 dist 目录与导出子路径/包命名不镜像（如 @nocobase/api-client 实际为 app-client）；Agent 反复 cat/find 不存在的路径。共同修复方向是给出公开包名、入口与 dist 映射。",
+      "reason": "跨报告合并：461:F4（E45/E49/E62）、473:F5（E9/E10/E43）、506:F7（E5/E24/E47）、600:F6（E5/E12/E35）、614:F3（E34/E43/E46）、715:F4（E35/E49）、732:F5（E16/E28/E36）均显示 Skill/文档按源码路径或导出子路径描述包内文件，而发布包只有 dist，且 dist 目录与导出子路径/包命名不镜像（如 @nocobase/api-client 实际为 app-client）；Agent 反复 cat/find 不存在的路径。共同修复方向是给出公开包名、入口与 dist 映射。 并入 799:F5：@nocobase/app-client 仅以 dist/plugins.js 单文件承载插件 API（并无 dist/plugins/ 目录），Agent 按 dist/plugins/*.d.ts、dist/plugins/routes.d.ts 探测得到 ENOENT/exit 2 后才改用包根导出，类型入口也未提示其为单文件模块；与 600:F6 所点名的 @nocobase/app-client/plugins 公开子路径缺口同根因，修复方向同为补齐公开入口与 dist 映射或提供稳定子路径导出。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
@@ -1463,7 +1478,8 @@
         "600:37453053696:1:F6",
         "614:37542344302:1:F3",
         "715:38329376329:1:F4",
-        "732:38643271089:1:F5"
+        "732:38643271089:1:F5",
+        "799:39860057502:1:F5"
       ]
     },
     {
@@ -2156,7 +2172,7 @@
     },
     {
       "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
-      "reason": "跨报告合并：701:F3（E26/E27/E28）、709:F3（E23/E24/E28）、725:F4（E11/E12/E13）、733:F4（E9/E10/E11）、749:F3（E15/E16/E17）、757:F3（E11/E12/E13）均显示 @nocobase/db 内部已有 isUniqueConstraintViolation（识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等），但该 helper 未从包入口导出，RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项；普通 createOne 直接外抛原始驱动异常，recognizeApiError 无法映射为 409，应用只能在 create 前预检并在 catch 后重查，并发窗口仍暴露为不透明 500。共同修复方向是公开可判定的唯一冲突错误并归一化 createOne；并入 783:F1：同一缺口在设备应用中再次出现——@nocobase/db 内部 isUniqueConstraintViolation 覆盖多驱动错误码却未公开，Repository.createOne/update 也不把唯一冲突归一化为 RepositoryError，应用只能复制驱动判断并先查后写。",
+      "reason": "跨报告合并：701:F3（E26/E27/E28）、709:F3（E23/E24/E28）、725:F4（E11/E12/E13）、733:F4（E9/E10/E11）、749:F3（E15/E16/E17）、757:F3（E11/E12/E13）均显示 @nocobase/db 内部已有 isUniqueConstraintViolation（识别 23505、ER_DUP_ENTRY、SQLITE_CONSTRAINT 等），但该 helper 未从包入口导出，RepositoryErrorCode/RepositoryErrorStatus 也没有唯一冲突/ALREADY_EXISTS 项；普通 createOne 直接外抛原始驱动异常，recognizeApiError 无法映射为 409，应用只能在 create 前预检并在 catch 后重查，并发窗口仍暴露为不透明 500。共同修复方向是公开可判定的唯一冲突错误并归一化 createOne；并入 783:F1：同一缺口在设备应用中再次出现——@nocobase/db 内部 isUniqueConstraintViolation 覆盖多驱动错误码却未公开，Repository.createOne/update 也不把唯一冲突归一化为 RepositoryError，应用只能复制驱动判断并先查后写。 并入 799:F2：设备台账应用再次确认 @nocobase/db 内部已能跨方言识别唯一约束冲突（isUniqueConstraintViolation），但 insertRow/createOne 未捕获该错误、repositoryErrorStatuses 也无 DUPLICATE/CONFLICT 项，冲突最终被收敛为不透明 INTERNAL 500，应用只能用 findOne 预检并保留先查后写竞态；与既有成员同属同一能力缺口与同一修复落点（公开可判定的唯一冲突错误并归一化 createOne）。",
       "members": [
         "701:38106776639:1:F3",
         "709:38179339282:1:F3",
@@ -2164,7 +2180,8 @@
         "733:38643278737:1:F4",
         "749:38969428277:1:F3",
         "757:39068142600:1:F3",
-        "783:39502979147:1:F1"
+        "783:39502979147:1:F1",
+        "799:39860057502:1:F2"
       ]
     },
     {
@@ -2385,12 +2402,13 @@
     },
     {
       "title": "实时准备超时后 failed 为终局：缺少降级状态与迟到连接恢复，应用被锁在入口错误页",
-      "reason": "跨报告合并：773:F1（E29/E30/E31/E37）、781:F5（E12/E13/E27/E14/E17）、790:F1（E12/E13/E40/E41）、791:F1（E1/E2/E3/E6/E29）均指向认证 Provider 的 preparation 在 realtime.active 时只等待最多 10 秒 onOpen，超时即 publish(failed) 并 unsubscribe；失败后不区分“HTTP 会话已认证、实时传输降级”与不可进入，也不因迟到的 onOpen 自动恢复。773/781 的模板只在 ready 时挂载业务页，790 应用另监听 realtimeClientToken 自动重试一次，791 应用只能自设 1.5 秒宽限后把 failed 当作可继续。共同根因是实时准备超时成为终局状态且没有受支持的降级/恢复出口，修复方向一致：提供可配置宽限或 authenticated-degraded 状态，保留迟到 open 的恢复，并让模板/示例在实时不可用时继续挂载业务界面。",
+      "reason": "跨报告合并：773:F1（E29/E30/E31/E37）、781:F5（E12/E13/E27/E14/E17）、790:F1（E12/E13/E40/E41）、791:F1（E1/E2/E3/E6/E29）均指向认证 Provider 的 preparation 在 realtime.active 时只等待最多 10 秒 onOpen，超时即 publish(failed) 并 unsubscribe；失败后不区分“HTTP 会话已认证、实时传输降级”与不可进入，也不因迟到的 onOpen 自动恢复。773/781 的模板只在 ready 时挂载业务页，790 应用另监听 realtimeClientToken 自动重试一次，791 应用只能自设 1.5 秒宽限后把 failed 当作可继续。共同根因是实时准备超时成为终局状态且没有受支持的降级/恢复出口，修复方向一致：提供可配置宽限或 authenticated-degraded 状态，保留迟到 open 的恢复，并让模板/示例在实时不可用时继续挂载业务界面。 并入 799:F3：AuthenticationProvider 在 realtime.active 时进入 preparing，直到 onOpen 或固定 10 秒 PREPARATION_TIMEOUT_MS 超时才置 failed，模板 SessionPreparation 随之整屏显示 Unable to connect 且仅提供 Retry/Sign out（后台节流冷启动复现）；与既有成员同属“实时准备超时成为终局、缺少降级状态与迟到连接恢复”的根因，修复方向一致。",
       "members": [
         "773:39335481569:1:F1",
         "781:39502963850:1:F5",
         "790:39682172014:1:F1",
-        "791:39682181087:1:F1"
+        "791:39682181087:1:F1",
+        "799:39860057502:1:F3"
       ]
     },
     {
@@ -2451,9 +2469,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39696562085",
+    "runId": "39874655484",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-22T00:00:04.678Z"
+    "completedAt": "2026-10-22T23:55:44.732Z"
   }
 }
