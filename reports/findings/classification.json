@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a7ebcd84b30b768cb4e87c94d4c43a8bb215a70e5c2a2f4253dd18e30beea1aa",
+  "inputHash": "cff47ec40396c20feb7d0827082df92f7143a04f315878b4ed5bda1fca8f13a5",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -1343,6 +1343,16 @@
       "fingerprint": "c672b433f62130e0abaec0e16e371a24fcacd270c07986a6793e45395eeae16c"
     },
     {
+      "id": "798:39860050221:1:F4",
+      "report": "798:39860050221:1",
+      "fingerprint": "44a8b939bcbd8336078b64a3f0bc1bc40bca5747d8c384733c89ce4419179fb3"
+    },
+    {
+      "id": "798:39860050221:1:F5",
+      "report": "798:39860050221:1",
+      "fingerprint": "d2394ba3e73d8218e597b41af04a7fc0d39378bba5890ede44ea12cbabda7c82"
+    },
+    {
       "id": "799:39860057502:1:F2",
       "report": "799:39860057502:1",
       "fingerprint": "e2a908ecf2c9a8dcefb806ca8e9597e7c9ae0df6e551ab25533bcf7270026c62"
@@ -2381,9 +2391,10 @@
     },
     {
       "title": "Scheduler 不提供管理页面或立即执行入口，管理员只能自建页面并等待 cron 验证",
-      "reason": "单独保留：765:F3 同时主张 Scheduler 缺少管理页面与缺少立即执行入口两个能力面；既有组分别只覆盖其中一个，且该 finding 不可拆分、同报告 765:F1 已单列，故独立成组，避免把另一缺口混入。",
+      "reason": "跨报告合并：765:F3（E1/E3/E6/E8）与 798:F4（E28/E7/E8/E33）均指向 @nocobase/app-plugin-scheduler 按设计不贡献页面，服务端路由只有 list/get/occurrences/enable/disable，既无官方管理页也无受权限保护的“立即执行”入口；管理员页面必须由应用自建，验证新计划只能等待 cron（798:F4 的 verify-2 以 Successes 36→38 观察）。两条 finding 完整缺口集合相同（缺管理页 + 缺立即执行），仅版本不同，跨版本可归为同一问题；共同修复方向是提供可选管理页或受 scheduler.schedules 权限保护、保留 occurrence 幂等的立即执行入口。",
       "members": [
-        "765:39165528773:1:F3"
+        "765:39165528773:1:F3",
+        "798:39860050221:1:F4"
       ]
     },
     {
@@ -2463,15 +2474,22 @@
       "members": [
         "789:39682163349:1:F4"
       ]
+    },
+    {
+      "title": "开发 Skill 的插件能力映射表未列出 Scheduler",
+      "reason": "单独保留：798:F5（E29/E24/E37）显示 nocobase-app-development/SKILL.md 的“常见能力 → 应读 Skill”表只列 notification/authorization/authentication/file/i18n/users/db，未列 Scheduler，仅在表下正文与其他参考中交叉引用；该缺口是能力映射表条目遗漏，与“Skill 内部 references 路径/目录说明不明”（组 74）、AI 员工/知识库技能未被触发、站内通知生产限制未标注等根因和修复落点均不同，故单独保留。",
+      "members": [
+        "798:39860050221:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "39874655484",
+    "runId": "39878082359",
     "attempt": 1,
     "controlSha": "f9161bfc755bf1d74147a8367a0ae62f962e0dec",
-    "completedAt": "2026-10-22T23:55:44.732Z"
+    "completedAt": "2026-10-23T00:30:05.653Z"
   }
 }
