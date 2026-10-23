@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { ClipboardListIcon, Home, WorkflowIcon } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -24,6 +26,59 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The IT service desk. The parent is the one page a caller needs to reach the section at all; each child declares
+    // its own page grant, so a permission set can allow reporting without allowing the list, or the other way round.
+    name: 'tickets',
+    path: '/tickets',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'tickets.list' }, action: 'access' },
+    navigation: {
+      title: 'tickets.title',
+      icon: ClipboardListIcon,
+      order: 20,
+    },
+    breadcrumb: { title: 'tickets.title' },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    children: [
+      {
+        name: 'ticketNew',
+        path: 'new',
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'tickets.new' },
+          action: 'access',
+        },
+        breadcrumb: { title: 'tickets.new' },
+        componentLoader: () => import('./pages/tickets/new.js'),
+      },
+      {
+        name: 'ticketDetail',
+        path: ':ticketId',
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'tickets.detail' },
+          action: 'access',
+        },
+        breadcrumb: { title: 'tickets.detail.title' },
+        componentLoader: () => import('./pages/tickets/detail.js'),
+      },
+    ],
+  },
+  {
+    // The process administration: the diagram the runtime enforces, its parameters, and every recorded transition.
+    name: 'serviceDesk',
+    path: '/service-desk',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'service-desk' }, action: 'access' },
+    navigation: {
+      title: 'tickets.serviceDesk.navigation',
+      icon: WorkflowIcon,
+      order: 30,
+    },
+    breadcrumb: { title: 'tickets.serviceDesk.navigation' },
+    componentLoader: () => import('./pages/service-desk/index.js'),
   },
   {
     auth: 'guest',
@@ -64,6 +119,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;

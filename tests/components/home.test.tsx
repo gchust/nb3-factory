@@ -21,6 +21,16 @@ vi.mock('@nocobase/app-client', async (original) => ({
   useToaster: () => toaster,
 }));
 
+// The home page mounts the service desk's dashboard section, which asks the authorization client whether the caller may
+// read it. This test renders the page without an `AppClientRoot`, so the real hook has no service container to reach;
+// answering "no" keeps the section out of the way and the rest of the page is what is under test.
+vi.mock('@nocobase/app-plugin-authorization/client', async (original) => ({
+  ...(await original<
+    typeof import('@nocobase/app-plugin-authorization/client')
+  >()),
+  useCan: () => ({ can: false, isPending: false }),
+}));
+
 // Strict: a key the locale lacks fails the test instead of rendering as text.
 const runtime = await createTestI18nRuntime({
   application: {
