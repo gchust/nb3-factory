@@ -20,6 +20,7 @@ import {
 
 import { CAPABILITIES, type Capability } from './capabilities.js';
 import { PromptDialog } from './prompt-dialog.js';
+import { ServiceDeskHomeSection } from '../tickets/overview.js';
 import { useCopy } from './use-copy.js';
 
 const STEPS = ['describe', 'build', 'review'] as const;
@@ -40,6 +41,9 @@ export default function HomePage(): ReactElement {
   return (
     <PageContainer className='mx-auto max-w-6xl'>
       <AgentIntro />
+      {/* The service desk's own queue: late tickets and each engineer's load. Renders nothing for anyone who may not
+          read the desk's aggregate numbers, so employees and engineers see the page they saw before. */}
+      <ServiceDeskHomeSection />
       <section
         aria-labelledby='home-capabilities'
         className='flex flex-col gap-4'
