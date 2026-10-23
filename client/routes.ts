@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -24,6 +26,17 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
     path: '/inbox',
+  },
+  {
+    // The materials library: a page grant opens it, and its endpoints check the
+    // `materials.library` composite the same permission sets grant.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    breadcrumb: { title: 'materials.pageTitle' },
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'materials.pageTitle', icon: BookOpen, order: 20 },
+    path: '/materials',
   },
   {
     auth: 'guest',
@@ -64,6 +77,12 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+// The application's own pages plus the prepared system-settings contribution. The settings group and its pages
+// carry their own `authz`, so registering the contribution only makes the management surfaces reachable for the
+// identities a permission set grants.
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
