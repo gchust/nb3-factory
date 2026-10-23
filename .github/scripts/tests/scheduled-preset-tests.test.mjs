@@ -391,7 +391,7 @@ test('summary escapes table and HTML content', () => {
   assert.match(summary, /&#124;/);
 });
 
-test('preset workflow runs manually and daily at 02:23 UTC+8, off the congested hour', () => {
+test('preset workflow keeps manual runs available while the daily schedule is paused', () => {
   const workflow = readFileSync(new URL('../../workflows/scheduled-preset-tests.yml', import.meta.url), 'utf8');
   assert.match(workflow, /^name: Preset build tests$/m);
   assert.doesNotMatch(workflow, /legacy/i);
@@ -400,7 +400,7 @@ test('preset workflow runs manually and daily at 02:23 UTC+8, off the congested 
   assert.match(workflow, /if: github.event_name == 'workflow_dispatch' \|\| github.event_name == 'schedule'/);
   assert.match(workflow, /workflow_dispatch:\s+inputs:\s+dry_run:[\s\S]*?default: false\s+type: boolean/);
   assert.match(workflow, /concurrency:\s+group: factory-scheduled-preset-tests\s+cancel-in-progress: false\s+queue: max/);
-  assert.match(workflow, /^ {2}schedule:/m);
+  assert.doesNotMatch(workflow, /^ {2}schedule:/m);
   assert.match(workflow, /^  workflow_dispatch:/m);
   assert.match(workflow, /run-name:.*'daily'.*'preview'.*'manual'/);
   assert.equal((workflow.match(/run: node \.github\/scripts\/scheduled-preset-tests\.mjs$/gm) ?? []).length, 1);

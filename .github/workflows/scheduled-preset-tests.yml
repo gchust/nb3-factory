@@ -13,12 +13,14 @@ on:
   # the planned time: scheduled runs here start hours late (19:00 ran three to
   # five hours late, and daily-findings' off-hour 20:17 still runs 2.7 to five
   # hours late). Dispatch the workflow by hand when the time matters.
-  schedule:
-    - cron: '23 18 * * *'
+  # Daily automatic builds are paused until the factory is ready.
+  # Uncomment this schedule to resume; manual dispatch remains available.
+  # schedule:
+  #   - cron: '23 18 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；每日 UTC+8 02:23 自动搭建'
+        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；每日自动搭建已暂停'
         required: true
         default: false
         type: boolean
