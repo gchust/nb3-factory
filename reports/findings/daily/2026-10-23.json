@@ -1,0 +1,435 @@
+{
+  "version": 1,
+  "date": "2026-10-23",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "15ad68202e9931335ca49542",
+      "id": "797:39860043393:1:F2",
+      "issue": 797,
+      "runId": 39860043393,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "README 称 create 不受记录范围影响，但 create 后回读实际需要 read 分支",
+      "summary": "README 第 349 行写“Create reads no record scope, so a create grant is unaffected.”，但同一包未提示 Repository 会在写入后回读该行（驱动不返回行或需重载精确数值时回退 findOne），因此只声明 create 分支的权限会在回读时被 read 策略拒绝。app 侧不得不为 createPermission 额外声明 .read() 才修复 403。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "写动作（create/update 及自定义 handler）回读需在同一权限声明 read，授权指引未说明",
+        "issues": 6,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/797/runs/39860043393/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "c4993b2c641f9c59ae1ee138",
+      "id": "797:39860043393:1:F3",
+      "issue": 797,
+      "runId": 39860043393,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "create 分支跳过全部约束，但写入行回读依赖驱动实现，语义不一致",
+      "summary": "authorizer 对 create 直接置 scope:true 且不解析 constraints；Repository.createOne 经 adapter 写入后，驱动支持 RETURNING 时直接返回，否则回退 findOne 回读，精确数值字段还会强制重载。于是“create 是否需要 read 范围”取决于驱动与字段类型，与文档描述的“create 不受影响”不一致。",
+      "severity": "minor",
+      "type": "runtime-defect",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "create 分支跳过约束且回读依赖驱动，create 授权语义不一致",
+        "issues": 1,
+        "first": "2026-10-23"
+      },
+      "report": "reports/issues/797/runs/39860043393/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "3fd0fa92e0bda33068d6b209",
+      "id": "797:39860043393:1:F6",
+      "issue": 797,
+      "runId": 39860043393,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "create 动作完全跳过记录范围，创建阶段的限制只能靠服务端兜底",
+      "summary": "authorizer 对 create 不解析任何 constraints 并把范围置为 true，因此 restriction 规则无法约束创建（记录尚不存在），只能由业务服务在写入时补齐负责人等字段。相关 Skill/README 未显式提示这一边界。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/app-plugin-authz-restriction-rules"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/app-plugin-authz-restriction-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "create 授权静默跳过 recordAccess 与数据范围，归属字段须由业务写入且无提示",
+        "issues": 2,
+        "first": "2026-10-22"
+      },
+      "report": "reports/issues/797/runs/39860043393/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "bf1766d826fc8ecbc85b3ddd",
+      "id": "798:39860050221:1:F4",
+      "issue": 798,
+      "runId": 39860050221,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "Scheduler 插件不提供管理页面与“立即执行”入口，验证与交付成本外移给应用",
+      "summary": "插件按设计只提供 API 与授权目录项（operations.md 明说“插件不贡献页面”），路由仅有 list/get/occurrences/enable/disable，没有创建/编辑 cron 或手动触发路由。结果每个应用都要重建列表/详情/历史页；本场景验收只能等待短周期 cron 真实触发（verify-2 通过 Successes 36→38 观察）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "Scheduler 不提供管理页面或立即执行入口，管理员只能自建页面并等待 cron 验证",
+        "issues": 2,
+        "first": "2026-10-19"
+      },
+      "report": "reports/issues/798/runs/39860050221/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "fbc52b2c722918b2001a859e",
+      "id": "798:39860050221:1:F5",
+      "issue": 798,
+      "runId": 39860050221,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "开发 Skill 的插件能力映射表未列出 Scheduler",
+      "summary": "nocobase-app-development/SKILL.md 的“常见能力 → 应读 Skill”表包含 notification/authorization/authentication/file/i18n/users/db，但没有 Scheduler 行；表下方正文才提到 scheduler。AGENTS.md 与 services-and-jobs.md/business-administration.md 有交叉引用，因此本 run 一开始就找到了 Scheduler Skill，但仅依赖该表的 Agent 可能低估其存在。",
+      "severity": "info",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "调度专项：过期待办标记",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "开发 Skill 的插件能力映射表未列出 Scheduler",
+        "issues": 1,
+        "first": "2026-10-23"
+      },
+      "report": "reports/issues/798/runs/39860050221/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "855abdace09b66901df4a2a9",
+      "id": "799:39860057502:1:F2",
+      "issue": 799,
+      "runId": 39860057502,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "Repository.createOne 未把唯一约束冲突映射为可识别的领域错误",
+      "summary": "框架能跨方言识别唯一约束冲突（isUniqueConstraintViolation），但只在 upsertOne 的并发分支使用；insertRow/createOne 未捕获该错误，repositoryErrorStatuses 也没有 ALREADY_EXISTS/CONFLICT 类错误码，最终被 app-server 收敛为不透明 INTERNAL 500。应用只能用 findOne 预检来给出 409/DEVICE_CODE_TAKEN，仍然存在先查后写的竞态窗口。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "@nocobase/db 内部已有 isUniqueConstraintViolation 却未公开导出，RepositoryErrorCode 也无唯一冲突项，应用无法类型化判定重复键",
+        "issues": 8,
+        "first": "2026-10-11"
+      },
+      "report": "reports/issues/799/runs/39860057502/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "e90a17be308b5f4bec69f8b9",
+      "id": "799:39860057502:1:F3",
+      "issue": 799,
+      "runId": 39860057502,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "认证外壳把整屏渲染绑定到实时连接就绪，弱网下退化为 10 秒失败页",
+      "summary": "AuthenticationProvider 在 realtime 服务存在时进入 preparing，直到 realtime.onOpen（授权失效完成后）或 PREPARATION_TIMEOUT_MS=10s 超时才结束；超时置 failed，模板 SessionPreparation 以整屏 “Unable to connect” 呈现，只提供 Retry/Sign out。QA 报告记录后台标签页节流时冷启动出现该页，保持活跃后恢复。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "实时准备超时后 failed 为终局：缺少降级状态与迟到连接恢复，应用被锁在入口错误页",
+        "issues": 5,
+        "first": "2026-10-20"
+      },
+      "report": "reports/issues/799/runs/39860057502/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "66dcd21525f9f96ab907d684",
+      "id": "799:39860057502:1:F5",
+      "issue": 799,
+      "runId": 39860057502,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "@nocobase/app-client 以 plugins.js 单文件承载插件 API，易被误认为目录",
+      "summary": "包内只有 dist/plugins.js 与 plugins.d.ts，没有 dist/plugins/ 目录；实现期 Agent 连续以 dist/plugins/*.d.ts、dist/plugins/routes.d.ts 探测并以 ENOENT/exit 2 失败，随后才改用包根导出。类型入口 index.d.ts 的再导出也不提示其为单文件模块。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [],
+      "subjectKeys": [],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "中英文设备台账",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
+        "issues": 8,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/799/runs/39860057502/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "dd1e4673270d7936322b8e68",
+      "id": "800:39860066290:1:F1",
+      "issue": 800,
+      "runId": 39860066290,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "resolveIfCreated 对“已注册但未创建”的 singleton 静默返回 undefined，类型与指引都未说明",
+      "summary": "@nocobase/service-provider 的 ServiceContainer 在 singleton 注册后把 state 置为 pending，只有 resolve 成功才置 created；resolveIfCreated 仅在 created 时返回实例（container.js 的 singleton/resolve/resolveIfCreated）。公开声明 container.d.ts 没有任何 JSDoc 区分“未注册”与“已注册未创建”，名字又极易被理解为“已存在就返回”。services-and-jobs.md 只演示 container.resolve；migrations.md 是唯一提到 resolveIfCreated 的地方，且只说明“无源容器时返回 undefined”。应用侧 TicketServiceProvider 先用 resolveIfCreated(notificationServiceToken) 判空，通知因此全部静默丢弃，Agent 读 dist 源码后才改为 has()?resolve():undefined。框架自身（notification provider 对 authorizationToken、in-app provider 对 realtime/registry token、authorization …",
+      "severity": "major",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/service-provider",
+        "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/service-provider",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "container.resolveIfCreated() 对已注册但未创建的 singleton 静默返回 undefined，类型与指引未区分“未注册/已注册未创建”",
+        "issues": 1,
+        "first": "2026-10-23"
+      },
+      "report": "reports/issues/800/runs/39860066290/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "01620769c2f4e7b31a24f651",
+      "id": "800:39860066290:1:F2",
+      "issue": 800,
+      "runId": 39860066290,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "日志章节未提 createDiagnosticLogger，导致依赖被放进 devDependencies，直到构建期才被拦下",
+      "summary": "services-and-jobs.md 的日志部分只教 loggingToken/getLogger；@nocobase/logging 实际导出了 message-first 的 createDiagnosticLogger（供 App 日志就绪前使用）。应用为实现诊断日志直接 import 该 helper，却把包放在 devDependencies，nocobase build 的 “Verify server dependencies” 报出 “@nocobase/logging — imported by server code but not in this application”，随后用 npx nocobase package add 修正。对比 lifecycle.md 会明确要求把 @nocobase/lifecycle 加入 dependencies，日志章节缺少同类提示。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/logging",
+        "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/logging",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/日志",
+      "candidates": [
+        "应用搭建/日志"
+      ],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "services-and-jobs.md 日志章节未提及 createDiagnosticLogger，诊断日志依赖被放入 devDependencies 直到构建才暴露",
+        "issues": 1,
+        "first": "2026-10-23"
+      },
+      "report": "reports/issues/800/runs/39860066290/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "93a4e32f1ad6900be87cffec",
+      "id": "800:39860066290:1:F3",
+      "issue": 800,
+      "runId": 39860066290,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-23",
+      "archivedAt": "2026-10-23T23:07:26.886Z",
+      "title": "lifecycle trigger 只支持“在某状态停留超时”，不支持“自某时间字段起超时”，跨状态 SLA 只能手写扫描",
+      "summary": "lifecycle 的 triggers 以 when（状态）+ after(parameters) 定义，findIdleRecords 也是按 states + stateField 阈值筛选；自转移会重置 trigger 等待。因此“超过 24 小时未解决”这类跨状态累计的 SLA 无法用 trigger 表达，应用只能用 TicketService.remindOverdue 手写扫描 + 每日 schedule（并自管 overdueNotifiedAt 幂等）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "feedbackReview": {
+        "status": "insufficient",
+        "reason": "定向复核未完成：Pi invocation timed out after 180 seconds.",
+        "checks": []
+      },
+      "targets": [
+        "@nocobase/lifecycle",
+        "app/.agents/skills/nocobase-app-development/references/lifecycle.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/lifecycle",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "IT 服务台：报修到确认关闭",
+      "appVersion": "1.0.0-beta.70",
+      "group": {
+        "title": "lifecycle trigger 只支持“在某状态停留超时”，不支持“自字段/时间起超时”，跨状态 SLA 只能手写扫描",
+        "issues": 1,
+        "first": "2026-10-23"
+      },
+      "report": "reports/issues/800/runs/39860066290/attempt-1/index.html#review-finding-F3"
+    }
+  ]
+}
