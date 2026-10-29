@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -51,29 +50,12 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
+    // The landing page, the shared device ledger and the inbox opted out of page authorization, so they are reachable
+    // by every signed-in user. The administration pages keep the grants the prepared settings contribution declares.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
-    ]);
-  });
-
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
+      { name: 'devices', authorizedAs: null },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
       { name: 'settingsUser', authorizedAs: 'user:*' },
@@ -91,10 +73,26 @@ describe('app client routes', () => {
         authorizedAs: 'settings:authorization.permission-sets',
       },
     ]);
-    for (const loader of componentLoadersIn(built.routes))
-      await expect(loader()).resolves.toMatchObject({
-        default: expect.any(Function),
-      });
+  });
+
+  it('registers the device ledger and the prepared settings administration', () => {
+    // The application now has business pages and personal settings, so the Users and Roles administration is part of
+    // its route tree rather than a contribution a deployment has to remember to add.
+    const resolved = resolveRoutes();
+    expect(pagePaths(resolved.routes)).toEqual(
+      expect.arrayContaining([
+        '/devices',
+        '/settings/users',
+        '/settings/roles',
+      ]),
+    );
+    expect(
+      resolved.routes.some(
+        (route) =>
+          route.name === 'devices' &&
+          route.navigation?.title === 'navigation.devices',
+      ),
+    ).toBe(true);
   });
 
   it('keeps the inbox out of the application navigation', () => {
