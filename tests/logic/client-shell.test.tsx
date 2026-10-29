@@ -7,6 +7,7 @@ import {
   ClientApplicationContext,
   type ClientApplication,
   createAppClientConfig,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import {
@@ -289,10 +290,19 @@ function renderApplication(
       data: { fallback: false, locale: 'en-US', requestedLocale: 'en-US' },
     }),
   };
+  const realtimeClient = {
+    active: false,
+    close: vi.fn(),
+    onError: () => () => undefined,
+    onOpen: () => () => undefined,
+    reconnect: vi.fn(),
+    subscribe: vi.fn(() => () => undefined),
+  };
   const registered = new Map<unknown, unknown>([
     [apiClientToken, apiClient],
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    [realtimeClientToken, realtimeClient],
   ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
@@ -302,6 +312,7 @@ function renderApplication(
         if (registered.has(token)) return registered.get(token);
         throw new Error(`Unexpected service token: ${String(token)}`);
       },
+      resolveIfCreated: (token: unknown) => registered.get(token),
     },
   } as unknown as ClientApplication;
   render(

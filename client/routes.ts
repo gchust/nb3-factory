@@ -1,8 +1,10 @@
-import { Home } from 'lucide-react';
+import { Home, Inbox, LifeBuoy } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -16,14 +18,41 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     path: '/',
   },
   {
-    // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
-    // unread badge). The plugin's API answers each person's own messages only, so the page needs no authorization of
-    // its own.
+    // The template leaves the inbox out of the navigation so the application decides where its entry goes. The
+    // header carries no Inbox button here; the work queue and the notifications that point at a ticket both live in
+    // the sidebar instead. The plugin's API answers each person's own messages only, so the page needs no
+    // authorization of its own.
     authz: 'skip',
     auth: 'required',
     componentLoader: () => import('./pages/inbox.js'),
     name: 'inbox',
+    navigation: { title: 'navigation.inbox', icon: Inbox, order: 20 },
     path: '/inbox',
+  },
+  {
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+    breadcrumb: { title: 'navigation.tickets' },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: LifeBuoy, order: 10 },
+    path: '/tickets',
+    children: [
+      {
+        authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+        breadcrumb: { title: 'navigation.ticketNew' },
+        componentLoader: () => import('./pages/tickets/new.js'),
+        name: 'ticketNew',
+        path: 'new',
+      },
+      {
+        authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+        breadcrumb: { title: 'navigation.ticketDetail' },
+        componentLoader: () => import('./pages/tickets/detail/index.js'),
+        name: 'ticketDetail',
+        path: ':ticketId',
+      },
+    ],
   },
   {
     auth: 'guest',
@@ -64,6 +93,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;
