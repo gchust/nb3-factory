@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileTextIcon, Home, UsersIcon } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -61,6 +61,44 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/device.js'),
     name: 'device',
     path: '/device',
+  },
+  {
+    // The library. Record visibility is business logic in the server's document service, not a page grant: any
+    // signed-in colleague lands here and sees the documents they may read. The menu title lives in `navigation`.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: FileTextIcon },
+    path: '/documents',
+  },
+  {
+    // A form too long for a dialog, so it has its own page rather than an overlay. Declared before the detail route
+    // so the static `new` segment wins over `:documentId`.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/documents/new.js'),
+    name: 'document-new',
+    path: '/documents/new',
+  },
+  {
+    // A document's own page. Declares no navigation, so it adds no menu entry, and no `breadcrumb`, so it leaves by
+    // the Back button above its heading rather than by the header's trail.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/documents/detail.js'),
+    name: 'document-detail',
+    path: '/documents/:documentId',
+  },
+  {
+    // Account and permission administration. Only a user with unrestricted access opens it; `authz: 'unrestricted'`
+    // is the first page's rule and the endpoint the page calls enforces its own permission independently.
+    auth: 'required',
+    authz: 'unrestricted',
+    componentLoader: () => import('./pages/users/index.js'),
+    name: 'users',
+    navigation: { title: 'navigation.users', icon: UsersIcon },
+    path: '/users',
   },
 ]);
 
