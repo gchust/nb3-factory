@@ -5,10 +5,20 @@ import { useState, type PropsWithChildren, type ReactElement } from 'react';
 import { Loading } from '#components/loading';
 import { Button } from '#components/ui/button';
 
+export interface SessionPreparationProps extends PropsWithChildren {
+  /**
+   * Keep the application reachable through HTTP authorization when the realtime
+   * channel cannot be opened. The default stays fail-closed: the shell's
+   * retry/sign-out screen is still shown unless the application opts in.
+   */
+  readonly allowRealtimeUnavailable?: boolean;
+}
+
 /** The first identity handshake must invalidate permissions before pages mount. */
 export function SessionPreparation({
   children,
-}: PropsWithChildren): ReactElement {
+  allowRealtimeUnavailable = false,
+}: SessionPreparationProps): ReactElement {
   const { preparation, retryPreparation, client, refresh } =
     useAuthentication();
   const { t } = useTranslation();
@@ -16,6 +26,16 @@ export function SessionPreparation({
   const [signOutFailed, setSignOutFailed] = useState(false);
 
   if (preparation === 'ready') return <>{children}</>;
+
+  // The application opts into HTTP authorization here instead of blocking every
+  // business page on a WebSocket that may legitimately never open (proxy,
+  // browser connection pool, or a socket stuck in CONNECTING). Authorization
+  // still runs over HTTP; only live updates are degraded, and the inbox polls
+  // so notifications still arrive promptly.
+  if (allowRealtimeUnavailable && preparation === 'failed') {
+    return <>{children}</>;
+  }
+
   if (preparation === 'preparing') {
     return <Loading className='min-h-svh' label={t('auth.preparingSession')} />;
   }

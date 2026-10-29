@@ -15,9 +15,18 @@ import { SessionPreparation } from './session-preparation.js';
 
 export interface AppRouterProps {
   readonly clientRoutes: readonly AppClientRegisteredRoute[];
+  /**
+   * The application keeps working through HTTP authorization when the realtime
+   * channel cannot be opened. The default remains the shell's fail-closed
+   * preparation screen.
+   */
+  readonly allowRealtimeUnavailable?: boolean;
 }
 
-export function AppRouter({ clientRoutes }: AppRouterProps): ReactElement {
+export function AppRouter({
+  clientRoutes,
+  allowRealtimeUnavailable = false,
+}: AppRouterProps): ReactElement {
   const routeGroups = useMemo(
     () => ({
       guest: clientRoutes.filter((route) => route.auth === 'guest'),
@@ -35,7 +44,9 @@ export function AppRouter({ clientRoutes }: AppRouterProps): ReactElement {
       <Route
         element={
           <RequiredAuthentication>
-            <SessionPreparation>
+            <SessionPreparation
+              allowRealtimeUnavailable={allowRealtimeUnavailable}
+            >
               <Outlet />
             </SessionPreparation>
           </RequiredAuthentication>

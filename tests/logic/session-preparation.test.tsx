@@ -43,7 +43,9 @@ const runtime = await createTestI18nRuntime({
 });
 afterEach(() => vi.useRealTimers());
 
-async function setup() {
+async function setup({
+  allowRealtimeUnavailable = false,
+}: { allowRealtimeUnavailable?: boolean } = {}) {
   const allowed = {
     data: {
       unrestricted: false,
@@ -125,6 +127,7 @@ async function setup() {
           <AuthorizationProvider>
             <MemoryRouter>
               <AppRouter
+                allowRealtimeUnavailable={allowRealtimeUnavailable}
                 clientRoutes={[
                   route,
                   {
@@ -208,6 +211,15 @@ it('keeps a timed-out session closed, supports retry, and reports sign-out failu
   expect(screen.queryByText('Unable to connect')).toBeNull();
   await probe.open();
   expect(probe.mounted).toHaveBeenCalledOnce();
+});
+
+it('keeps the application reachable through HTTP when realtime cannot be prepared', async () => {
+  vi.useFakeTimers();
+  const probe = await setup({ allowRealtimeUnavailable: true });
+  await act(async () => vi.advanceTimersByTime(10_000));
+  expect(probe.mounted).toHaveBeenCalledOnce();
+  expect(screen.queryByText('Live updates are unavailable')).toBeNull();
+  expect(screen.queryByText('Unable to connect')).toBeNull();
 });
 
 it('can sign out of a failed initialization without a working realtime connection', async () => {

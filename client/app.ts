@@ -42,6 +42,7 @@ export function createApp(runtime: AppRuntimeContext): ClientApplication {
           ...runtime.reactProviders.map((provider) => provider.component),
         ],
         routes: createElement(AppRouter, {
+          allowRealtimeUnavailable: true,
           clientRoutes: runtime.routes,
         }),
       }),
