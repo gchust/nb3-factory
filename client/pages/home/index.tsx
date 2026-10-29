@@ -1,190 +1,337 @@
 import { useTranslation } from '@nocobase/i18n/client';
 import {
+  ActivityIcon,
+  AlertTriangleIcon,
   ArrowRightIcon,
-  CheckIcon,
-  CopyIcon,
-  MessageSquareTextIcon,
-  SparklesIcon,
+  CheckCircle2Icon,
+  InboxIcon,
+  PlusIcon,
+  UsersIcon,
 } from 'lucide-react';
-import { type ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
+import { Link } from 'react-router';
 
 import { PageContainer } from '#components/page-container';
+import { PageHeader } from '#components/page-header';
+import { Alert, AlertDescription } from '#components/ui/alert';
+import { Badge } from '#components/ui/badge';
 import { Button } from '#components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '#components/ui/card';
+import { Skeleton } from '#components/ui/skeleton';
+import { cn } from 'cn';
 
-import { CAPABILITIES, type Capability } from './capabilities.js';
-import { PromptDialog } from './prompt-dialog.js';
-import { useCopy } from './use-copy.js';
+import {
+  errorText,
+  useTicketLabels,
+  useTicketPermission,
+  useTicketsApi,
+  type Ticket,
+  type TicketDashboard,
+  type TicketState,
+} from '../tickets/shared.js';
 
-const STEPS = ['describe', 'build', 'review'] as const;
+function statusBadge(status: TicketState) {
+  return status === 'escalated'
+    ? 'destructive'
+    : status === 'processing'
+      ? 'default'
+      : status === 'resolved'
+        ? 'secondary'
+        : 'outline';
+}
 
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<Capability>();
-  const [open, setOpen] = useState(false);
-  // Changes on every opening, so the dialog remounts and drops the edits of the previous one.
-  const [openCount, setOpenCount] = useState(0);
+  const { formatDate, priority, status } = useTicketLabels();
+  const canCreate = useTicketPermission('create');
+  const canAssign = useTicketPermission('assign');
+  const request = useTicketsApi<{ data: TicketDashboard }>('tickets/dashboard');
+  const dashboard = request.data?.data;
 
-  const openCapability = (capability: Capability): void => {
-    setSelected(capability);
-    setOpenCount((count) => count + 1);
-    setOpen(true);
-  };
+  const summary = dashboard?.summary;
+  const cards = [
+    {
+      key: 'active',
+      value: summary?.active ?? 0,
+      hint: t('helpdesk.dashboard.summary.activeHint'),
+      icon: ActivityIcon,
+      attention: false,
+    },
+    {
+      key: 'unassigned',
+      value: summary?.unassigned ?? 0,
+      hint: t('helpdesk.dashboard.summary.unassignedHint'),
+      icon: InboxIcon,
+      attention: false,
+    },
+    {
+      key: 'overdue',
+      value: summary?.overdue ?? 0,
+      hint: t('helpdesk.dashboard.summary.overdueHint'),
+      icon: AlertTriangleIcon,
+      attention: (summary?.overdue ?? 0) > 0,
+    },
+    {
+      key: 'resolved',
+      value: summary?.resolved ?? 0,
+      hint: t('helpdesk.dashboard.summary.resolvedHint'),
+      icon: CheckCircle2Icon,
+      attention: false,
+    },
+  ] as const;
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
-      <AgentIntro />
-      <section
-        aria-labelledby='home-capabilities'
-        className='flex flex-col gap-4'
-      >
-        <div className='flex flex-col gap-1'>
-          <h2 id='home-capabilities' className='text-base font-medium'>
-            {t('home.capabilitiesTitle')}
-          </h2>
-          <p className='text-sm text-muted-foreground'>
-            {t('home.capabilitiesDescription')}
-          </p>
-        </div>
-        <ul className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {CAPABILITIES.map((capability) => (
-            <li key={capability.id} className='flex'>
-              <CapabilityCard
-                capability={capability}
-                onOpen={() => openCapability(capability)}
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
-      {selected ? (
-        <PromptDialog
-          key={openCount}
-          capability={selected}
-          open={open}
-          onOpenChange={setOpen}
-        />
-      ) : null}
+      <PageHeader
+        title={t('helpdesk.dashboard.title')}
+        description={t('helpdesk.dashboard.description')}
+        actions={
+          canCreate ? (
+            <Button nativeButton={false} render={<Link to='/tickets/new' />}>
+              <PlusIcon />
+              {t('helpdesk.newTicket')}
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {request.error ? (
+        <Alert variant='destructive'>
+          <AlertDescription>
+            {t('helpdesk.dashboard.loadFailed')}
+            <span className='block text-xs opacity-80'>
+              {errorText(request.error, '')}
+            </span>
+            <Button variant='outline' size='sm' onClick={request.reload}>
+              {t('helpdesk.retry')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : request.loading && !dashboard ? (
+        <>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            {cards.map((card) => (
+              <Skeleton key={card.key} className='h-32 w-full' />
+            ))}
+          </div>
+          <div className='grid gap-4 lg:grid-cols-2'>
+            <Skeleton className='h-72 w-full' />
+            <Skeleton className='h-72 w-full' />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            {cards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Card
+                  key={card.key}
+                  className={cn(card.attention && 'border-destructive/40')}
+                >
+                  <CardHeader className='flex flex-row items-center justify-between gap-2 pb-2'>
+                    <CardTitle className='text-sm font-medium text-muted-foreground'>
+                      {t(`helpdesk.dashboard.summary.${card.key}`)}
+                    </CardTitle>
+                    <span
+                      className={cn(
+                        'flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground',
+                        card.attention && 'bg-destructive/10 text-destructive',
+                      )}
+                    >
+                      <Icon className='size-4' aria-hidden />
+                    </span>
+                  </CardHeader>
+                  <CardContent>
+                    <p className='text-3xl font-semibold tracking-tight'>
+                      {card.value}
+                    </p>
+                    <p className='mt-1 text-xs text-muted-foreground'>
+                      {card.hint}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className='grid gap-4 lg:grid-cols-2'>
+            <TicketQueue
+              title={t('helpdesk.dashboard.unassignedTitle')}
+              description={t('helpdesk.dashboard.unassignedDescription')}
+              empty={t('helpdesk.dashboard.unassignedEmpty')}
+              tickets={dashboard?.unassigned ?? []}
+              href='/tickets?status=pending'
+              viewAll={t('helpdesk.dashboard.viewTickets')}
+              formatDate={formatDate}
+              priority={priority}
+              status={status}
+            />
+            <TicketQueue
+              title={t('helpdesk.dashboard.overdueTitle')}
+              description={t('helpdesk.dashboard.overdueDescription')}
+              empty={t('helpdesk.dashboard.overdueEmpty')}
+              tickets={dashboard?.overdue ?? []}
+              href='/tickets?status=escalated'
+              viewAll={t('helpdesk.dashboard.viewTickets')}
+              formatDate={formatDate}
+              priority={priority}
+              status={status}
+              attention
+            />
+          </div>
+
+          {canAssign ? (
+            <Card>
+              <CardHeader className='flex flex-row items-start justify-between gap-3'>
+                <div className='space-y-1'>
+                  <CardTitle
+                    role='heading'
+                    aria-level={2}
+                    className='flex items-center gap-2'
+                  >
+                    <UsersIcon className='size-4 text-muted-foreground' />
+                    {t('helpdesk.dashboard.workloadTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('helpdesk.dashboard.workloadDescription')}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  nativeButton={false}
+                  render={<Link to='/tickets?status=processing' />}
+                >
+                  {t('helpdesk.dashboard.viewTickets')}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {(dashboard?.workload.length ?? 0) === 0 ? (
+                  <p className='py-6 text-center text-sm text-muted-foreground'>
+                    {t('helpdesk.dashboard.workloadEmpty')}
+                  </p>
+                ) : (
+                  <ul className='divide-y'>
+                    {dashboard?.workload.map((engineer) => (
+                      <li
+                        key={engineer.id}
+                        className='flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0'
+                      >
+                        <div className='min-w-0'>
+                          <p className='truncate font-medium'>
+                            {engineer.name}
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            {t('helpdesk.dashboard.workloadActive', {
+                              count: engineer.active,
+                            })}
+                          </p>
+                        </div>
+                        {engineer.escalated > 0 ? (
+                          <Badge variant='destructive'>
+                            {t('helpdesk.dashboard.workloadEscalated', {
+                              count: engineer.escalated,
+                            })}
+                          </Badge>
+                        ) : (
+                          <Badge variant='outline'>
+                            {t('helpdesk.status.processing')}
+                          </Badge>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
+      )}
     </PageContainer>
   );
 }
 
-/** The first part of the page: development here happens by asking a coding agent, which the steps and sample show. */
-function AgentIntro(): ReactElement {
-  const { t } = useTranslation();
-  const { copied, copy } = useCopy();
-  const example = t('home.example.text');
-
-  return (
-    <section className='grid gap-8 rounded-2xl border border-border bg-linear-to-br from-primary/5 via-card to-card p-6 md:p-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center'>
-      <div className='flex flex-col gap-6'>
-        <div className='flex flex-col gap-4'>
-          <p className='flex items-center gap-2 text-sm font-medium text-primary'>
-            <SparklesIcon className='size-4' aria-hidden />
-            {t('home.platform')}
-          </p>
-          <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em] text-balance md:text-4xl'>
-            {t('home.title')}
-          </h1>
-          <p className='text-base leading-7 text-muted-foreground'>
-            {t('home.description')}
-          </p>
-        </div>
-        <ol className='flex flex-col gap-3'>
-          {STEPS.map((step, index) => (
-            <li key={step} className='flex gap-3'>
-              <span className='flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>
-                {index + 1}
-              </span>
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-sm font-medium'>
-                  {t(`home.steps.${step}.title`)}
-                </span>
-                <span className='text-sm text-muted-foreground'>
-                  {t(`home.steps.${step}.description`)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <figure className='flex flex-col overflow-hidden rounded-xl border border-primary/10 bg-card shadow-sm'>
-        <figcaption className='flex items-center justify-between gap-2 border-b border-primary/10 px-4 py-2.5'>
-          <span className='flex items-center gap-2 text-sm font-medium'>
-            <MessageSquareTextIcon
-              className='size-4 text-primary'
-              aria-hidden
-            />
-            {t('home.example.title')}
-          </span>
-          <Button variant='ghost' size='sm' onClick={() => void copy(example)}>
-            {copied ? (
-              <CheckIcon data-icon='inline-start' />
-            ) : (
-              <CopyIcon data-icon='inline-start' />
-            )}
-            {copied ? t('home.prompt.copiedShort') : t('home.prompt.copy')}
-          </Button>
-        </figcaption>
-        <p className='bg-primary/5 px-4 py-4 text-sm leading-7 whitespace-pre-line'>
-          {example}
-        </p>
-        <p className='border-t border-primary/10 px-4 py-2.5 text-xs text-muted-foreground'>
-          {t('home.example.hint')}
-        </p>
-      </figure>
-    </section>
-  );
-}
-
-function CapabilityCard({
-  capability,
-  onOpen,
+function TicketQueue({
+  title,
+  description,
+  empty,
+  tickets,
+  href,
+  viewAll,
+  formatDate,
+  priority,
+  status,
+  attention = false,
 }: {
-  readonly capability: Capability;
-  readonly onOpen: () => void;
+  readonly title: string;
+  readonly description: string;
+  readonly empty: string;
+  readonly tickets: readonly Ticket[];
+  readonly href: string;
+  readonly viewAll: string;
+  readonly formatDate: (value: string | null | undefined) => string;
+  readonly priority: (value: Ticket['priority']) => string;
+  readonly status: (value: TicketState) => string;
+  readonly attention?: boolean;
 }): ReactElement {
-  const { t } = useTranslation();
-  const prefix = `home.capabilities.${capability.id}`;
-  const Icon = capability.icon;
-
   return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='group flex w-full cursor-pointer rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-    >
-      <Card className='w-full transition-[translate,box-shadow,background-color] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:bg-hover group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0'>
-        <CardHeader className='gap-3'>
-          {/* The chip only deepens its tint on hover rather than inverting: swapping a light background and a dark icon
-              passes both through the same color halfway, where the icon vanishes for a moment and reads as a flicker. */}
-          <span className='flex size-9 items-center justify-center rounded-lg bg-primary/5 text-primary ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 ease-out group-hover:bg-primary/10 group-hover:ring-border motion-reduce:transition-none'>
-            <Icon
-              className='size-4 transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none'
-              aria-hidden
-            />
-          </span>
-          <div className='flex flex-col gap-1'>
-            <CardTitle>{t(`${prefix}.title`)}</CardTitle>
-            <CardDescription className='leading-6'>
-              {t(`${prefix}.description`)}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardFooter className='mt-auto justify-between text-sm text-muted-foreground transition-colors duration-200 ease-out group-hover:text-foreground'>
-          {t('home.viewPrompts', { count: capability.prompts.length })}
-          <ArrowRightIcon
-            className='size-4 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none'
-            aria-hidden
-          />
-        </CardFooter>
-      </Card>
-    </button>
+    <Card className={cn(attention && 'border-destructive/30')}>
+      <CardHeader className='flex flex-row items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <CardTitle role='heading' aria-level={2}>
+            {title}
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <Button
+          variant='ghost'
+          size='sm'
+          nativeButton={false}
+          render={<Link to={href} />}
+        >
+          {viewAll}
+          <ArrowRightIcon data-icon='inline-end' />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {tickets.length === 0 ? (
+          <p className='py-6 text-center text-sm text-muted-foreground'>
+            {empty}
+          </p>
+        ) : (
+          <ul className='divide-y'>
+            {tickets.map((ticket) => (
+              <li key={ticket.id}>
+                <Link
+                  to={`/tickets/${encodeURIComponent(ticket.id)}`}
+                  className='flex flex-col gap-2 py-3 first:pt-0 last:pb-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none'
+                >
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <span className='font-mono text-xs text-muted-foreground'>
+                      {ticket.ticketNo}
+                    </span>
+                    <Badge variant={statusBadge(ticket.status)}>
+                      {status(ticket.status)}
+                    </Badge>
+                    <Badge variant='outline'>{priority(ticket.priority)}</Badge>
+                  </div>
+                  <p className='truncate font-medium'>{ticket.title}</p>
+                  <p className='text-xs text-muted-foreground'>
+                    {formatDate(ticket.createdAt)}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }

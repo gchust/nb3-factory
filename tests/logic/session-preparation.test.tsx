@@ -18,7 +18,7 @@ import {
   TestI18nProvider,
   createTestI18nRuntime,
 } from '@nocobase/i18n/testing';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { MemoryRouter, Outlet } from 'react-router';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -195,29 +195,32 @@ it('mounts only after the initial handshake and preserves runtime fail-closed po
   expect(await screen.findByText('Access denied')).toBeVisible();
 });
 
-it('keeps a timed-out session closed, supports retry, and reports sign-out failure', async () => {
+it('continues over HTTP when preparation times out and refreshes permissions', async () => {
   vi.useFakeTimers();
   const probe = await setup();
-  await act(async () => vi.advanceTimersByTime(10_000));
-  expect(screen.getByText('Unable to connect')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+  expect(probe.mounted).not.toHaveBeenCalled();
+
+  await act(async () => vi.advanceTimersByTime(3_000));
   await act(async () => {});
-  expect(screen.getByRole('alert')).toHaveTextContent('Unable to sign out');
-  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
+
+  expect(screen.getByText('Protected dialog')).toBeVisible();
+  expect(probe.mounted).toHaveBeenCalledOnce();
+  // The fallback cannot trust the snapshot that belonged to the session before the identity handshake.
+  expect(probe.request).toHaveBeenCalledOnce();
   expect(screen.queryByText('Unable to connect')).toBeNull();
-  await probe.open();
+
+  await act(async () => vi.advanceTimersByTime(7_000));
   expect(probe.mounted).toHaveBeenCalledOnce();
 });
 
-it('can sign out of a failed initialization without a working realtime connection', async () => {
+it('can leave a session whose realtime connection never opened', async () => {
   vi.useFakeTimers();
   const probe = await setup();
-  await act(async () => vi.advanceTimersByTime(10_000));
-  probe.signOut.mockResolvedValueOnce({});
-  probe.getSession.mockResolvedValueOnce({ data: null });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+  await act(async () => vi.advanceTimersByTime(3_000));
   await act(async () => {});
+  expect(probe.mounted).toHaveBeenCalledOnce();
+
+  await probe.logout();
+
   expect(screen.getByText('Login route')).toBeVisible();
-  expect(probe.mounted).not.toHaveBeenCalled();
 });

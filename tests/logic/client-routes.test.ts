@@ -5,7 +5,6 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
 
 describe('app client routes', () => {
@@ -55,29 +54,17 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
-    ]);
-  });
-
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'composite:helpdesk.tickets' },
+      { name: 'ticketCreate', authorizedAs: 'composite:helpdesk.tickets' },
+      { name: 'ticketDetail', authorizedAs: 'composite:helpdesk.tickets' },
       { name: 'settingsUsers', authorizedAs: 'user:*' },
       { name: 'settingsUserCreate', authorizedAs: 'user:*' },
       { name: 'settingsUser', authorizedAs: 'user:*' },
       { name: 'settingsUserEdit', authorizedAs: 'user:*' },
+      {
+        name: 'settingsWorkflows',
+        authorizedAs: 'settings:workflow-management',
+      },
       {
         name: 'settingsRoles',
         authorizedAs: 'settings:authorization.permission-sets',
@@ -91,6 +78,40 @@ describe('app client routes', () => {
         authorizedAs: 'settings:authorization.permission-sets',
       },
     ]);
+  });
+
+  it('registers business pages and settings as capabilities are developed', async () => {
+    const resolved = resolveRoutes();
+    expect(pagePaths(resolved.routes)).toEqual(
+      expect.arrayContaining([
+        '/tickets',
+        '/tickets/new',
+        '/tickets/:ticketId',
+      ]),
+    );
+    expect(
+      pagePaths(resolved.routes).some((path) => path.startsWith('/settings')),
+    ).toBe(true);
+    const built = resolveAppClientContributions([
+      {
+        packageName: '@nocobase/app-template-default',
+        routes: applicationRoutes,
+        source: 'application',
+      },
+    ]);
+    expect(pageAuthorizations(built.routes)).toEqual(
+      expect.arrayContaining([
+        { name: 'tickets', authorizedAs: 'composite:helpdesk.tickets' },
+        {
+          name: 'settingsWorkflows',
+          authorizedAs: 'settings:workflow-management',
+        },
+        {
+          name: 'settingsRoles',
+          authorizedAs: 'settings:authorization.permission-sets',
+        },
+      ]),
+    );
     for (const loader of componentLoadersIn(built.routes))
       await expect(loader()).resolves.toMatchObject({
         default: expect.any(Function),

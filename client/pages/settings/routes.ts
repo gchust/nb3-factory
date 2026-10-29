@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { Settings, Users, ShieldCheck, Workflow } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -39,6 +39,18 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             ],
           },
         ],
+      },
+      {
+        name: 'settingsWorkflows',
+        path: '/workflows',
+        auth: 'required',
+        authz: {
+          resource: { type: 'settings', id: 'workflow-management' },
+          action: 'read',
+        },
+        navigation: { title: 'helpdesk.workflow.title', icon: Workflow },
+        breadcrumb: { title: 'helpdesk.workflow.title' },
+        componentLoader: () => import('../workflows/index.js'),
       },
       {
         name: 'settingsRoles',

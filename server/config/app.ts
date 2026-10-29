@@ -33,6 +33,11 @@ const app: AppConfigFactory<AppIdentityConfig> = defineAppConfig({
       publicBasePath,
       internalBasePath: routing.internalBasePath,
       publicApiUrl: joinBasePath(publicBasePath, '/api'),
+      // This application ships helpdesk demo accounts and tickets as sample
+      // data. Load them while an empty development or test database is
+      // installed; `pnpm start` sets NODE_ENV=production, and the
+      // APP_SAMPLE_DATA environment variable still overrides this default.
+      sampleData: process.env.NODE_ENV !== 'production',
     };
   },
 });
