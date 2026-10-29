@@ -1,5 +1,11 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import { DocumentsProvider } from './documents-provider.js';
+import { LeaveProvider } from './leave-provider.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  LeaveProvider,
+  DocumentsProvider,
+];
 
 export default serviceProviders;

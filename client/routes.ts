@@ -1,8 +1,9 @@
-import { Home } from 'lucide-react';
+import { BookOpenText, CalendarDays, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
 } from '@nocobase/app-client/plugins';
+import systemSettingsRoutes from './pages/settings/routes.js';
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -14,6 +15,57 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Every employee manages their own leave. The page is `authz: 'skip'` on purpose: opening it needs no page grant,
+    // while deciding requests is enforced by the API through the `leave.approvals` settings action.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/leave/index.js'),
+    name: 'leave',
+    navigation: { title: 'navigation.leave', icon: CalendarDays, order: 20 },
+    path: '/leave',
+    children: [
+      {
+        name: 'leaveNew',
+        path: 'new',
+        componentLoader: () => import('./pages/leave/request-form.js'),
+      },
+      {
+        name: 'leaveRequest',
+        path: ':requestId',
+        componentLoader: () => import('./pages/leave/request-detail.js'),
+      },
+    ],
+  },
+  {
+    // The page grant is `documents.library`; every action inside it (view, create, edit, share) is a separate
+    // composite action checked again by the API, so hiding a button is never what protects a document.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'documents.library' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: {
+      title: 'navigation.documents',
+      icon: BookOpenText,
+      order: 30,
+    },
+    path: '/documents',
+    children: [
+      {
+        name: 'documentsNew',
+        path: 'new',
+        componentLoader: () => import('./pages/documents/new.js'),
+      },
+      {
+        name: 'documentDetail',
+        path: ':documentId',
+        componentLoader: () => import('./pages/documents/detail.js'),
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
@@ -64,6 +116,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const routes: readonly AppClientRouteContribution[] = [appRoutes];
+const routes: readonly AppClientRouteContribution[] = [
+  appRoutes,
+  systemSettingsRoutes,
+];
 
 export default routes;

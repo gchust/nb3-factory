@@ -33,6 +33,10 @@ const app: AppConfigFactory<AppIdentityConfig> = defineAppConfig({
       publicBasePath,
       internalBasePath: routing.internalBasePath,
       publicApiUrl: joinBasePath(publicBasePath, '/api'),
+      // This application demonstrates its document workflow with the accounts and
+      // documents issued by its sample registration. `APP_SAMPLE_DATA=false`
+      // still disables it for an installation that must start empty.
+      sampleData: true,
     };
   },
 });
