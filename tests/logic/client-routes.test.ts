@@ -5,8 +5,31 @@ import {
 } from '@nocobase/app-client/plugins';
 import { describe, expect, it } from 'vitest';
 
-import systemSettingsRoutes from '../../client/pages/settings/routes.js';
 import applicationRoutes from '../../client/routes.ts';
+
+const expectedPageAuthorizations = [
+  { name: 'home', authorizedAs: null },
+  { name: 'inbox', authorizedAs: null },
+  { name: 'devices', authorizedAs: null },
+  { name: 'deviceCreate', authorizedAs: null },
+  { name: 'deviceEdit', authorizedAs: null },
+  { name: 'settingsUsers', authorizedAs: 'user:*' },
+  { name: 'settingsUserCreate', authorizedAs: 'user:*' },
+  { name: 'settingsUser', authorizedAs: 'user:*' },
+  { name: 'settingsUserEdit', authorizedAs: 'user:*' },
+  {
+    name: 'settingsRoles',
+    authorizedAs: 'settings:authorization.permission-sets',
+  },
+  {
+    name: 'settingsRoleCreate',
+    authorizedAs: 'settings:authorization.permission-sets',
+  },
+  {
+    name: 'settingsRoleEdit',
+    authorizedAs: 'settings:authorization.permission-sets',
+  },
+];
 
 describe('app client routes', () => {
   it('keeps the landing page and the authentication pages', () => {
@@ -51,46 +74,26 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page and the inbox opted out of page authorization, so they are reachable by every signed-in user.
-    expect(pageAuthorizations(resolved.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
-    ]);
+    // The landing page, inbox and device ledger opted out of page authorization, so they are reachable by every
+    // signed-in user. The Users and Roles surfaces keep the prepared settings grants.
+    expect(pageAuthorizations(resolved.routes)).toEqual(
+      expectedPageAuthorizations,
+    );
   });
 
-  it('keeps a bare application home-only and supports settings registration as business capabilities are developed', async () => {
-    expect(
-      pagePaths(resolveRoutes().routes).some((path) =>
-        path.startsWith('/settings'),
-      ),
-    ).toBe(false);
-    const built = resolveAppClientContributions([
-      {
-        packageName: '@nocobase/app-template-default',
-        routes: [...applicationRoutes, systemSettingsRoutes],
-        source: 'application',
-      },
-    ]);
-    expect(pageAuthorizations(built.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
-      { name: 'inbox', authorizedAs: null },
-      { name: 'settingsUsers', authorizedAs: 'user:*' },
-      { name: 'settingsUserCreate', authorizedAs: 'user:*' },
-      { name: 'settingsUser', authorizedAs: 'user:*' },
-      { name: 'settingsUserEdit', authorizedAs: 'user:*' },
-      {
-        name: 'settingsRoles',
-        authorizedAs: 'settings:authorization.permission-sets',
-      },
-      {
-        name: 'settingsRoleCreate',
-        authorizedAs: 'settings:authorization.permission-sets',
-      },
-      {
-        name: 'settingsRoleEdit',
-        authorizedAs: 'settings:authorization.permission-sets',
-      },
-    ]);
+  it('registers the device ledger with the prepared Users and Roles settings surfaces', async () => {
+    const built = resolveRoutes();
+    const paths = pagePaths(built.routes);
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        '/devices',
+        '/settings/users',
+        '/settings/roles',
+      ]),
+    );
+    expect(pageAuthorizations(built.routes)).toEqual(
+      expectedPageAuthorizations,
+    );
     for (const loader of componentLoadersIn(built.routes))
       await expect(loader()).resolves.toMatchObject({
         default: expect.any(Function),
