@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { CalendarClock, Settings, ShieldCheck, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -37,6 +37,25 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
                 componentLoader: () => import('./user-form.js'),
               },
             ],
+          },
+        ],
+      },
+      {
+        name: 'settingsScheduler',
+        path: '/scheduler',
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'scheduler.schedules' },
+          action: 'access',
+        },
+        navigation: { title: 'scheduler.title', icon: CalendarClock },
+        breadcrumb: { title: 'scheduler.title' },
+        componentLoader: () => import('../scheduler/index.js'),
+        children: [
+          {
+            name: 'settingsSchedulerDetail',
+            path: ':scheduleId',
+            componentLoader: () => import('../scheduler/detail.js'),
           },
         ],
       },

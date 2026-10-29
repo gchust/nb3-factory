@@ -199,20 +199,51 @@ it('keeps a timed-out session closed, supports retry, and reports sign-out failu
   vi.useFakeTimers();
   const probe = await setup();
   await act(async () => vi.advanceTimersByTime(10_000));
+  // The first timeout is retried without asking; only a failure of that retry is reported.
+  expect(screen.queryByText('Unable to connect')).toBeNull();
+  await act(async () => vi.advanceTimersByTime(1_500));
+  await act(async () => vi.advanceTimersByTime(10_000));
   expect(screen.getByText('Unable to connect')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   await act(async () => {});
   expect(screen.getByRole('alert')).toHaveTextContent('Unable to sign out');
   fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
+  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(3);
   expect(screen.queryByText('Unable to connect')).toBeNull();
   await probe.open();
   expect(probe.mounted).toHaveBeenCalledOnce();
 });
 
+it('retries a timed-out preparation without waiting for someone to press Retry', async () => {
+  vi.useFakeTimers();
+  const probe = await setup();
+  await act(async () => vi.advanceTimersByTime(10_000));
+  expect(screen.queryByText('Unable to connect')).toBeNull();
+  await act(async () => vi.advanceTimersByTime(1_500));
+  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
+  expect(screen.getByText('Preparing your session…')).toBeVisible();
+  await probe.open();
+  expect(probe.mounted).toHaveBeenCalledOnce();
+});
+
+it('recovers when the realtime connection opens after the preparation timeout', async () => {
+  vi.useFakeTimers();
+  const probe = await setup();
+  await act(async () => vi.advanceTimersByTime(10_000));
+  expect(screen.queryByText('Unable to connect')).toBeNull();
+  // The connection the initial preparation gave up on arrives late; it must still bring the page back.
+  await probe.open();
+  expect(probe.realtime.reconnect).toHaveBeenCalledTimes(2);
+  await probe.open();
+  expect(probe.mounted).toHaveBeenCalledOnce();
+  expect(screen.queryByText('Unable to connect')).toBeNull();
+});
+
 it('can sign out of a failed initialization without a working realtime connection', async () => {
   vi.useFakeTimers();
   const probe = await setup();
+  await act(async () => vi.advanceTimersByTime(10_000));
+  await act(async () => vi.advanceTimersByTime(1_500));
   await act(async () => vi.advanceTimersByTime(10_000));
   probe.signOut.mockResolvedValueOnce({});
   probe.getSession.mockResolvedValueOnce({ data: null });
