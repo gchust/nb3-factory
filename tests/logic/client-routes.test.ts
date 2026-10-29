@@ -55,6 +55,8 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
       { name: 'inbox', authorizedAs: null },
+      { name: 'todos', authorizedAs: 'todos' },
+      { name: 'schedules', authorizedAs: 'scheduler.schedules' },
     ]);
   });
 
