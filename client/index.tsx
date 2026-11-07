@@ -8,6 +8,7 @@ import { resolveAppRuntime } from '@nocobase/app-client/runtime';
 import { createRoot } from 'react-dom/client';
 
 import { revealScrollbarsWhileScrolling } from './lib/scrollbar';
+import { restoreWebSocketReadyStateConstants } from './lib/websocket-ready-state';
 import appRuntime from './runtime';
 import { AppStartupError } from './startup';
 import './styles.css';
@@ -38,6 +39,9 @@ async function start(): Promise<void> {
     const runtime = await resolveAppRuntime(appRuntime);
 
     app = createApp(runtime);
+    // Plugins boot inside app.start(), and the realtime client they use relies
+    // on the standard WebSocket readyState constants being present.
+    restoreWebSocketReadyStateConstants();
     await app.start();
     applicationStarted = true;
 
