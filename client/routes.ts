@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home, ShieldCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,28 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'documents' }, action: 'access' },
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: FileText },
+    path: '/documents',
+  },
+  {
+    auth: 'required',
+    authz: {
+      resource: { type: 'settings', id: 'documents.administration' },
+      action: 'read',
+    },
+    componentLoader: () => import('./pages/settings/documents/index.js'),
+    name: 'documents-administration',
+    navigation: {
+      title: 'navigation.documentAdministration',
+      icon: ShieldCheck,
+    },
+    path: '/settings/documents',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
