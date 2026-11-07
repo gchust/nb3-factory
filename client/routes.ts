@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home, LibraryBig, ShieldCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,104 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Published, non-confidential documents. Readers hold this page grant; librarians hold it too so they can see
+    // the same catalogue. The detail drawer is a child route so a document has its own URL.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.reader' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'library',
+    navigation: { title: 'navigation.library', icon: BookOpen },
+    path: '/library',
+    children: [
+      {
+        authz: {
+          resource: { type: 'page', id: 'library.reader' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/library/document.js'),
+        name: 'library-document',
+        path: ':documentId',
+      },
+    ],
+  },
+  {
+    // A librarian's own documents, including drafts and confidential ones. Create, edit and sharing are child
+    // routes so each opens from its own URL and closing returns to the list.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.librarian' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/manage/index.js'),
+    name: 'library-manage',
+    navigation: { title: 'navigation.libraryManage', icon: LibraryBig },
+    path: '/library/manage',
+    children: [
+      {
+        authz: {
+          resource: { type: 'page', id: 'library.librarian' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/library/manage/new.js'),
+        name: 'library-manage-new',
+        path: 'new',
+      },
+      {
+        authz: {
+          resource: { type: 'page', id: 'library.librarian' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/library/manage/edit.js'),
+        name: 'library-manage-edit',
+        path: ':documentId/edit',
+      },
+      {
+        authz: {
+          resource: { type: 'page', id: 'library.librarian' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/library/manage/share.js'),
+        name: 'library-manage-share',
+        path: ':documentId/share',
+      },
+      {
+        authz: {
+          resource: { type: 'page', id: 'library.librarian' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/library/document.js'),
+        name: 'library-manage-document',
+        path: ':documentId',
+      },
+    ],
+  },
+  {
+    // Staff administration is for the unrestricted administrator only: user records and role assignments are
+    // application-level configuration, not a business permission a reader or librarian should receive. The Users
+    // plugin's endpoints independently require the relevant `user` action, which only that identity holds.
+    auth: 'required',
+    authz: 'unrestricted',
+    componentLoader: () => import('./pages/admin/users/index.js'),
+    name: 'admin-users',
+    navigation: {
+      title: 'navigation.adminUsers',
+      icon: ShieldCheck,
+      order: 90,
+    },
+    path: '/admin/users',
+    children: [
+      {
+        authz: 'unrestricted',
+        componentLoader: () => import('./pages/admin/users/permissions.js'),
+        name: 'admin-user-permissions',
+        path: ':userId/permissions',
+      },
+    ],
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
