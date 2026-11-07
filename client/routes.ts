@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -14,6 +14,29 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The single table the overdue schedule acts on. `authz: 'skip'` keeps it available to any signed-in user; the
+    // page only reads, and the server still authenticates the endpoint it calls.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/todos.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+  },
+  {
+    // The Scheduler plugin ships the API but no page, so the application renders the management table itself. The
+    // page shares the plugin's own page resource: only a user granted `scheduler.schedules` reaches it or its API.
+    authz: {
+      resource: { type: 'page', id: 'scheduler.schedules' },
+      action: 'access',
+    },
+    auth: 'required',
+    componentLoader: () => import('./pages/schedules.js'),
+    name: 'schedules',
+    navigation: { title: 'navigation.schedules', icon: CalendarClock },
+    path: '/schedules',
   },
   {
     // Declares no navigation, so the application decides where its entry goes (for example a sidebar item with an
