@@ -1,4 +1,4 @@
-import { Settings, Users, ShieldCheck } from 'lucide-react';
+import { CalendarClock, Settings, Users, ShieldCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   type AppClientRouteContribution,
@@ -39,6 +39,19 @@ const systemSettingsRoutes: AppClientRouteContribution = defineAppRoutes([
             ],
           },
         ],
+      },
+      {
+        name: 'settingsSchedules',
+        path: '/schedules',
+        auth: 'required',
+        // The scheduler API and this page share the same page grant, so granting the page also reveals its runs.
+        authz: {
+          resource: { type: 'page', id: 'scheduler.schedules' },
+          action: 'access',
+        },
+        navigation: { title: 'schedulerAdmin.title', icon: CalendarClock },
+        breadcrumb: { title: 'schedulerAdmin.title' },
+        componentLoader: () => import('./schedules.js'),
       },
       {
         name: 'settingsRoles',

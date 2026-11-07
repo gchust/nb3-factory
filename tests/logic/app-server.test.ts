@@ -741,6 +741,152 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('serves todos only to a person with the Todos page grant', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const anonymous = await requestApp(app, `${baseUrl}/api/todos`);
+    expect(anonymous.status).toBe(401);
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+    const json = {
+      'content-type': 'application/json',
+      // A cookie-authenticated write has to name a trusted origin.
+      origin: 'http://localhost',
+    };
+    const created = await requestApp(app, `${baseUrl}/api/todos`, {
+      method: 'POST',
+      headers: { cookie, ...json },
+      body: JSON.stringify({
+        title: 'Write the API test',
+        dueAt: new Date(Date.now() + 86_400_000).toISOString(),
+      }),
+    });
+    expect(created.status).toBe(201);
+    const todo = (await created.json()) as {
+      data: { id: string; title: string; completed: boolean; expired: boolean };
+    };
+    expect(todo.data).toMatchObject({
+      title: 'Write the API test',
+      completed: false,
+      expired: false,
+    });
+
+    const listed = await requestApp(app, `${baseUrl}/api/todos`, {
+      headers: { cookie },
+    });
+    expect(listed.status).toBe(200);
+    await expect(listed.json()).resolves.toMatchObject({
+      data: [{ id: todo.data.id }],
+      meta: { page: 1, pageSize: 20, total: 1 },
+    });
+
+    const patched = await requestApp(
+      app,
+      `${baseUrl}/api/todos/${todo.data.id}`,
+      {
+        method: 'PATCH',
+        headers: { cookie, ...json },
+        body: JSON.stringify({ completed: true }),
+      },
+    );
+    expect(patched.status).toBe(200);
+    await expect(patched.json()).resolves.toMatchObject({
+      data: { id: todo.data.id, completed: true },
+    });
+
+    const missing = await requestApp(
+      app,
+      `${baseUrl}/api/todos/00000000-0000-0000-0000-000000000000`,
+      {
+        method: 'PATCH',
+        headers: { cookie, ...json },
+        body: JSON.stringify({ completed: true }),
+      },
+    );
+    expect(missing.status).toBe(404);
+    await expect(missing.json()).resolves.toMatchObject({
+      error: { reason: 'RECORD_NOT_FOUND' },
+    });
+
+    const schedules = await requestApp(
+      app,
+      `${baseUrl}/api/scheduler/schedules?page=1&pageSize=20`,
+      { headers: { cookie } },
+    );
+    expect(schedules.status).toBe(200);
+    await expect(schedules.json()).resolves.toMatchObject({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          key: 'todos.mark-overdue',
+          cron: '*/5 * * * *',
+          targetType: 'app.todo.overdue',
+          targetState: 'ready',
+          scheduleStatus: 'active',
+        }),
+      ]),
+    });
+
+    const user = await requestApp(app, `${baseUrl}/api/users`, {
+      method: 'POST',
+      headers: { cookie, ...json },
+      body: JSON.stringify({
+        name: 'Limited User',
+        username: 'limiteduser',
+        email: 'limited-user@example.com',
+        password: 'limited123',
+      }),
+    });
+    expect(user.status).toBe(201);
+
+    const limitedSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: json,
+        body: JSON.stringify({
+          username: 'limiteduser',
+          password: 'limited123',
+        }),
+      },
+    );
+    expect(limitedSignIn.status).toBe(200);
+    const limitedCookie = limitedSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+    // The page grant covers the API, so a signed-in person without it cannot even read the list.
+    const denied = await requestApp(app, `${baseUrl}/api/todos`, {
+      headers: { cookie: limitedCookie },
+    });
+    expect(denied.status).toBe(403);
+    await expect(denied.json()).resolves.toMatchObject({
+      error: { reason: 'TODO_ACCESS_REQUIRED' },
+    });
+
+    const deleted = await requestApp(
+      app,
+      `${baseUrl}/api/todos/${todo.data.id}`,
+      { method: 'DELETE', headers: { cookie, origin: 'http://localhost' } },
+    );
+    expect(deleted.status).toBe(204);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),
